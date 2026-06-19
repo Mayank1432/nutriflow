@@ -705,12 +705,24 @@ function updateStPer(si,field,val){
 }
 
 // ingredient update helpers — FIXED: only update the changed field, never touch others
-function updateIngr(mId,di,ii,field,val){
-  todayData.meals[mId].dishes[di].ingredients[ii][field]=val;
-  if(field==='unit'&&todayData.meals[mId].dishes[di].ingredients[ii].libId){
-    // detach from lib when unit changed
-    todayData.meals[mId].dishes[di].ingredients[ii].libId=undefined;
+function ensureEditableIngredient(ing){
+  if(!ing||ing.pr100!==undefined)return ing;
+  if(ing.libId){
+    const f=fd(ing.libId)||{};
+    const unit=ing.unit||'g';
+    ing.pr100   = pu2p100(f.pr||0,  unit);
+    ing.kc100   = pu2p100(f.kc||0,  unit);
+    ing.carb100 = pu2p100(f.carb||0,unit);
+    ing.fat100  = pu2p100(f.fat||0, unit);
+    ing.fibre100= pu2p100(f.fibre||0,unit);
+    ing.pp100   = pu2p100(f.pp||0,  unit);
+    ing.libId   = undefined;
   }
+  return ing;
+}
+function updateIngr(mId,di,ii,field,val){
+  const ing=ensureEditableIngredient(todayData.meals[mId].dishes[di].ingredients[ii]);
+  ing[field]=val;
   autosave();renderAllIngr();renderBars();
 }
 function updateIngrQty(mId,di,ii,val){
@@ -723,20 +735,7 @@ function ingrStep(mId,di,ii,d){
   autosave();renderAllIngr();renderBars();
 }
 function updateIngr100(mId,di,ii,field,val){
-  // detach from library, update only the specified per-100 field
-  const ing=todayData.meals[mId].dishes[di].ingredients[ii];
-  if(ing.libId){
-    // copy lib values first so we don't lose other fields
-    const f=fd(ing.libId)||{};
-    const unit=ing.unit||'g';
-    ing.pr100   = pu2p100(f.pr||0,  unit);
-    ing.kc100   = pu2p100(f.kc||0,  unit);
-    ing.carb100 = pu2p100(f.carb||0,unit);
-    ing.fat100  = pu2p100(f.fat||0, unit);
-    ing.fibre100= pu2p100(f.fibre||0,unit);
-    ing.pp100   = pu2p100(f.pp||0,  unit);
-    ing.libId   = undefined;
-  }
+  const ing=ensureEditableIngredient(todayData.meals[mId].dishes[di].ingredients[ii]);
   ing[field]=parseFloat(val)||0;
   autosave();renderAllIngr();renderBars();
 }
