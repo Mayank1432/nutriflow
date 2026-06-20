@@ -4,12 +4,14 @@
 - [x] Editing quantity resets nutrition values
 - [x] Quick Add ingredients should remain editable
 - [ ] Piece-based custom ingredients calculate incorrectly because nutrition fields are treated as per-100 instead of per-piece.
+- [ ] Allow custom ingredients to enter nutrition for any serving amount, then convert automatically to the app's internal calculation format.
 
 ## 🟡 Refactoring
 - [ ] Remove duplicate ingredient update logic
 - [ ] Centralize food calculations
 - [ ] Improve Local Storage handling
 - [ ] Standardize unit calculation logic for g, ml, and piece.
+- [ ] Add a unit normalization helper for converting serving-based nutrition into per-100 or per-piece values.
 
 ## 🟢 Features
 - [ ] Merge both planner versions
