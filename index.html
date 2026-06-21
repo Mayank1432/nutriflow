@@ -707,13 +707,17 @@ function ensureEditableIngredient(ing){
   }
   return ing;
 }
+function getTodayIngredient(mId,di,ii){
+  return todayData.meals[mId].dishes[di].ingredients[ii];
+}
 function updateIngr(mId,di,ii,field,val){
-  const ing=ensureEditableIngredient(todayData.meals[mId].dishes[di].ingredients[ii]);
+  const ing=ensureEditableIngredient(getTodayIngredient(mId,di,ii));
   ing[field]=val;
   autosave();renderAllIngr();renderBars();
 }
 function updateIngrQty(mId,di,ii,val){
-  todayData.meals[mId].dishes[di].ingredients[ii].qty=parseFloat(val)||0;
+  const ing=getTodayIngredient(mId,di,ii);
+  ing.qty=parseFloat(val)||0;
   autosave();renderAllIngr();renderBars();
 }
 function ingrStep(mId,di,ii,d){
@@ -722,7 +726,7 @@ function ingrStep(mId,di,ii,d){
   autosave();renderAllIngr();renderBars();
 }
 function updateIngr100(mId,di,ii,field,val){
-  const ing=ensureEditableIngredient(todayData.meals[mId].dishes[di].ingredients[ii]);
+  const ing=ensureEditableIngredient(getTodayIngredient(mId,di,ii));
   ing[field]=parseFloat(val)||0;
   autosave();renderAllIngr();renderBars();
 }
