@@ -364,6 +364,7 @@ let todayData = LS.get(KEYS.td) || blankDay();
 MEAL_DEFS.forEach(md=>{if(!todayData.meals[md.id])todayData.meals[md.id]={dishes:[],collapsed:false};});
 
 let curView='today', curMeal='breakfast', selHistDate=null, curWkDay=null;
+let historyEditKey=null, historyEditDraft=null;
 let dishForms={};MEAL_DEFS.forEach(md=>{dishForms[md.id]={open:false,name:'',ingrOpen:-1};});
 
 // ═══════════════════════════════════════════════════════════
@@ -374,11 +375,14 @@ let rolloverCheckRunning=false;
 function saveTodayState(){
   LS.set(KEYS.td,todayData);
 }
+function saveHistoryState(){
+  LS.set(KEYS.lg,log);
+}
 function saveTodayToHistory(dateKey,data=todayData){
   const snap=JSON.parse(JSON.stringify({meals:data.meals,staples}));
   log[dateKey]={...snap,savedAt:Date.now()};
   const ak=Object.keys(log).sort();if(ak.length>30)ak.slice(0,ak.length-30).forEach(k=>delete log[k]);
-  LS.set(KEYS.lg,log);
+  saveHistoryState();
 }
 function ensureTodayDateKey(){
   if(todayData.dateKey)return;
@@ -999,6 +1003,53 @@ function copyPlanToToday(){
 // ═══════════════════════════════════════════════════════════
 // HISTORY
 // ═══════════════════════════════════════════════════════════
+function cloneHistoryDay(day){
+  return JSON.parse(JSON.stringify(day));
+}
+function startHistoryEdit(key){
+  if(!log[key])return;
+  historyEditKey=key;
+  historyEditDraft=cloneHistoryDay(log[key]);
+  renderHistDetail(key);
+}
+function cancelHistoryEdit(){
+  const key=historyEditKey;
+  historyEditKey=null;
+  historyEditDraft=null;
+  renderHistDetail(key);
+}
+function saveHistoryEdit(){
+  const key=historyEditKey;
+  if(!key||!historyEditDraft)return;
+  log[key]=cloneHistoryDay(historyEditDraft);
+  log[key].savedAt=Date.now();
+  saveHistoryState();
+  historyEditKey=null;
+  historyEditDraft=null;
+  renderHistory();
+}
+function getHistoryDraftIngredient(mealId,dishIndex,ingredientIndex){
+  return historyEditDraft.meals[mealId].dishes[dishIndex].ingredients[ingredientIndex];
+}
+function updateHistoryDraftDishName(mealId,dishIndex,value){
+  historyEditDraft.meals[mealId].dishes[dishIndex].name=value;
+  renderHistDetail(historyEditKey);
+}
+function updateHistoryDraftIngredientQty(mealId,dishIndex,ingredientIndex,value){
+  const ing=getHistoryDraftIngredient(mealId,dishIndex,ingredientIndex);
+  ing.qty=parseFloat(value)||0;
+  renderHistDetail(historyEditKey);
+}
+function updateHistoryDraftIngredientField(mealId,dishIndex,ingredientIndex,field,value){
+  const ing=ensureEditableIngredient(getHistoryDraftIngredient(mealId,dishIndex,ingredientIndex));
+  ing[field]=value;
+  renderHistDetail(historyEditKey);
+}
+function updateHistoryDraftIngredient100(mealId,dishIndex,ingredientIndex,field,value){
+  const ing=ensureEditableIngredient(getHistoryDraftIngredient(mealId,dishIndex,ingredientIndex));
+  ing[field]=parseFloat(value)||0;
+  renderHistDetail(historyEditKey);
+}
 function renderHistory(){
   const keys=last30Keys().reverse();let html='';
   keys.forEach(key=>{
@@ -1020,16 +1071,45 @@ function renderHistory(){
 function selHist(key){selHistDate=selHistDate===key?null:key;renderHistory();}
 function renderHistDetail(key){
   const isToday=key===todayKey();
-  const entry=isToday?{meals:todayData.meals,staples}:log[key];
+  const isEditing=historyEditKey===key&&historyEditDraft;
+  const entry=isEditing?historyEditDraft:(isToday?{meals:todayData.meals,staples}:log[key]);
   if(!entry){document.getElementById('hist-detail').innerHTML='';return;}
   const v=calcDayLog(entry);const col=v.p>=115?'#4ade80':v.p>=100?'#fbbf24':'#f87171';
-  let html=`<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:2px">${fmtDateFull(key)}${isToday?' — Today':''}</div>
-    <div style="font-size:19px;font-weight:700;color:${col}">${r1(v.p)}g <span style="font-size:12px;color:#555">· ${r0(v.k)} kcal · ${r1(v.fat)}g fat · ${r1(v.carb)}g carb · ${r1(v.fibre)}g fibre · ₹${r0(v.c)}</span></div></div>`;
+  const controls=!isToday&&log[key]
+    ?(isEditing
+      ?`<div style="display:flex;gap:6px"><button class="small-btn green" onclick="saveHistoryEdit()">Save</button><button class="small-btn" onclick="cancelHistoryEdit()">Cancel</button></div>`
+      :`<button class="small-btn" onclick="startHistoryEdit('${key}')">Edit</button>`)
+    :'';
+  let html=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap"><div><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:2px">${fmtDateFull(key)}${isToday?' — Today':''}</div>
+    <div style="font-size:19px;font-weight:700;color:${col}">${r1(v.p)}g <span style="font-size:12px;color:#555">· ${r0(v.k)} kcal · ${r1(v.fat)}g fat · ${r1(v.carb)}g carb · ${r1(v.fibre)}g fibre · ₹${r0(v.c)}</span></div></div>${controls}</div>`;
   if(entry.staples){const sc=entry.staples.filter(s=>s.checked);if(sc.length){html+=`<div style="font-size:11px;font-weight:600;color:#555;margin-bottom:4px;text-transform:uppercase">Staples</div>`;sc.forEach(s=>{const sv=calcRow(s);html+=`<div style="font-size:12px;color:#888;padding:2px 0">${s.name} ${s.qty}${s.unit==='piece'?'pc':s.unit} · ${r1(sv.p)}g pro</div>`;});}}
   MEAL_DEFS.forEach(m=>{
     const dishes=((entry.meals&&entry.meals[m.id]&&entry.meals[m.id].dishes)||[]);if(!dishes.length)return;
     html+=`<div style="margin-top:10px"><div style="font-size:12px;font-weight:600;color:${m.col};margin-bottom:4px">${m.icon} ${m.label}</div>`;
-    dishes.forEach(dish=>{const dv=calcDish(dish);html+=`<div style="padding-left:8px;border-left:2px solid #2a2a2a;margin-bottom:5px"><div style="font-size:13px;font-weight:500;color:#ccc">${esc(dish.name)} <span style="font-size:11px;color:#555">· ${r1(dv.p)}g · ₹${r0(dv.c)}</span></div><div style="font-size:11px;color:#555;margin-top:1px">${(dish.ingredients||[]).map(i=>`${i.name} ${i.qty}${i.unit==='piece'?'pc':i.unit||'g'}`).join(' · ')||'no ingredients'}</div></div>`;});
+    dishes.forEach((dish,di)=>{const dv=calcDish(dish);
+      if(isEditing){
+        html+=`<div style="padding-left:8px;border-left:2px solid #2a2a2a;margin-bottom:8px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px"><input class="ed wide" value="${esc(dish.name)}" onchange="updateHistoryDraftDishName('${m.id}',${di},this.value)"><span style="font-size:11px;color:#555">· ${r1(dv.p)}g · ₹${r0(dv.c)}</span></div>`;
+        (dish.ingredients||[]).forEach((ing,ii)=>{
+          const unit=ing.unit||'g';const isLib=!!ing.libId;let pr100,kc100,cb100,ft100,fb100,pp100;
+          if(isLib){const f=fd(ing.libId)||{};pr100=pu2p100(f.pr||0,unit);kc100=pu2p100(f.kc||0,unit);cb100=pu2p100(f.carb||0,unit);ft100=pu2p100(f.fat||0,unit);fb100=pu2p100(f.fibre||0,unit);pp100=pu2p100(f.pp||0,unit);}
+          else{pr100=r1(ing.pr100||0);kc100=r1(ing.kc100||0);cb100=r1(ing.carb100||0);ft100=r1(ing.fat100||0);fb100=r1(ing.fibre100||0);pp100=r1(ing.pp100||0);}
+          html+=`<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin:4px 0 4px 8px">
+            <input class="ed wide" value="${esc(ing.name)}" onchange="updateHistoryDraftIngredientField('${m.id}',${di},${ii},'name',this.value)">
+            <input class="ed" type="number" min="0" value="${ing.qty||0}" onchange="updateHistoryDraftIngredientQty('${m.id}',${di},${ii},this.value)">
+            <select class="ed-sel" onchange="updateHistoryDraftIngredientField('${m.id}',${di},${ii},'unit',this.value)"><option value="g"${unit==='g'?' selected':''}>g</option><option value="ml"${unit==='ml'?' selected':''}>ml</option><option value="piece"${unit==='piece'?' selected':''}>pc</option></select>
+            <input class="ed" title="Protein" type="number" min="0" value="${pr100}" onchange="updateHistoryDraftIngredient100('${m.id}',${di},${ii},'pr100',this.value)">
+            <input class="ed" title="Kcal" type="number" min="0" value="${kc100}" onchange="updateHistoryDraftIngredient100('${m.id}',${di},${ii},'kc100',this.value)">
+            <input class="ed" title="Carbs" type="number" min="0" value="${cb100}" onchange="updateHistoryDraftIngredient100('${m.id}',${di},${ii},'carb100',this.value)">
+            <input class="ed" title="Fat" type="number" min="0" value="${ft100}" onchange="updateHistoryDraftIngredient100('${m.id}',${di},${ii},'fat100',this.value)">
+            <input class="ed" title="Fibre" type="number" min="0" value="${fb100}" onchange="updateHistoryDraftIngredient100('${m.id}',${di},${ii},'fibre100',this.value)">
+            <input class="ed" title="Cost" type="number" min="0" value="${pp100}" onchange="updateHistoryDraftIngredient100('${m.id}',${di},${ii},'pp100',this.value)">
+          </div>`;
+        });
+        html+=`</div>`;
+      }else{
+        html+=`<div style="padding-left:8px;border-left:2px solid #2a2a2a;margin-bottom:5px"><div style="font-size:13px;font-weight:500;color:#ccc">${esc(dish.name)} <span style="font-size:11px;color:#555">· ${r1(dv.p)}g · ₹${r0(dv.c)}</span></div><div style="font-size:11px;color:#555;margin-top:1px">${(dish.ingredients||[]).map(i=>`${i.name} ${i.qty}${i.unit==='piece'?'pc':i.unit||'g'}`).join(' · ')||'no ingredients'}</div></div>`;
+      }
+    });
     html+=`</div>`;
   });
   document.getElementById('hist-detail').innerHTML=`<div class="hist-detail">${html}</div>`;
