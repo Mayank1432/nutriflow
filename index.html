@@ -370,15 +370,41 @@ let dishForms={};MEAL_DEFS.forEach(md=>{dishForms[md.id]={open:false,name:'',ing
 // PERSISTENCE & AUTOSAVE
 // ═══════════════════════════════════════════════════════════
 let saveTimer=null;
+let rolloverCheckRunning=false;
 function saveTodayState(){
   LS.set(KEYS.td,todayData);
 }
-function saveTodayToHistory(){
-  const key=todayKey();
-  const snap=JSON.parse(JSON.stringify({meals:todayData.meals,staples}));
-  log[key]={...snap,savedAt:Date.now()};
+function saveTodayToHistory(dateKey,data=todayData){
+  const snap=JSON.parse(JSON.stringify({meals:data.meals,staples}));
+  log[dateKey]={...snap,savedAt:Date.now()};
   const ak=Object.keys(log).sort();if(ak.length>30)ak.slice(0,ak.length-30).forEach(k=>delete log[k]);
   LS.set(KEYS.lg,log);
+}
+function ensureTodayDateKey(){
+  if(todayData.dateKey)return;
+  todayData.dateKey=todayKey();
+  saveTodayState();
+}
+function hasTodayContent(data){
+  return MEAL_DEFS.some(m=>((data.meals&&data.meals[m.id]&&data.meals[m.id].dishes)||[]).some(d=>d&&(((d.name||'').trim())||(d.ingredients||[]).length>0)));
+}
+function checkDailyRollover(){
+  if(rolloverCheckRunning)return;
+  rolloverCheckRunning=true;
+  try{
+    ensureTodayDateKey();
+    const currentKey=todayKey();
+    if(todayData.dateKey===currentKey)return;
+    const oldDate=todayData.dateKey;
+    const oldToday=JSON.parse(JSON.stringify(todayData));
+    if(hasTodayContent(oldToday)&&!log[oldDate])saveTodayToHistory(oldDate,oldToday);
+    todayData=blankDay();
+    todayData.dateKey=currentKey;
+    saveTodayState();
+    render();
+  }finally{
+    rolloverCheckRunning=false;
+  }
 }
 function autosave(){
   clearTimeout(saveTimer);
@@ -1052,7 +1078,10 @@ function importData(input){
 // ═══════════════════════════════════════════════════════════
 // APP INIT
 // ═══════════════════════════════════════════════════════════
+checkDailyRollover();
 render();
+window.addEventListener('focus',checkDailyRollover);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkDailyRollover();});
 
 // ═══════════════════════════════════════════════════════════
 // PWA SETUP
