@@ -370,16 +370,20 @@ let dishForms={};MEAL_DEFS.forEach(md=>{dishForms[md.id]={open:false,name:'',ing
 // PERSISTENCE & AUTOSAVE
 // ═══════════════════════════════════════════════════════════
 let saveTimer=null;
+function saveTodayState(){
+  LS.set(KEYS.td,todayData);
+}
+function saveTodayToHistory(){
+  const key=todayKey();
+  const snap=JSON.parse(JSON.stringify({meals:todayData.meals,staples}));
+  log[key]={...snap,savedAt:Date.now()};
+  const ak=Object.keys(log).sort();if(ak.length>30)ak.slice(0,ak.length-30).forEach(k=>delete log[k]);
+  LS.set(KEYS.lg,log);
+}
 function autosave(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
-    LS.set(KEYS.td,todayData);LS.set(KEYS.cu,custom);LS.set(KEYS.wk,weekPlan);LS.set(KEYS.st,staples);
-    // also log today automatically
-    const key=todayKey();
-    const snap=JSON.parse(JSON.stringify({meals:todayData.meals,staples}));
-    log[key]={...snap,savedAt:Date.now()};
-    const ak=Object.keys(log).sort();if(ak.length>30)ak.slice(0,ak.length-30).forEach(k=>delete log[k]);
-    LS.set(KEYS.lg,log);
+    saveTodayState();LS.set(KEYS.cu,custom);LS.set(KEYS.wk,weekPlan);LS.set(KEYS.st,staples);
     const el=document.getElementById('saved-ts');
     if(el){const t=new Date();el.textContent='Last saved '+pad(t.getHours())+':'+pad(t.getMinutes());}
   },800);
