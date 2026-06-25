@@ -56,6 +56,40 @@ Then open:
 http://localhost:8000
 ```
 
+## PWA Smoke Test
+
+Install dev dependencies:
+
+```bash
+npm install
+```
+
+Install Chromium for Playwright:
+
+```bash
+npx playwright install chromium
+```
+
+Run against live GitHub Pages in PowerShell:
+
+```powershell
+$env:PWA_BASE_URL="https://mayank1432.github.io/protein-diet-planner/"
+npm run test:pwa
+```
+
+Run against a local static server:
+
+```bash
+python -m http.server 4173
+```
+
+Then in another PowerShell terminal:
+
+```powershell
+$env:PWA_BASE_URL="http://127.0.0.1:4173/"
+npm run test:pwa
+```
+
 ## Technologies Used
 
 - HTML5
