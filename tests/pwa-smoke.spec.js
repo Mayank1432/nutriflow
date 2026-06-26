@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const CACHE_NAME = 'protein-planner-v0.5.4';
+const CACHE_NAME = 'protein-planner-v0.5.5';
 const TEST_KEY = 'pwa_smoke_test_key';
 
 function absoluteUrl(baseURL, path) {

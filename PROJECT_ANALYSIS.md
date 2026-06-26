@@ -26,9 +26,8 @@ There is no module system. The JavaScript relies on global constants, global mut
 Main UI areas:
 
 - Header metrics for today's protein, today's cost, seven-day spend, and 30-day average.
-- Daily staples section.
 - View tabs for Today, Weekly Plan, and History.
-- Today view with meal tabs, meal panels, editable ingredient table, and quick-add form.
+- Today view with meal tabs, meal ingredient panels, editable ingredient table, and quick-add form.
 - Weekly Plan view with current-week day tabs and planned ingredients.
 - History view with last-30-days summaries and day details.
 - Cost per gram of protein table.
@@ -159,9 +158,9 @@ Ad hoc ingredient:
 
 Ad hoc ingredients store per-100 values directly.
 
-### Staples
+### Legacy Staples
 
-Staples are separate from `todayData` but included in daily calculations when checked.
+Legacy staples may appear in old backups or history entries. Current Today startup/import normalization converts Today staples into normal Breakfast ingredients, clears active Today staples, and keeps old History entries readable.
 
 ```js
 {
@@ -180,7 +179,7 @@ Staples are separate from `todayData` but included in daily calculations when ch
 }
 ```
 
-Staples use per-unit values and are assigned to a meal through `mealId`.
+Legacy staples use per-unit values and may include `mealId`; after Today normalization they are stored as ordinary ingredients inside the existing meals → dishes → ingredients shape.
 
 ### Weekly Plan Ingredients
 
@@ -297,11 +296,11 @@ Compatibility concerns:
 
 - `render()`: top-level render for the Today view and shared sections.
 - `renderBars()`: summary cards and progress bars.
-- `renderStaples()`: staple rows.
+- `renderStaples()`: legacy no-op guard retained for compatibility.
 - `renderMealTabs()`: meal tabs with protein totals.
-- `renderMealPanels()`: active meal, dishes, and dish ingredient rows/forms.
-- `renderIngrForm(mId, di)`: add-ingredient form for a dish.
-- `renderAllIngr()`: editable combined table of checked staples and today's dish ingredients.
+- `renderMealPanels()`: active meal and ingredient rows; internal dishes are not exposed in the Today UI.
+- `renderIngrForm(mId, di)`: legacy add-ingredient form retained for compatibility with internal dish functions.
+- `renderAllIngr()`: editable table of today's meal ingredients.
 - `renderLibPills()`: quick-add library/custom food buttons.
 - `renderCostTable()`: protein cost comparison table.
 - `renderWeekPlan()`: current-week planner UI.
@@ -311,8 +310,8 @@ Compatibility concerns:
 ### User Actions
 
 - View switching: `showView(v)`.
-- Staples: `stToggle`, `stStep`, `stQty`, `stMeal`, `updateSt`, `stQtyRow`, `updateStPer`.
-- Meal/dish actions: `switchMeal`, `toggleMeal`, `openDishForm`, `closeDishForm`, `commitDish`, `removeDish`.
+- Legacy staples: `stToggle`, `stStep`, `stQty`, `stMeal`, `updateSt`, `stQtyRow`, `updateStPer`.
+- Meal/dish actions: `switchMeal`, `toggleMeal`, `openDishForm`, `closeDishForm`, `commitDish`, `removeDish`; dish controls are not user-facing in the current Today UI.
 - Ingredient actions: `toggleIngrForm`, `closeIngrForm`, `commitIngr`, `addLibIngrToDish`, `removeIngr`, `quickAddLib`, `addCustomIngr`, `updateIngr`, `updateIngrQty`, `ingrStep`, `updateIngr100`.
 - Weekly plan actions: `initWkDay`, `selWkDay`, `wkStep`, `wkSetQty`, `removeWkItem`, `addWkLib`, `addWkCustom`, `clearWeekDay`, `copyPlanToToday`.
 - Backup: `exportData`, `importData`.
@@ -325,12 +324,11 @@ Compatibility concerns:
 - Seven-day budget progress bar.
 - Built-in food library.
 - Custom food creation.
-- Daily staples with checkboxes, quantities, and meal assignment.
+- Legacy staple normalization into normal Today ingredients.
 - Meal categories: breakfast, lunch, dinner, snacks.
 - Meal tabs with per-meal protein totals.
-- Add/remove dishes.
-- Add/remove ingredients inside dishes.
-- Add library/custom-library foods to dishes.
+- Add/remove meal ingredients while preserving internal dish storage.
+- Add library/custom-library foods to meals.
 - Add ad hoc ingredients with nutrition and cost values.
 - Editable all-ingredients table.
 - Quantity steppers and numeric inputs.

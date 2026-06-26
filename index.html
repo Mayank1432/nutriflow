@@ -149,7 +149,6 @@ tr:hover td{background:#161616}
   #metrics{order:1}
   .view-tabs{order:2}
   #view-today,#view-week,#view-history{order:3}
-  .daily-staples-section{order:4}
   .cost-section{order:5}
   .backup-section{order:6}
   .card,.meal-body,.hist-detail,.add-panel{max-width:100%;padding:11px 10px}
@@ -188,7 +187,6 @@ tr:hover td{background:#161616}
   .mobile-collapse-section.is-collapsed .mobile-collapse-body,.mobile-collapse-section.is-open .mobile-collapse-body{display:block}
   body[data-today-mobile-view="home"] .mobile-collapse-section,body[data-today-mobile-view="home"] .quick-add-card{display:none}
   body:not([data-today-mobile-view="home"]) #metrics,body:not([data-today-mobile-view="home"]) .view-tabs,body:not([data-today-mobile-view="home"]) .today-mobile-home{display:none}
-  body[data-today-mobile-view="dailyStaples"] .daily-staples-section,
   body[data-today-mobile-view="allIngredients"] [data-mobile-section="allIngredients"],
   body[data-today-mobile-view="costTable"] .cost-section,
   body[data-today-mobile-view="backupRestore"] .backup-section{display:block}
@@ -209,21 +207,6 @@ tr:hover td{background:#161616}
 <h1>🥗 Protein Diet Planner</h1>
 <div class="subtitle" id="todayLabel"></div>
 <div class="g4" id="metrics"></div>
-
-<!-- STAPLES -->
-<section class="mobile-collapse-section daily-staples-section is-collapsed" data-mobile-section="staples">
-  <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('staples')">Daily Staples <span>Show</span></button>
-  <div class="today-mobile-subpage-header">
-    <button type="button" class="today-mobile-back" onclick="closeTodayMobileView()">← Back to Today</button>
-    <h2>Daily Staples</h2>
-  </div>
-  <div class="mobile-collapse-body">
-    <div class="card">
-      <div class="stitle">Daily staples — check what you had today</div>
-      <div id="staples-list"></div>
-    </div>
-  </div>
-</section>
 
 <!-- VIEW TABS -->
 <div class="view-tabs">
@@ -259,13 +242,13 @@ tr:hover td{background:#161616}
         <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th>Name</th><th>Meal·Dish</th><th>Qty</th><th>Unit</th>
+            <th>Name</th><th>Meal</th><th>Qty</th><th>Unit</th>
             <th>Pro/100</th><th>Kcal/100</th><th>Carb/100</th><th>Fat/100</th><th>Fib/100</th><th>₹/100</th>
             <th>Protein</th><th>Kcal</th><th>Carbs</th><th>Fat</th><th>Fibre</th><th>Cost</th><th></th>
           </tr></thead>
           <tbody id="all-ingr-body"></tbody>
           <tfoot><tr class="tfoot">
-            <td colspan="10">Total (incl. staples)</td>
+            <td colspan="10">Total</td>
             <td id="tp"></td><td id="tk"></td><td id="tcarb"></td><td id="tfat"></td><td id="tfibre"></td><td id="tc"></td><td></td>
           </tr></tfoot>
         </table>
@@ -479,6 +462,7 @@ function fd(id){return LIB[id]||custom[id];}
 function clamp(id,v){const f=fd(id);return f&&f.max?Math.min(f.max,Math.max(0,v)):Math.max(0,v);}
 function blankDay(){const m={};MEAL_DEFS.forEach(md=>{m[md.id]={dishes:[],collapsed:false};});return{meals:m};}
 let todayData = LS.get(KEYS.td) || blankDay();
+if(!todayData.meals)todayData.meals=blankDay().meals;
 MEAL_DEFS.forEach(md=>{if(!todayData.meals[md.id])todayData.meals[md.id]={dishes:[],collapsed:false};});
 
 let curView='today', curMeal='breakfast', selHistDate=null, curWkDay=null;
@@ -486,7 +470,6 @@ let historyEditKey=null, historyEditDraft=null;
 let dishForms={};MEAL_DEFS.forEach(md=>{dishForms[md.id]={open:false,name:'',ingrOpen:-1};});
 let todayMobileView='home';
 const mobileSectionOpen = {
-  staples: false,
   allIngredients: false,
   quickAdd: false,
   customIngredient: false,
@@ -522,7 +505,6 @@ function renderTodayMobileToolButton(view,title,subtitle){
 function renderTodayMobileTools(){
   const el=document.getElementById('today-mobile-tools');if(!el)return;
   el.innerHTML=[
-    renderTodayMobileToolButton('dailyStaples','Daily Staples','Check eggs, milk, almonds, and staple meal placement'),
     renderTodayMobileToolButton('allIngredients','All Ingredients Today','Edit every ingredient, macro, quantity, and cost'),
     renderTodayMobileToolButton('quickAdd','Quick Add Library','Add common foods to the selected meal'),
     renderTodayMobileToolButton('customIngredient','Custom Ingredient','Create and add a custom food'),
@@ -601,6 +583,41 @@ function cloneIngredientListForPlanner(list){
   if(!Array.isArray(list))return [];
   return list.map(cloneIngredientForPlanner);
 }
+function stapleToIngredient(staple){
+  if(!staple||typeof staple!=='object')return null;
+  const unit=staple.unit||'g';
+  const ing={name:staple.name||'',qty:+staple.qty||0,unit};
+  if(staple.libId)ing.libId=staple.libId;
+  ['pr','kc','carb','fat','fibre','pp'].forEach(k=>{if(staple[k]!==undefined)ing[k]=staple[k];});
+  ing.pr100=staple.pr100!==undefined?+staple.pr100||0:pu2p100(staple.pr||0,unit);
+  ing.kc100=staple.kc100!==undefined?+staple.kc100||0:pu2p100(staple.kc||0,unit);
+  ing.carb100=staple.carb100!==undefined?+staple.carb100||0:pu2p100(staple.carb||0,unit);
+  ing.fat100=staple.fat100!==undefined?+staple.fat100||0:pu2p100(staple.fat||0,unit);
+  ing.fibre100=staple.fibre100!==undefined?+staple.fibre100||0:pu2p100(staple.fibre||0,unit);
+  ing.pp100=staple.pp100!==undefined?+staple.pp100||0:pu2p100(staple.pp||0,unit);
+  return ing;
+}
+function normalizeLegacyStaplesIntoToday(){
+  const legacy=[...(Array.isArray(staples)?staples:[]),...(Array.isArray(todayData.staples)?todayData.staples:[])];
+  const seen=new Set();
+  const converted=legacy.map(stapleToIngredient).filter(ing=>{
+    if(!ing||!((ing.name||'').trim()||ing.libId))return false;
+    const key=[ing.libId||'',ing.name||'',ing.qty||0,ing.unit||'',ing.pr100||0,ing.kc100||0,ing.pp100||0].join('|');
+    if(seen.has(key))return false;
+    seen.add(key);return true;
+  });
+  if(!converted.length){
+    if(todayData.staples)delete todayData.staples;
+    staples=[];
+    LS.set(KEYS.st,staples);LS.set(KEYS.td,todayData);
+    return;
+  }
+  const dish=getOrCreateTargetDish('breakfast','Ingredients');
+  converted.forEach(ing=>dish.ingredients.push(ing));
+  staples=[];
+  if(todayData.staples)delete todayData.staples;
+  LS.set(KEYS.st,staples);LS.set(KEYS.td,todayData);
+}
 
 // ═══════════════════════════════════════════════════════════
 // NUTRITION CALCULATIONS
@@ -635,13 +652,11 @@ function calcIngr(ing){
 function calcDish(dish){let t=zero();(dish.ingredients||[]).forEach(i=>t=addV(t,calcIngr(i)));return t;}
 function calcMealToday(mId){
   let t=zero();
-  staples.forEach(s=>{if(s.checked&&s.mealId===mId)t=addV(t,calcRow(s));});
   (todayData.meals[mId].dishes||[]).forEach(d=>(d.ingredients||[]).forEach(i=>t=addV(t,calcIngr(i))));
   return t;
 }
 function calcAll(){
   let t=zero();
-  staples.forEach(s=>{if(s.checked)t=addV(t,calcRow(s));});
   MEAL_DEFS.forEach(m=>(todayData.meals[m.id].dishes||[]).forEach(d=>(d.ingredients||[]).forEach(i=>t=addV(t,calcIngr(i)))));
   return t;
 }
@@ -681,7 +696,7 @@ function renderBars(){
   const avg=last30Avg();const lc=Object.keys(log).length;
   document.getElementById('metrics').innerHTML=
     met('Today\'s protein',r0(tot.p)+'g','target 120g',tot.p>=115?'#4ade80':tot.p>=100?'#fbbf24':'#f87171')+
-    met('Today\'s cost','₹'+r0(tot.c),'incl. staples','')+
+    met('Today\'s cost','₹'+r0(tot.c),'today total','')+
     met('7-day spend','₹'+r0(wk),over?'over ₹1500':'within ₹1500',over?'#f87171':'#4ade80')+
     met('30-day avg',avg>0?avg+'g':'—',lc+' days logged','');
   const pp=Math.min(100,(tot.p/120)*100),pc=tot.p>=115?'#4ade80':tot.p>=100?'#fbbf24':'#f87171';
@@ -696,7 +711,8 @@ function renderBars(){
 // RENDERING: STAPLES
 // ═══════════════════════════════════════════════════════════
 function renderStaples(){
-  document.getElementById('staples-list').innerHTML=staples.map((s,i)=>{
+  const list=document.getElementById('staples-list');if(!list)return;
+  list.innerHTML=staples.map((s,i)=>{
     const v=calcRow(s);
     return`<div class="cb-row">
       <input type="checkbox" id="cb${i}" ${s.checked?'checked':''} onchange="stToggle(${i},this.checked)">
@@ -736,10 +752,9 @@ function renderMealPanels(){
     if(curMeal!==m.id)return;
     const meal=todayData.meals[m.id];
     const v=calcMealToday(m.id);
-    let dishesHtml='';
+    let ingredientsHtml='';
     (meal.dishes||[]).forEach((dish,di)=>{
-      const dv=calcDish(dish);
-      let ingrHtml=(dish.ingredients||[]).map((ing,ii)=>{
+      ingredientsHtml+=(dish.ingredients||[]).map((ing,ii)=>{
         const iv=calcIngr(ing);
         return`<div class="ingr-row-d">
           <span style="flex:1">${esc(ing.name)} · ${ing.qty}${ing.unit==='piece'?'pc':ing.unit||'g'}</span>
@@ -747,33 +762,13 @@ function renderMealPanels(){
           <button class="delbtn" onclick="removeIngr('${m.id}',${di},${ii})">✕</button>
         </div>`;
       }).join('');
-      dishesHtml+=`<div style="padding:7px 0;border-bottom:1px solid #1a1a1a">
-        <div class="dish-hdr">
-          <div><span class="dish-name">${esc(dish.name)}</span><span style="font-size:11px;color:#555;margin-left:8px">${r0(dv.p)}g · ₹${r0(dv.c)}</span></div>
-          <div style="display:flex;gap:4px">
-            <button class="small-btn" style="font-size:11px" onclick="toggleIngrForm('${m.id}',${di})">+ Ingredient</button>
-            <button class="delbtn" onclick="removeDish('${m.id}',${di})">✕</button>
-          </div>
-        </div>
-        ${ingrHtml||'<div style="font-size:11px;color:#444;padding-left:4px;margin-top:3px">No ingredients — add below</div>'}
-        ${dishForms[m.id].ingrOpen===di?renderIngrForm(m.id,di):''}
-      </div>`;
     });
-    const f=dishForms[m.id];
-    let addDish=`<div style="margin-top:9px">`;
-    if(!f.open){addDish+=`<button class="small-btn" onclick="openDishForm('${m.id}')">+ Add dish</button>`;}
-    else{addDish+=`<div style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap">
-      <div><div class="fl">Dish name</div><input class="inp" id="df-${m.id}" placeholder="e.g. Chicken curry" value="${esc(f.name)}" oninput="dishForms['${m.id}'].name=this.value" onkeydown="if(event.key==='Enter')commitDish('${m.id}')"></div>
-      <button class="small-btn green" onclick="commitDish('${m.id}')">Add</button>
-      <button class="small-btn" onclick="closeDishForm('${m.id}')">Cancel</button>
-    </div>`;}
-    addDish+='</div>';
     html+=`<div class="meal-section">
       <div class="meal-hdr${meal.collapsed?' coll':''}" onclick="toggleMeal('${m.id}')">
-        <div style="display:flex;align-items:center"><span style="font-size:16px;margin-right:8px">${m.icon}</span><span style="font-size:14px;font-weight:600;color:#e0e0e0">${m.label}</span><span style="font-size:12px;color:#555;margin-left:8px">${(meal.dishes||[]).length} dishes · ${r0(v.p)}g · ₹${r0(v.c)}</span></div>
+        <div style="display:flex;align-items:center"><span style="font-size:16px;margin-right:8px">${m.icon}</span><span style="font-size:14px;font-weight:600;color:#e0e0e0">${m.label}</span><span style="font-size:12px;color:#555;margin-left:8px">${r0(v.p)}g · ₹${r0(v.c)}</span></div>
         <span style="color:#555;font-size:12px">${meal.collapsed?'▼':'▲'}</span>
       </div>
-      ${!meal.collapsed?`<div class="meal-body">${dishesHtml||'<div class="hist-none" style="padding:6px 0 2px">No dishes yet</div>'}${addDish}</div>`:''}
+      ${!meal.collapsed?`<div class="meal-body">${ingredientsHtml||'<div class="hist-none" style="padding:6px 0 2px">No ingredients yet. Use Quick Add or Custom Ingredient.</div>'}</div>`:''}
     </div>`;
   });
   document.getElementById('meal-panels').innerHTML=html;
@@ -810,41 +805,9 @@ function renderIngrForm(mId,di){
 // ═══════════════════════════════════════════════════════════
 function renderAllIngr(){
   let rows='';
-  // checked staples
-  staples.forEach((s,si)=>{
-    if(!s.checked)return;
-    const v=calcRow(s);
-    const meal=MEAL_DEFS.find(m=>m.id===s.mealId);
-    // Display per-100 values for g/ml; pieces stay per-piece.
-    const pr100=pu2p100(s.pr,s.unit), kc100=pu2p100(s.kc,s.unit);
-    const cb100=pu2p100(s.carb||0,s.unit), ft100=pu2p100(s.fat||0,s.unit), fb100=pu2p100(s.fibre||0,s.unit);
-    const pp100=pu2p100(s.pp,s.unit);
-    rows+=`<tr>
-      <td><input class="ed wide" value="${esc(s.name)}" onchange="updateSt(${si},'name',this.value)"></td>
-      <td style="color:${meal?meal.col:'#666'};font-size:11px">${meal?meal.icon+' '+meal.label:'—'}</td>
-      <td><div class="qrow">
-        <button class="qbtn" style="width:22px;height:22px;font-size:14px" onclick="stStep(${si},-1)" ${s.qty<=0?'disabled':''}>−</button>
-        <input class="qty-inp" style="width:50px" type="number" min="0" value="${s.qty}" onchange="stQtyRow(${si},this.value)" oninput="stQtyRow(${si},this.value,this)">
-        <button class="qbtn" style="width:22px;height:22px;font-size:14px" onclick="stStep(${si},1)">+</button>
-      </div></td>
-      <td><select class="ed-sel" onchange="updateSt(${si},'unit',this.value)"><option value="g"${s.unit==='g'?' selected':''}>g</option><option value="ml"${s.unit==='ml'?' selected':''}>ml</option><option value="piece"${s.unit==='piece'?' selected':''}>pc</option></select></td>
-      <td><input class="ed" type="number" min="0" value="${pr100}" onchange="updateStPer(${si},'pr',this.value)"></td>
-      <td><input class="ed" type="number" min="0" value="${kc100}" onchange="updateStPer(${si},'kc',this.value)"></td>
-      <td><input class="ed" type="number" min="0" value="${cb100}" onchange="updateStPer(${si},'carb',this.value)"></td>
-      <td><input class="ed" type="number" min="0" value="${ft100}" onchange="updateStPer(${si},'fat',this.value)"></td>
-      <td><input class="ed" type="number" min="0" value="${fb100}" onchange="updateStPer(${si},'fibre',this.value)"></td>
-      <td><input class="ed" type="number" min="0" value="${pp100}" onchange="updateStPer(${si},'pp',this.value)"></td>
-      <td>${r1(v.p)}g</td><td>${r0(v.k)}</td><td>${r1(v.carb)}g</td><td>${r1(v.fat)}g</td><td>${r1(v.fibre)}g</td>
-      <td>₹${v.c.toFixed(0)}</td><td><span class="ftag">staple</span></td>
-    </tr>`;
-  });
-
-  // dish ingredients
-  let anyDish=false;
   MEAL_DEFS.forEach(m=>{
     (todayData.meals[m.id].dishes||[]).forEach((dish,di)=>{
       (dish.ingredients||[]).forEach((ing,ii)=>{
-        anyDish=true;
         const iv=calcIngr(ing);
         const unit=ing.unit||'g';
         const isLib=!!ing.libId;
@@ -862,19 +825,19 @@ function renderAllIngr(){
         }
         rows+=`<tr>
           <td><input class="ed wide" value="${esc(ing.name)}" onchange="updateIngr('${m.id}',${di},${ii},'name',this.value)"></td>
-          <td><select class="ed-sel" onchange="moveTodayIngredientToMeal('${m.id}',${di},${ii},this.value)">${MEAL_DEFS.map(md=>`<option value="${md.id}"${md.id===m.id?' selected':''}>${md.icon} ${md.label}</option>`).join('')}</select><div style="font-size:10px;color:#555;margin-top:2px">${esc(dish.name)}</div></td>
+          <td><select class="ed-sel" onchange="moveTodayIngredientToMeal('${m.id}',${di},${ii},this.value)">${MEAL_DEFS.map(md=>`<option value="${md.id}"${md.id===m.id?' selected':''}>${md.icon} ${md.label}</option>`).join('')}</select></td>
           <td><div class="qrow">
             <button class="qbtn" style="width:22px;height:22px;font-size:14px" onclick="ingrStep('${m.id}',${di},${ii},-1)" ${+ing.qty<=0?'disabled':''}>−</button>
             <input class="qty-inp" style="width:50px" type="number" min="0" value="${ing.qty}" onchange="updateIngrQty('${m.id}',${di},${ii},this.value)" oninput="updateIngrQty('${m.id}',${di},${ii},this.value,this)">
             <button class="qbtn" style="width:22px;height:22px;font-size:14px" onclick="ingrStep('${m.id}',${di},${ii},1)">+</button>
           </div></td>
           <td><select class="ed-sel" onchange="updateIngr('${m.id}',${di},${ii},'unit',this.value)"><option value="g"${unit==='g'?' selected':''}>g</option><option value="ml"${unit==='ml'?' selected':''}>ml</option><option value="piece"${unit==='piece'?' selected':''}>pc</option></select></td>
-          <td><input class="ed" type="number" min="0" value="${pr100}" onchange="updateIngr100('${m.id}',${di},${ii},'pr100',this.value)"></td>
-          <td><input class="ed" type="number" min="0" value="${kc100}" onchange="updateIngr100('${m.id}',${di},${ii},'kc100',this.value)"></td>
-          <td><input class="ed" type="number" min="0" value="${cb100}" onchange="updateIngr100('${m.id}',${di},${ii},'carb100',this.value)"></td>
-          <td><input class="ed" type="number" min="0" value="${ft100}" onchange="updateIngr100('${m.id}',${di},${ii},'fat100',this.value)"></td>
-          <td><input class="ed" type="number" min="0" value="${fb100}" onchange="updateIngr100('${m.id}',${di},${ii},'fibre100',this.value)"></td>
-          <td><input class="ed" type="number" min="0" value="${pp100}" onchange="updateIngr100('${m.id}',${di},${ii},'pp100',this.value)"></td>
+          <td><input class="ed" type="number" min="0" value="${pr100}" onchange="updateIngr100('${m.id}',${di},${ii},'pr100',this.value,this)" oninput="updateIngr100('${m.id}',${di},${ii},'pr100',this.value,this)"></td>
+          <td><input class="ed" type="number" min="0" value="${kc100}" onchange="updateIngr100('${m.id}',${di},${ii},'kc100',this.value,this)" oninput="updateIngr100('${m.id}',${di},${ii},'kc100',this.value,this)"></td>
+          <td><input class="ed" type="number" min="0" value="${cb100}" onchange="updateIngr100('${m.id}',${di},${ii},'carb100',this.value,this)" oninput="updateIngr100('${m.id}',${di},${ii},'carb100',this.value,this)"></td>
+          <td><input class="ed" type="number" min="0" value="${ft100}" onchange="updateIngr100('${m.id}',${di},${ii},'fat100',this.value,this)" oninput="updateIngr100('${m.id}',${di},${ii},'fat100',this.value,this)"></td>
+          <td><input class="ed" type="number" min="0" value="${fb100}" onchange="updateIngr100('${m.id}',${di},${ii},'fibre100',this.value,this)" oninput="updateIngr100('${m.id}',${di},${ii},'fibre100',this.value,this)"></td>
+          <td><input class="ed" type="number" min="0" value="${pp100}" onchange="updateIngr100('${m.id}',${di},${ii},'pp100',this.value,this)" oninput="updateIngr100('${m.id}',${di},${ii},'pp100',this.value,this)"></td>
           <td>${r1(iv.p)}g</td><td>${r0(iv.k)}</td><td>${r1(iv.carb)}g</td><td>${r1(iv.fat)}g</td><td>${r1(iv.fibre)}g</td>
           <td>₹${iv.c.toFixed(0)}</td>
           <td><button class="delbtn" onclick="removeIngr('${m.id}',${di},${ii})">✕</button></td>
@@ -882,7 +845,7 @@ function renderAllIngr(){
       });
     });
   });
-  if(!rows) rows=`<tr><td colspan="17" style="color:#444;font-size:12px;padding:12px 5px">No items yet. Check staples above or add dishes in Today tab.</td></tr>`;
+  if(!rows) rows=`<tr><td colspan="17" style="color:#444;font-size:12px;padding:12px 5px">No ingredients yet. Use Quick Add or Custom Ingredient.</td></tr>`;
   document.getElementById('all-ingr-body').innerHTML=rows;
   refreshAllIngredientTotals();
 }
@@ -972,7 +935,7 @@ function getTodayIngredient(mId,di,ii){
 }
 function getOrCreateTargetDish(mId,ingredientName){
   const meal=todayData.meals[mId];
-  if(!meal.dishes.length)meal.dishes.push({name:ingredientName||'Ingredients',ingredients:[]});
+  if(!meal.dishes.length)meal.dishes.push({name:'Ingredients',ingredients:[]});
   return meal.dishes[0];
 }
 function refreshStapleRowTotals(row, staple){
@@ -1019,11 +982,12 @@ function ingrStep(mId,di,ii,d){
   ing.qty=Math.max(0,(+ing.qty||0)+d);
   autosave();refreshTodayIngredientViews();
 }
-function updateIngr100(mId,di,ii,field,val){
+function updateIngr100(mId,di,ii,field,val,sourceEl){
   const ing=ensureEditableIngredient(getTodayIngredient(mId,di,ii));
   if(!ing)return;
   ing[field]=parseFloat(val)||0;
-  autosave();refreshTodayIngredientViews();
+  autosave();refreshTodayIngredientViews(!sourceEl);
+  if(sourceEl)refreshIngredientRowTotals(sourceEl.closest('tr'),ing);
 }
 function moveTodayIngredientToMeal(mId,di,ii,targetMealId){
   if(mId===targetMealId)return;
@@ -1106,7 +1070,7 @@ function removeIngr(mId,di,ii){deleteTodayIngredient(mId,di,ii);}
 function quickAddLib(libId){
   const f=fd(libId);if(!f)return;
   const mId=curMeal||'snacks';
-  todayData.meals[mId].dishes.push({name:f.n,ingredients:[{libId,name:f.n,qty:f.s||25,unit:f.u}]});
+  getOrCreateTargetDish(mId).ingredients.push({libId,name:f.n,qty:f.s||25,unit:f.u});
   curMeal=mId;autosave();render();
 }
 function addCustomIngr(){
@@ -1128,7 +1092,7 @@ function addCustomIngr(){
   err.textContent='';
   const id='c'+(++uid);const step=unit==='piece'?1:unit==='ml'?50:25;
   custom[id]={n:name,u:unit,s:step,max:null,pp:p100pu(pp100,unit),pr:p100pu(pr100,unit),kc:p100pu(kc100,unit),carb:p100pu(carb100,unit),fat:p100pu(fat100,unit),fibre:p100pu(fibre100,unit),t:type};
-  todayData.meals[mId].dishes.push({name,ingredients:[{libId:id,name,qty,unit}]});
+  getOrCreateTargetDish(mId).ingredients.push({libId:id,name,qty,unit});
   curMeal=mId;
   ['in-name','in-pr','in-kc','in-cb','in-ft','in-fb','in-pp','in-qty'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   autosave();render();
@@ -1253,7 +1217,7 @@ function copyPlanToToday(){
   let added=0;
   MEAL_DEFS.forEach(m=>{
     cloneIngredientListForPlanner(dp[m.id]||[]).filter(ing=>!isGhostIngredient(ing)&&(+ing.qty||0)>0).forEach(ing=>{
-      todayData.meals[m.id].dishes.push({name:ing.name,ingredients:[ing]});
+      getOrCreateTargetDish(m.id).ingredients.push(ing);
       added++;
     });
     cleanupTodayMealGhosts(m.id);
@@ -1420,6 +1384,9 @@ function importData(input){
       if(data.weekPlan)weekPlan=data.weekPlan;
       if(data.staples)staples=data.staples;
       if(data.todayData)todayData=data.todayData;
+      if(!todayData.meals)todayData.meals=blankDay().meals;
+      MEAL_DEFS.forEach(md=>{if(!todayData.meals[md.id])todayData.meals[md.id]={dishes:[],collapsed:false};});
+      normalizeLegacyStaplesIntoToday();
       LS.set(KEYS.cu,custom);LS.set(KEYS.lg,log);LS.set(KEYS.wk,weekPlan);LS.set(KEYS.st,staples);LS.set(KEYS.td,todayData);
       alert('Backup restored successfully!');render();
     }catch(err){alert('Error reading backup file: '+err.message);}
@@ -1430,6 +1397,7 @@ function importData(input){
 // ═══════════════════════════════════════════════════════════
 // APP INIT
 // ═══════════════════════════════════════════════════════════
+normalizeLegacyStaplesIntoToday();
 checkDailyRollover();
 render();
 window.addEventListener('focus',checkDailyRollover);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'protein-planner-v0.5.4';
+const CACHE_NAME = 'protein-planner-v0.5.5';
 
 const APP_SHELL = [
   './',

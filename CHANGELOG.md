@@ -15,6 +15,10 @@ The format is based on Keep a Changelog.
 -
 
 ### Fixed
+- Fixed desktop Today Ingredients quantity and macro editing so live multi-digit input keeps focus.
+- Removed user-facing Today dish controls while preserving the internal dish data model.
+- Migrated legacy Daily Staples into normal Breakfast ingredients and stopped hidden staples from contributing to Today totals.
+- Bumped the PWA cache to `protein-planner-v0.5.5`.
 - Fixed Today Ingredients live quantity editing so multi-digit input keeps focus.
 - Fixed Today ingredient deletion to splice the source meal ingredient instead of leaving ghost rows.
 - Added source-path meal reassignment from Today Ingredients while preserving ingredient nutrition data.
