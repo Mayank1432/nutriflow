@@ -2,6 +2,9 @@
 
 ## 🔴 Critical Bugs
 - [x] Editing quantity resets nutrition values
+- [x] Fix Today Ingredients focus loss during multi-digit quantity edits.
+- [x] Delete Today/History ingredients by source path instead of leaving zero-value ghost rows.
+- [x] Allow safe meal reassignment from Today Ingredients.
 - [x] Quick Add ingredients should remain editable
 - [ ] Piece-based custom ingredients calculate incorrectly because nutrition fields are treated as per-100 instead of per-piece.
 - [ ] Allow custom ingredients to enter nutrition for any serving amount, then convert automatically to the app's internal calculation format.

@@ -544,6 +544,7 @@ function saveHistoryState(){
 }
 function saveTodayToHistory(dateKey,data=todayData){
   const snap=JSON.parse(JSON.stringify({meals:data.meals,staples}));
+  cleanupGhostIngredientsInMeals(snap.meals);
   log[dateKey]={...snap,savedAt:Date.now()};
   const ak=Object.keys(log).sort();if(ak.length>30)ak.slice(0,ak.length-30).forEach(k=>delete log[k]);
   saveHistoryState();
@@ -712,9 +713,9 @@ function renderStaples(){
   }).join('');
 }
 function stToggle(i,v){staples[i].checked=v;autosave();render();}
-function stStep(i,d){staples[i].qty=Math.max(0,(+staples[i].qty||0)+d);autosave();renderStaples();renderAllIngr();renderBars();}
-function stQty(i,v){staples[i].qty=Math.max(0,parseFloat(v)||0);autosave();renderAllIngr();renderBars();}
-function stMeal(i,v){staples[i].mealId=v;autosave();renderAllIngr();}
+function stStep(i,d){staples[i].qty=Math.max(0,(+staples[i].qty||0)+d);autosave();renderStaples();refreshTodayStapleViews();}
+function stQty(i,v){staples[i].qty=Math.max(0,parseFloat(v)||0);autosave();refreshTodayStapleViews();}
+function stMeal(i,v){staples[i].mealId=v;autosave();refreshTodayStapleViews();}
 
 // ═══════════════════════════════════════════════════════════
 // RENDERING: MEAL TABS
@@ -823,7 +824,7 @@ function renderAllIngr(){
       <td style="color:${meal?meal.col:'#666'};font-size:11px">${meal?meal.icon+' '+meal.label:'—'}</td>
       <td><div class="qrow">
         <button class="qbtn" style="width:22px;height:22px;font-size:14px" onclick="stStep(${si},-1)" ${s.qty<=0?'disabled':''}>−</button>
-        <input class="qty-inp" style="width:50px" type="number" min="0" value="${s.qty}" onchange="stQtyRow(${si},this.value)" oninput="stQtyRow(${si},this.value)">
+        <input class="qty-inp" style="width:50px" type="number" min="0" value="${s.qty}" onchange="stQtyRow(${si},this.value)" oninput="stQtyRow(${si},this.value,this)">
         <button class="qbtn" style="width:22px;height:22px;font-size:14px" onclick="stStep(${si},1)">+</button>
       </div></td>
       <td><select class="ed-sel" onchange="updateSt(${si},'unit',this.value)"><option value="g"${s.unit==='g'?' selected':''}>g</option><option value="ml"${s.unit==='ml'?' selected':''}>ml</option><option value="piece"${s.unit==='piece'?' selected':''}>pc</option></select></td>
@@ -861,7 +862,7 @@ function renderAllIngr(){
         }
         rows+=`<tr>
           <td><input class="ed wide" value="${esc(ing.name)}" onchange="updateIngr('${m.id}',${di},${ii},'name',this.value)"></td>
-          <td style="color:${m.col};font-size:11px">${m.icon} ${m.label}·${esc(dish.name)}</td>
+          <td><select class="ed-sel" onchange="moveTodayIngredientToMeal('${m.id}',${di},${ii},this.value)">${MEAL_DEFS.map(md=>`<option value="${md.id}"${md.id===m.id?' selected':''}>${md.icon} ${md.label}</option>`).join('')}</select><div style="font-size:10px;color:#555;margin-top:2px">${esc(dish.name)}</div></td>
           <td><div class="qrow">
             <button class="qbtn" style="width:22px;height:22px;font-size:14px" onclick="ingrStep('${m.id}',${di},${ii},-1)" ${+ing.qty<=0?'disabled':''}>−</button>
             <input class="qty-inp" style="width:50px" type="number" min="0" value="${ing.qty}" onchange="updateIngrQty('${m.id}',${di},${ii},this.value)" oninput="updateIngrQty('${m.id}',${di},${ii},this.value,this)">
@@ -897,12 +898,22 @@ function refreshAllIngredientTotals(){
 }
 
 // Staple update helpers
-function updateSt(si,field,val){staples[si][field]=val;autosave();}
-function stQtyRow(si,val){staples[si].qty=Math.max(0,parseFloat(val)||0);autosave();renderBars();renderAllIngr();}
+function refreshTodayStapleViews(renderTable=true){
+  renderMealTabs();renderMealPanels();
+  if(renderTable)renderAllIngr();else refreshAllIngredientTotals();
+  renderBars();
+}
+function updateSt(si,field,val){staples[si][field]=val;autosave();refreshTodayStapleViews();}
+function stQtyRow(si,val,sourceEl){
+  staples[si].qty=Math.max(0,parseFloat(val)||0);
+  autosave();renderMealTabs();renderMealPanels();renderBars();
+  if(sourceEl){refreshStapleRowTotals(sourceEl.closest('tr'),staples[si]);refreshAllIngredientTotals();}
+  else renderAllIngr();
+}
 function updateStPer(si,field,val){
   const unit=staples[si].unit;
   staples[si][field]=p100pu(val,unit);
-  autosave();renderAllIngr();renderBars();
+  autosave();refreshTodayStapleViews();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -925,8 +936,54 @@ function ensureEditableIngredient(ing){
   }
   return ing;
 }
+function isEmptyAutoDish(dish,names=[]){
+  const name=(dish&&dish.name||'').trim();
+  return dish&&!(dish.ingredients||[]).length&&(!name||names.includes(name));
+}
+function cleanupTodayMealGhosts(mId,names=[]){
+  const meal=todayData.meals[mId];if(!meal||!Array.isArray(meal.dishes))return;
+  meal.dishes=meal.dishes.filter(d=>!isEmptyAutoDish(d,names));
+}
+function cleanupHistoryMealGhosts(meals,mId,names=[]){
+  const meal=meals&&meals[mId];if(!meal||!Array.isArray(meal.dishes))return;
+  meal.dishes=meal.dishes.filter(d=>!isEmptyAutoDish(d,names));
+}
+function isGhostIngredient(ing){
+  if(!ing)return true;
+  return !((ing.name||'').trim()||ing.libId)&&!(+ing.qty||0);
+}
+function cleanupGhostIngredientsInMeals(meals){
+  if(!meals)return;
+  MEAL_DEFS.forEach(m=>{
+    const meal=meals[m.id];if(!meal||!Array.isArray(meal.dishes))return;
+    meal.dishes.forEach(d=>{d.ingredients=(d.ingredients||[]).filter(ing=>!isGhostIngredient(ing));});
+    cleanupHistoryMealGhosts(meals,m.id);
+  });
+}
+function getTodayIngredientRef(mId,di,ii){
+  const dish=todayData.meals[mId]&&todayData.meals[mId].dishes&&todayData.meals[mId].dishes[di];
+  if(!dish||!dish.ingredients)return null;
+  const ing=dish.ingredients[ii];
+  return ing?{mealId:mId,dishIndex:di,ingredientIndex:ii,dish,ingredients:dish.ingredients,ingredient:ing}:null;
+}
 function getTodayIngredient(mId,di,ii){
-  return todayData.meals[mId].dishes[di].ingredients[ii];
+  const ref=getTodayIngredientRef(mId,di,ii);
+  return ref&&ref.ingredient;
+}
+function getOrCreateTargetDish(mId,ingredientName){
+  const meal=todayData.meals[mId];
+  if(!meal.dishes.length)meal.dishes.push({name:ingredientName||'Ingredients',ingredients:[]});
+  return meal.dishes[0];
+}
+function refreshStapleRowTotals(row, staple){
+  if(!row)return;
+  const v=calcRow(staple);
+  row.children[10].textContent=r1(v.p)+'g';
+  row.children[11].textContent=r0(v.k);
+  row.children[12].textContent=r1(v.carb)+'g';
+  row.children[13].textContent=r1(v.fat)+'g';
+  row.children[14].textContent=r1(v.fibre)+'g';
+  row.children[15].textContent='₹'+v.c.toFixed(0);
 }
 function refreshIngredientRowTotals(row, ing){
   if(!row)return;
@@ -945,23 +1002,42 @@ function refreshTodayIngredientViews(renderTable=true){
 }
 function updateIngr(mId,di,ii,field,val){
   const ing=ensureEditableIngredient(getTodayIngredient(mId,di,ii));
+  if(!ing)return;
   ing[field]=val;
   autosave();refreshTodayIngredientViews();
 }
 function updateIngrQty(mId,di,ii,val,sourceEl){
   const ing=getTodayIngredient(mId,di,ii);
+  if(!ing)return;
   ing.qty=parseFloat(val)||0;
   autosave();refreshTodayIngredientViews(!sourceEl);
   if(sourceEl)refreshIngredientRowTotals(sourceEl.closest('tr'),ing);
 }
 function ingrStep(mId,di,ii,d){
-  const ing=todayData.meals[mId].dishes[di].ingredients[ii];
+  const ing=getTodayIngredient(mId,di,ii);
+  if(!ing)return;
   ing.qty=Math.max(0,(+ing.qty||0)+d);
   autosave();refreshTodayIngredientViews();
 }
 function updateIngr100(mId,di,ii,field,val){
   const ing=ensureEditableIngredient(getTodayIngredient(mId,di,ii));
+  if(!ing)return;
   ing[field]=parseFloat(val)||0;
+  autosave();refreshTodayIngredientViews();
+}
+function moveTodayIngredientToMeal(mId,di,ii,targetMealId){
+  if(mId===targetMealId)return;
+  const ref=getTodayIngredientRef(mId,di,ii);if(!ref||!todayData.meals[targetMealId])return;
+  const [ing]=ref.ingredients.splice(ii,1);
+  getOrCreateTargetDish(targetMealId,ing.name).ingredients.push(ing);
+  cleanupTodayMealGhosts(mId,[ref.dish.name,ing.name]);
+  curMeal=targetMealId;
+  autosave();refreshTodayIngredientViews();
+}
+function deleteTodayIngredient(mId,di,ii){
+  const ref=getTodayIngredientRef(mId,di,ii);if(!ref)return;
+  const [removed]=ref.ingredients.splice(ii,1);
+  cleanupTodayMealGhosts(mId,[ref.dish.name,removed&&removed.name]);
   autosave();refreshTodayIngredientViews();
 }
 
@@ -1025,11 +1101,11 @@ function addLibIngrToDish(mId,di,libId){
   todayData.meals[mId].dishes[di].ingredients.push({libId,name:f.n,qty:f.s||25,unit:f.u});
   dishForms[mId].ingrOpen=-1;autosave();render();
 }
-function removeIngr(mId,di,ii){todayData.meals[mId].dishes[di].ingredients.splice(ii,1);autosave();render();}
+function removeIngr(mId,di,ii){deleteTodayIngredient(mId,di,ii);}
 
 function quickAddLib(libId){
   const f=fd(libId);if(!f)return;
-  const mId=(document.getElementById('in-meal')||{}).value||'snacks';
+  const mId=curMeal||'snacks';
   todayData.meals[mId].dishes.push({name:f.n,ingredients:[{libId,name:f.n,qty:f.s||25,unit:f.u}]});
   curMeal=mId;autosave();render();
 }
@@ -1176,10 +1252,11 @@ function copyPlanToToday(){
   if(!dp||MEAL_DEFS.every(m=>!(dp[m.id]&&dp[m.id].length))){alert('No plan for today. Add ingredients in Weekly Plan first.');return;}
   let added=0;
   MEAL_DEFS.forEach(m=>{
-    cloneIngredientListForPlanner(dp[m.id]||[]).forEach(ing=>{
+    cloneIngredientListForPlanner(dp[m.id]||[]).filter(ing=>!isGhostIngredient(ing)&&(+ing.qty||0)>0).forEach(ing=>{
       todayData.meals[m.id].dishes.push({name:ing.name,ingredients:[ing]});
       added++;
     });
+    cleanupTodayMealGhosts(m.id);
   });
   autosave();showView('today');curMeal='breakfast';render();
   if(added)alert('Copied '+added+' item'+(added!==1?'s':'')+' to Today!');
@@ -1206,6 +1283,7 @@ function cancelHistoryEdit(){
 function saveHistoryEdit(){
   const key=historyEditKey;
   if(!key||!historyEditDraft)return;
+  cleanupGhostIngredientsInMeals(historyEditDraft.meals);
   log[key]=cloneHistoryDay(historyEditDraft);
   log[key].savedAt=Date.now();
   saveHistoryState();
@@ -1215,6 +1293,12 @@ function saveHistoryEdit(){
 }
 function getHistoryDraftIngredient(mealId,dishIndex,ingredientIndex){
   return historyEditDraft.meals[mealId].dishes[dishIndex].ingredients[ingredientIndex];
+}
+function deleteHistoryDraftIngredient(mealId,dishIndex,ingredientIndex){
+  const dish=historyEditDraft.meals[mealId].dishes[dishIndex];if(!dish)return;
+  const removed=dish.ingredients.splice(ingredientIndex,1)[0];
+  cleanupHistoryMealGhosts(historyEditDraft.meals,mealId,[dish.name,removed&&removed.name]);
+  renderHistDetail(historyEditKey);
 }
 function updateHistoryDraftDishName(mealId,dishIndex,value){
   historyEditDraft.meals[mealId].dishes[dishIndex].name=value;
@@ -1288,6 +1372,7 @@ function renderHistDetail(key){
             <input class="ed" title="Fat" type="number" min="0" value="${ft100}" onchange="updateHistoryDraftIngredient100('${m.id}',${di},${ii},'fat100',this.value)">
             <input class="ed" title="Fibre" type="number" min="0" value="${fb100}" onchange="updateHistoryDraftIngredient100('${m.id}',${di},${ii},'fibre100',this.value)">
             <input class="ed" title="Cost" type="number" min="0" value="${pp100}" onchange="updateHistoryDraftIngredient100('${m.id}',${di},${ii},'pp100',this.value)">
+            <button class="delbtn" onclick="deleteHistoryDraftIngredient('${m.id}',${di},${ii})">✕</button>
           </div>`;
         });
         html+=`</div>`;

@@ -15,6 +15,11 @@ The format is based on Keep a Changelog.
 -
 
 ### Fixed
+- Fixed Today Ingredients live quantity editing so multi-digit input keeps focus.
+- Fixed Today ingredient deletion to splice the source meal ingredient instead of leaving ghost rows.
+- Added source-path meal reassignment from Today Ingredients while preserving ingredient nutrition data.
+- Added History edit ingredient deletion and conservative ghost cleanup on History save.
+- Bumped the PWA cache to `protein-planner-v0.5.4`.
 - Quick Add ingredients are now fully editable after being added.
 - Added `ensureEditableIngredient()` to centralize conversion of library-backed ingredients into editable snapshots.
 - Prevented nutrition values from being lost when editing library-backed ingredients.
