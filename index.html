@@ -22,6 +22,7 @@ h1{font-size:17px;font-weight:700;margin-bottom:2px;color:#f5f5f5}
 .stitle{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
 .mobile-collapse-toggle{display:none}
 .mobile-collapse-body{display:block}
+.today-mobile-tools,.today-mobile-subpage-header{display:none}
 /* VIEW TABS */
 .view-tabs{display:flex;gap:0;margin-bottom:14px;border:1px solid #2a2a2a;border-radius:10px;overflow:hidden;width:fit-content}
 .view-tab{padding:7px 15px;font-size:13px;cursor:pointer;background:#111;color:#666;border:none;font-weight:500;border-right:1px solid #2a2a2a;transition:all .15s}
@@ -172,12 +173,35 @@ tr:hover td{background:#161616}
   .cost-tbl thead,.cost-tbl tbody,.cost-tbl tr{display:table;width:600px;table-layout:auto}
   .hist-grid{grid-template-columns:repeat(auto-fill,minmax(86px,1fr))}
   .bar-row{gap:8px}
-  .mobile-collapse-section{margin-bottom:11px}
+  .today-mobile-tools{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:11px}
+  .today-mobile-tool-btn{width:100%;padding:12px 13px;border:1px solid #2a2a2a;border-radius:12px;background:#111;color:#ddd;text-align:left;cursor:pointer}
+  .today-mobile-tool-btn strong{display:block;font-size:13px;color:#e5e5e5;margin-bottom:2px}
+  .today-mobile-tool-btn span{display:block;font-size:11px;color:#666;line-height:1.35}
+  .today-mobile-subpage-header{display:flex;align-items:flex-start;gap:10px;flex-direction:column;margin-bottom:10px}
+  .today-mobile-subpage-header h2{font-size:17px;color:#f5f5f5;margin:0}
+  .today-mobile-back{min-height:40px;padding:8px 12px;border:1px solid #2a2a2a;border-radius:10px;background:#111;color:#aaa;font-size:13px;cursor:pointer}
+  .mobile-collapse-section{display:none;margin-bottom:11px}
   .mobile-collapse-section .card{margin-bottom:0}
-  .mobile-collapse-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:42px;margin-bottom:7px;padding:9px 11px;border:1px solid #2a2a2a;border-radius:10px;background:#111;color:#bbb;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+  .quick-add-card{display:none}
+  .mobile-collapse-toggle{display:none}
   .mobile-collapse-toggle span{font-size:11px;color:#666;font-weight:600;text-transform:none;letter-spacing:0}
-  .mobile-collapse-section.is-collapsed .mobile-collapse-body{display:none}
-  .mobile-collapse-section.is-open .mobile-collapse-body{display:block}
+  .mobile-collapse-section.is-collapsed .mobile-collapse-body,.mobile-collapse-section.is-open .mobile-collapse-body{display:block}
+  body[data-today-mobile-view="home"] .mobile-collapse-section,body[data-today-mobile-view="home"] .quick-add-card{display:none}
+  body:not([data-today-mobile-view="home"]) #metrics,body:not([data-today-mobile-view="home"]) .view-tabs,body:not([data-today-mobile-view="home"]) .today-mobile-home{display:none}
+  body[data-today-mobile-view="dailyStaples"] .daily-staples-section,
+  body[data-today-mobile-view="allIngredients"] [data-mobile-section="allIngredients"],
+  body[data-today-mobile-view="costTable"] .cost-section,
+  body[data-today-mobile-view="backupRestore"] .backup-section{display:block}
+  body[data-today-mobile-view="quickAdd"] .quick-add-card,
+  body[data-today-mobile-view="customIngredient"] .quick-add-card{display:block}
+  body[data-today-mobile-view="quickAdd"] [data-mobile-section="quickAdd"],
+  body[data-today-mobile-view="customIngredient"] [data-mobile-section="customIngredient"]{display:block}
+  body[data-today-mobile-view="quickAdd"] [data-mobile-section="customIngredient"],
+  body[data-today-mobile-view="customIngredient"] [data-mobile-section="quickAdd"]{display:none}
+  body[data-today-mobile-view="quickAdd"] .quick-add-card>.stitle,
+  body[data-today-mobile-view="customIngredient"] .quick-add-card>.stitle,
+  body[data-today-mobile-view="quickAdd"] .quick-add-card>.divider,
+  body[data-today-mobile-view="customIngredient"] .quick-add-card>.divider{display:none}
 }
 </style>
 </head>
@@ -189,6 +213,10 @@ tr:hover td{background:#161616}
 <!-- STAPLES -->
 <section class="mobile-collapse-section daily-staples-section is-collapsed" data-mobile-section="staples">
   <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('staples')">Daily Staples <span>Show</span></button>
+  <div class="today-mobile-subpage-header">
+    <button type="button" class="today-mobile-back" onclick="closeTodayMobileView()">← Back to Today</button>
+    <h2>Daily Staples</h2>
+  </div>
   <div class="mobile-collapse-body">
     <div class="card">
       <div class="stitle">Daily staples — check what you had today</div>
@@ -206,18 +234,25 @@ tr:hover td{background:#161616}
 
 <!-- ══ TODAY ══ -->
 <div id="view-today">
-  <div class="meal-tabs" id="meal-tabs"></div>
-  <div class="card">
-    <div class="bar-row"><span>Protein today</span><span id="pnum" style="font-weight:600"></span></div>
-    <div class="bar-bg"><div class="bar" id="pbar"></div></div>
-    <div class="bar-row"><span>7-day spend</span><span id="cnum" style="font-weight:600"></span></div>
-    <div class="bar-bg"><div class="bar" id="cbar"></div></div>
+  <div class="today-mobile-home">
+    <div class="meal-tabs" id="meal-tabs"></div>
+    <div class="card">
+      <div class="bar-row"><span>Protein today</span><span id="pnum" style="font-weight:600"></span></div>
+      <div class="bar-bg"><div class="bar" id="pbar"></div></div>
+      <div class="bar-row"><span>7-day spend</span><span id="cnum" style="font-weight:600"></span></div>
+      <div class="bar-bg"><div class="bar" id="cbar"></div></div>
+    </div>
+    <div id="meal-panels"></div>
+    <div class="today-mobile-tools" id="today-mobile-tools"></div>
   </div>
-  <div id="meal-panels"></div>
 
   <!-- ALL INGREDIENTS TABLE -->
   <section class="mobile-collapse-section is-collapsed" data-mobile-section="allIngredients">
     <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('allIngredients')">All Ingredients Today <span>Show</span></button>
+    <div class="today-mobile-subpage-header">
+      <button type="button" class="today-mobile-back" onclick="closeTodayMobileView()">← Back to Today</button>
+      <h2>All Ingredients Today</h2>
+    </div>
     <div class="mobile-collapse-body">
       <div class="card">
         <div class="stitle">All ingredients today <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#444;font-size:10px">— every field editable</span></div>
@@ -244,10 +279,14 @@ tr:hover td{background:#161616}
   </section>
 
   <!-- QUICK ADD -->
-  <div class="card">
+  <div class="card quick-add-card">
     <div class="stitle">Quick-add ingredient</div>
     <section class="mobile-collapse-section is-collapsed" data-mobile-section="quickAdd">
       <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('quickAdd')">Quick Add Library <span>Show</span></button>
+      <div class="today-mobile-subpage-header">
+        <button type="button" class="today-mobile-back" onclick="closeTodayMobileView()">← Back to Today</button>
+        <h2>Quick Add Library</h2>
+      </div>
       <div class="mobile-collapse-body">
         <div style="font-size:11px;color:#555;margin-bottom:6px;font-weight:500">From library</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="lib-pills"></div>
@@ -256,6 +295,10 @@ tr:hover td{background:#161616}
     <hr class="divider">
     <section class="mobile-collapse-section is-collapsed" data-mobile-section="customIngredient">
       <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('customIngredient')">Custom Ingredient <span>Show</span></button>
+      <div class="today-mobile-subpage-header">
+        <button type="button" class="today-mobile-back" onclick="closeTodayMobileView()">← Back to Today</button>
+        <h2>Custom Ingredient</h2>
+      </div>
       <div class="mobile-collapse-body">
         <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Custom ingredient</div>
         <div class="ig ig2">
@@ -350,6 +393,10 @@ tr:hover td{background:#161616}
 <!-- COST TABLE -->
 <section class="mobile-collapse-section cost-section is-collapsed" data-mobile-section="costTable">
   <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('costTable')">Cost / Protein Table <span>Show</span></button>
+  <div class="today-mobile-subpage-header">
+    <button type="button" class="today-mobile-back" onclick="closeTodayMobileView()">← Back to Today</button>
+    <h2>Cost / Protein Table</h2>
+  </div>
   <div class="mobile-collapse-body">
     <div class="card">
       <div class="stitle">₹ per gram of protein</div>
@@ -362,6 +409,10 @@ tr:hover td{background:#161616}
 <!-- EXPORT / IMPORT -->
 <section class="mobile-collapse-section backup-section is-collapsed" data-mobile-section="backup">
   <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('backup')">Backup & Restore <span>Show</span></button>
+  <div class="today-mobile-subpage-header">
+    <button type="button" class="today-mobile-back" onclick="closeTodayMobileView()">← Back to Today</button>
+    <h2>Backup & Restore</h2>
+  </div>
   <div class="mobile-collapse-body">
     <div class="card">
       <div class="stitle">Backup & Restore</div>
@@ -433,6 +484,7 @@ MEAL_DEFS.forEach(md=>{if(!todayData.meals[md.id])todayData.meals[md.id]={dishes
 let curView='today', curMeal='breakfast', selHistDate=null, curWkDay=null;
 let historyEditKey=null, historyEditDraft=null;
 let dishForms={};MEAL_DEFS.forEach(md=>{dishForms[md.id]={open:false,name:'',ingrOpen:-1};});
+let todayMobileView='home';
 const mobileSectionOpen = {
   staples: false,
   allIngredients: false,
@@ -450,6 +502,33 @@ function toggleMobileSection(key){
   section.classList.toggle('is-collapsed',!mobileSectionOpen[key]);
   const label=section.querySelector('.mobile-collapse-toggle span');
   if(label)label.textContent=mobileSectionOpen[key]?'Hide':'Show';
+}
+function applyTodayMobileView(){
+  document.body.dataset.todayMobileView=todayMobileView;
+}
+function openTodayMobileView(view){
+  todayMobileView=view;
+  applyTodayMobileView();
+  window.scrollTo(0,0);
+}
+function closeTodayMobileView(){
+  todayMobileView='home';
+  applyTodayMobileView();
+  window.scrollTo(0,0);
+}
+function renderTodayMobileToolButton(view,title,subtitle){
+  return`<button type="button" class="today-mobile-tool-btn" onclick="openTodayMobileView('${view}')"><strong>${title}</strong>${subtitle?`<span>${subtitle}</span>`:''}</button>`;
+}
+function renderTodayMobileTools(){
+  const el=document.getElementById('today-mobile-tools');if(!el)return;
+  el.innerHTML=[
+    renderTodayMobileToolButton('dailyStaples','Daily Staples','Check eggs, milk, almonds, and staple meal placement'),
+    renderTodayMobileToolButton('allIngredients','All Ingredients Today','Edit every ingredient, macro, quantity, and cost'),
+    renderTodayMobileToolButton('quickAdd','Quick Add Library','Add common foods to the selected meal'),
+    renderTodayMobileToolButton('customIngredient','Custom Ingredient','Create and add a custom food'),
+    renderTodayMobileToolButton('costTable','Cost / Protein Table','Compare foods by rupees per gram protein'),
+    renderTodayMobileToolButton('backupRestore','Backup & Restore','Export or import your planner data')
+  ].join('');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -905,8 +984,9 @@ function renderCostTable(){
 // RENDERING: FULL PAGE
 // ═══════════════════════════════════════════════════════════
 function render(){
+  applyTodayMobileView();
   document.getElementById('todayLabel').textContent='Today: '+fmtDateFull(todayKey());
-  renderBars();renderStaples();renderMealTabs();renderMealPanels();renderAllIngr();renderLibPills();renderCostTable();
+  renderBars();renderStaples();renderMealTabs();renderMealPanels();renderTodayMobileTools();renderAllIngr();renderLibPills();renderCostTable();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1225,6 +1305,8 @@ function renderHistDetail(key){
 // ═══════════════════════════════════════════════════════════
 function showView(v){
   curView=v;
+  if(v!=='today')todayMobileView='home';
+  applyTodayMobileView();
   document.getElementById('view-today').style.display=v==='today'?'':'none';
   document.getElementById('view-week').style.display=v==='week'?'':'none';
   document.getElementById('view-history').style.display=v==='history'?'':'none';
