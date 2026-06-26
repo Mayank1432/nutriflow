@@ -124,3 +124,48 @@ Implementing features immediately.
 - Better long-term maintainability.
 - Smaller, safer changes.
 - Higher code quality.
+
+---
+
+## ADR-005: Plan Migration from Vanilla Prototype to React/Vite PWA
+
+**Status:** Accepted
+
+### Decision
+
+Protein Diet Planner started as a plain HTML/CSS/Vanilla JavaScript app with Local Storage.
+
+The project will continue short-term bug fixes in the current vanilla app, but the long-term product direction is to migrate toward a modern React + Vite + TypeScript PWA after core data/editing bugs are fixed.
+
+The migration should be planned and staged rather than done as a rushed rewrite.
+
+### Reason
+
+The app has grown beyond a small prototype. The new product goal is a polished, share-worthy, installable mobile PWA with:
+
+- Option C colorful and friendly UI direction
+- Light mode as default
+- Optional dark mode
+- Mobile app shell navigation
+- Bottom navigation for core screens
+- Hamburger menu for tools/settings
+- Quick Add V2 with search, categories, quantity prompt, Add More, and Add & Return
+- Analytics and graphs
+- Editable goals and macro targets
+- Cleaner architecture for future expansion
+
+The current single-file/global-state structure made early development fast, but it is becoming harder to maintain as the UI, analytics, settings, and workflow requirements grow.
+
+### Alternatives Considered
+
+- Continue expanding the single `index.html` app indefinitely.
+- Rewrite the full app immediately before fixing known data bugs.
+- Add more UI patches without changing architecture direction.
+
+### Consequences
+
+- Core data/editing bugs should be fixed before framework migration.
+- Documentation must stay updated as architecture and features change.
+- The migration should preserve existing Local Storage data and backup/export compatibility.
+- The app should remain deployable as a GitHub Pages PWA.
+- Future implementation tasks should separate bug fixes, documentation, migration planning, app shell, storage/calculation porting, UI redesign, analytics, and PWA QA.
