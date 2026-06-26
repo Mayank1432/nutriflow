@@ -20,6 +20,8 @@ h1{font-size:17px;font-weight:700;margin-bottom:2px;color:#f5f5f5}
 /* CARDS */
 .card{background:#111;border:1px solid #222;border-radius:14px;padding:13px 15px;margin-bottom:11px}
 .stitle{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.mobile-collapse-toggle{display:none}
+.mobile-collapse-body{display:block}
 /* VIEW TABS */
 .view-tabs{display:flex;gap:0;margin-bottom:14px;border:1px solid #2a2a2a;border-radius:10px;overflow:hidden;width:fit-content}
 .view-tab{padding:7px 15px;font-size:13px;cursor:pointer;background:#111;color:#666;border:none;font-weight:500;border-right:1px solid #2a2a2a;transition:all .15s}
@@ -142,7 +144,13 @@ tr:hover td{background:#161616}
 .ebtn:hover{background:#2a2a2a;color:#e0e0e0}
 .ebtn.green{border-color:#2d5a2d;background:#1a3a1a;color:#4ade80}
 @media(max-width:600px){
-  body{padding:10px 10px 24px}
+  body{display:flex;flex-direction:column;padding:10px 10px 24px}
+  #metrics{order:1}
+  .view-tabs{order:2}
+  #view-today,#view-week,#view-history{order:3}
+  .daily-staples-section{order:4}
+  .cost-section{order:5}
+  .backup-section{order:6}
   .card,.meal-body,.hist-detail,.add-panel{max-width:100%;padding:11px 10px}
   .g4{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .ig4,.ig3,.ig2{grid-template-columns:1fr}
@@ -164,6 +172,12 @@ tr:hover td{background:#161616}
   .cost-tbl thead,.cost-tbl tbody,.cost-tbl tr{display:table;width:600px;table-layout:auto}
   .hist-grid{grid-template-columns:repeat(auto-fill,minmax(86px,1fr))}
   .bar-row{gap:8px}
+  .mobile-collapse-section{margin-bottom:11px}
+  .mobile-collapse-section .card{margin-bottom:0}
+  .mobile-collapse-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:42px;margin-bottom:7px;padding:9px 11px;border:1px solid #2a2a2a;border-radius:10px;background:#111;color:#bbb;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+  .mobile-collapse-toggle span{font-size:11px;color:#666;font-weight:600;text-transform:none;letter-spacing:0}
+  .mobile-collapse-section.is-collapsed .mobile-collapse-body{display:none}
+  .mobile-collapse-section.is-open .mobile-collapse-body{display:block}
 }
 </style>
 </head>
@@ -173,10 +187,15 @@ tr:hover td{background:#161616}
 <div class="g4" id="metrics"></div>
 
 <!-- STAPLES -->
-<div class="card">
-  <div class="stitle">Daily staples — check what you had today</div>
-  <div id="staples-list"></div>
-</div>
+<section class="mobile-collapse-section daily-staples-section is-collapsed" data-mobile-section="staples">
+  <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('staples')">Daily Staples <span>Show</span></button>
+  <div class="mobile-collapse-body">
+    <div class="card">
+      <div class="stitle">Daily staples — check what you had today</div>
+      <div id="staples-list"></div>
+    </div>
+  </div>
+</section>
 
 <!-- VIEW TABS -->
 <div class="view-tabs">
@@ -197,67 +216,82 @@ tr:hover td{background:#161616}
   <div id="meal-panels"></div>
 
   <!-- ALL INGREDIENTS TABLE -->
-  <div class="card">
-    <div class="stitle">All ingredients today <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#444;font-size:10px">— every field editable</span></div>
-    <div class="tbl-wrap">
-    <table>
-      <thead><tr>
-        <th>Name</th><th>Meal·Dish</th><th>Qty</th><th>Unit</th>
-        <th>Pro/100</th><th>Kcal/100</th><th>Carb/100</th><th>Fat/100</th><th>Fib/100</th><th>₹/100</th>
-        <th>Protein</th><th>Kcal</th><th>Carbs</th><th>Fat</th><th>Fibre</th><th>Cost</th><th></th>
-      </tr></thead>
-      <tbody id="all-ingr-body"></tbody>
-      <tfoot><tr class="tfoot">
-        <td colspan="10">Total (incl. staples)</td>
-        <td id="tp"></td><td id="tk"></td><td id="tcarb"></td><td id="tfat"></td><td id="tfibre"></td><td id="tc"></td><td></td>
-      </tr></tfoot>
-    </table>
+  <section class="mobile-collapse-section is-collapsed" data-mobile-section="allIngredients">
+    <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('allIngredients')">All Ingredients Today <span>Show</span></button>
+    <div class="mobile-collapse-body">
+      <div class="card">
+        <div class="stitle">All ingredients today <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#444;font-size:10px">— every field editable</span></div>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Name</th><th>Meal·Dish</th><th>Qty</th><th>Unit</th>
+            <th>Pro/100</th><th>Kcal/100</th><th>Carb/100</th><th>Fat/100</th><th>Fib/100</th><th>₹/100</th>
+            <th>Protein</th><th>Kcal</th><th>Carbs</th><th>Fat</th><th>Fibre</th><th>Cost</th><th></th>
+          </tr></thead>
+          <tbody id="all-ingr-body"></tbody>
+          <tfoot><tr class="tfoot">
+            <td colspan="10">Total (incl. staples)</td>
+            <td id="tp"></td><td id="tk"></td><td id="tcarb"></td><td id="tfat"></td><td id="tfibre"></td><td id="tc"></td><td></td>
+          </tr></tfoot>
+        </table>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #1e1e1e;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span id="auto-save-note" style="font-size:12px;color:#555">Changes auto-saved.</span>
+          <span id="saved-ts" style="font-size:11px;color:#444"></span>
+        </div>
+      </div>
     </div>
-    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #1e1e1e;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span id="auto-save-note" style="font-size:12px;color:#555">Changes auto-saved.</span>
-      <span id="saved-ts" style="font-size:11px;color:#444"></span>
-    </div>
-  </div>
+  </section>
 
   <!-- QUICK ADD -->
   <div class="card">
     <div class="stitle">Quick-add ingredient</div>
-    <div style="font-size:11px;color:#555;margin-bottom:6px;font-weight:500">From library</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="lib-pills"></div>
+    <section class="mobile-collapse-section is-collapsed" data-mobile-section="quickAdd">
+      <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('quickAdd')">Quick Add Library <span>Show</span></button>
+      <div class="mobile-collapse-body">
+        <div style="font-size:11px;color:#555;margin-bottom:6px;font-weight:500">From library</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="lib-pills"></div>
+      </div>
+    </section>
     <hr class="divider">
-    <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Custom ingredient</div>
-    <div class="ig ig2">
-      <div><div class="fl">Name</div><input class="inp" id="in-name" placeholder="e.g. Tofu"></div>
-      <div><div class="fl">Add to meal</div>
-        <select class="inp" id="in-meal">
-          <option value="breakfast">Breakfast</option><option value="lunch">Lunch</option>
-          <option value="dinner">Dinner</option><option value="snacks">Snacks</option>
-        </select>
+    <section class="mobile-collapse-section is-collapsed" data-mobile-section="customIngredient">
+      <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('customIngredient')">Custom Ingredient <span>Show</span></button>
+      <div class="mobile-collapse-body">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Custom ingredient</div>
+        <div class="ig ig2">
+          <div><div class="fl">Name</div><input class="inp" id="in-name" placeholder="e.g. Tofu"></div>
+          <div><div class="fl">Add to meal</div>
+            <select class="inp" id="in-meal">
+              <option value="breakfast">Breakfast</option><option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option><option value="snacks">Snacks</option>
+            </select>
+          </div>
+        </div>
+        <div class="ig ig4">
+          <div><div class="fl">Protein/100</div><input class="inp" id="in-pr" type="number" min="0" placeholder="g"></div>
+          <div><div class="fl">Kcal/100</div><input class="inp" id="in-kc" type="number" min="0" placeholder="kcal"></div>
+          <div><div class="fl">Carbs/100</div><input class="inp" id="in-cb" type="number" min="0" placeholder="g"></div>
+          <div><div class="fl">Fat/100</div><input class="inp" id="in-ft" type="number" min="0" placeholder="g"></div>
+        </div>
+        <div class="ig ig3">
+          <div><div class="fl">Fibre/100</div><input class="inp" id="in-fb" type="number" min="0" placeholder="g"></div>
+          <div><div class="fl">₹/100</div><input class="inp" id="in-pp" type="number" min="0" placeholder="₹"></div>
+          <div><div class="fl">Qty</div><input class="inp" id="in-qty" type="number" min="1" placeholder="100"></div>
+        </div>
+        <div class="ig ig2">
+          <div><div class="fl">Unit</div>
+            <select class="inp" id="in-unit"><option value="g">g</option><option value="ml">ml</option><option value="piece">piece</option></select>
+          </div>
+          <div><div class="fl">Type</div>
+            <select class="inp" id="in-type"><option value="p">Animal</option><option value="v">Plant</option></select>
+          </div>
+        </div>
+        <div class="add-bottom">
+          <button class="abtn" onclick="addCustomIngr()">+ Add</button>
+          <span class="err" id="add-err"></span>
+        </div>
       </div>
-    </div>
-    <div class="ig ig4">
-      <div><div class="fl">Protein/100</div><input class="inp" id="in-pr" type="number" min="0" placeholder="g"></div>
-      <div><div class="fl">Kcal/100</div><input class="inp" id="in-kc" type="number" min="0" placeholder="kcal"></div>
-      <div><div class="fl">Carbs/100</div><input class="inp" id="in-cb" type="number" min="0" placeholder="g"></div>
-      <div><div class="fl">Fat/100</div><input class="inp" id="in-ft" type="number" min="0" placeholder="g"></div>
-    </div>
-    <div class="ig ig3">
-      <div><div class="fl">Fibre/100</div><input class="inp" id="in-fb" type="number" min="0" placeholder="g"></div>
-      <div><div class="fl">₹/100</div><input class="inp" id="in-pp" type="number" min="0" placeholder="₹"></div>
-      <div><div class="fl">Qty</div><input class="inp" id="in-qty" type="number" min="1" placeholder="100"></div>
-    </div>
-    <div class="ig ig2">
-      <div><div class="fl">Unit</div>
-        <select class="inp" id="in-unit"><option value="g">g</option><option value="ml">ml</option><option value="piece">piece</option></select>
-      </div>
-      <div><div class="fl">Type</div>
-        <select class="inp" id="in-type"><option value="p">Animal</option><option value="v">Plant</option></select>
-      </div>
-    </div>
-    <div class="add-bottom">
-      <button class="abtn" onclick="addCustomIngr()">+ Add</button>
-      <span class="err" id="add-err"></span>
-    </div>
+    </section>
   </div>
 </div>
 
@@ -314,22 +348,32 @@ tr:hover td{background:#161616}
 </div>
 
 <!-- COST TABLE -->
-<div class="card">
-  <div class="stitle">₹ per gram of protein</div>
-  <table class="cost-tbl"><thead><tr><th>Food</th><th>Pro/100</th><th>₹/100</th><th>₹/g protein</th></tr></thead>
-  <tbody id="cost-body"></tbody></table>
-</div>
+<section class="mobile-collapse-section cost-section is-collapsed" data-mobile-section="costTable">
+  <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('costTable')">Cost / Protein Table <span>Show</span></button>
+  <div class="mobile-collapse-body">
+    <div class="card">
+      <div class="stitle">₹ per gram of protein</div>
+      <table class="cost-tbl"><thead><tr><th>Food</th><th>Pro/100</th><th>₹/100</th><th>₹/g protein</th></tr></thead>
+      <tbody id="cost-body"></tbody></table>
+    </div>
+  </div>
+</section>
 
 <!-- EXPORT / IMPORT -->
-<div class="card">
-  <div class="stitle">Backup & Restore</div>
-  <div style="font-size:12px;color:#555;margin-bottom:8px">Export all your data as a JSON file. Import it back anytime — safe across browser resets.</div>
-  <div class="export-row">
-    <button class="ebtn green" onclick="exportData()">⬇ Export backup</button>
-    <button class="ebtn" onclick="document.getElementById('imp-file').click()">⬆ Import backup</button>
-    <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importData(this)">
+<section class="mobile-collapse-section backup-section is-collapsed" data-mobile-section="backup">
+  <button class="mobile-collapse-toggle" type="button" onclick="toggleMobileSection('backup')">Backup & Restore <span>Show</span></button>
+  <div class="mobile-collapse-body">
+    <div class="card">
+      <div class="stitle">Backup & Restore</div>
+      <div style="font-size:12px;color:#555;margin-bottom:8px">Export all your data as a JSON file. Import it back anytime — safe across browser resets.</div>
+      <div class="export-row">
+        <button class="ebtn green" onclick="exportData()">⬇ Export backup</button>
+        <button class="ebtn" onclick="document.getElementById('imp-file').click()">⬆ Import backup</button>
+        <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importData(this)">
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
 <script src="js/storage.js"></script>
 <script>
@@ -389,6 +433,24 @@ MEAL_DEFS.forEach(md=>{if(!todayData.meals[md.id])todayData.meals[md.id]={dishes
 let curView='today', curMeal='breakfast', selHistDate=null, curWkDay=null;
 let historyEditKey=null, historyEditDraft=null;
 let dishForms={};MEAL_DEFS.forEach(md=>{dishForms[md.id]={open:false,name:'',ingrOpen:-1};});
+const mobileSectionOpen = {
+  staples: false,
+  allIngredients: false,
+  quickAdd: false,
+  customIngredient: false,
+  costTable: false,
+  backup: false
+};
+
+function toggleMobileSection(key){
+  mobileSectionOpen[key]=!mobileSectionOpen[key];
+  const section=document.querySelector(`[data-mobile-section="${key}"]`);
+  if(!section)return;
+  section.classList.toggle('is-open',mobileSectionOpen[key]);
+  section.classList.toggle('is-collapsed',!mobileSectionOpen[key]);
+  const label=section.querySelector('.mobile-collapse-toggle span');
+  if(label)label.textContent=mobileSectionOpen[key]?'Hide':'Show';
+}
 
 // ═══════════════════════════════════════════════════════════
 // PERSISTENCE & AUTOSAVE
@@ -723,7 +785,7 @@ function renderAllIngr(){
           <td style="color:${m.col};font-size:11px">${m.icon} ${m.label}·${esc(dish.name)}</td>
           <td><div class="qrow">
             <button class="qbtn" style="width:22px;height:22px;font-size:14px" onclick="ingrStep('${m.id}',${di},${ii},-1)" ${+ing.qty<=0?'disabled':''}>−</button>
-            <input class="qty-inp" style="width:50px" type="number" min="0" value="${ing.qty}" onchange="updateIngrQty('${m.id}',${di},${ii},this.value)" oninput="updateIngrQty('${m.id}',${di},${ii},this.value)">
+            <input class="qty-inp" style="width:50px" type="number" min="0" value="${ing.qty}" onchange="updateIngrQty('${m.id}',${di},${ii},this.value)" oninput="updateIngrQty('${m.id}',${di},${ii},this.value,this)">
             <button class="qbtn" style="width:22px;height:22px;font-size:14px" onclick="ingrStep('${m.id}',${di},${ii},1)">+</button>
           </div></td>
           <td><select class="ed-sel" onchange="updateIngr('${m.id}',${di},${ii},'unit',this.value)"><option value="g"${unit==='g'?' selected':''}>g</option><option value="ml"${unit==='ml'?' selected':''}>ml</option><option value="piece"${unit==='piece'?' selected':''}>pc</option></select></td>
@@ -742,6 +804,10 @@ function renderAllIngr(){
   });
   if(!rows) rows=`<tr><td colspan="17" style="color:#444;font-size:12px;padding:12px 5px">No items yet. Check staples above or add dishes in Today tab.</td></tr>`;
   document.getElementById('all-ingr-body').innerHTML=rows;
+  refreshAllIngredientTotals();
+}
+
+function refreshAllIngredientTotals(){
   const tot=calcAll();
   document.getElementById('tp').textContent=r1(tot.p)+'g'+(tot.p>=115?' ✓':'');
   document.getElementById('tk').textContent=r0(tot.k)+' kcal';
@@ -783,25 +849,41 @@ function ensureEditableIngredient(ing){
 function getTodayIngredient(mId,di,ii){
   return todayData.meals[mId].dishes[di].ingredients[ii];
 }
+function refreshIngredientRowTotals(row, ing){
+  if(!row)return;
+  const iv=calcIngr(ing);
+  row.children[10].textContent=r1(iv.p)+'g';
+  row.children[11].textContent=r0(iv.k);
+  row.children[12].textContent=r1(iv.carb)+'g';
+  row.children[13].textContent=r1(iv.fat)+'g';
+  row.children[14].textContent=r1(iv.fibre)+'g';
+  row.children[15].textContent='₹'+iv.c.toFixed(0);
+}
+function refreshTodayIngredientViews(renderTable=true){
+  renderMealTabs();renderMealPanels();
+  if(renderTable)renderAllIngr();else refreshAllIngredientTotals();
+  renderBars();
+}
 function updateIngr(mId,di,ii,field,val){
   const ing=ensureEditableIngredient(getTodayIngredient(mId,di,ii));
   ing[field]=val;
-  autosave();renderAllIngr();renderBars();
+  autosave();refreshTodayIngredientViews();
 }
-function updateIngrQty(mId,di,ii,val){
+function updateIngrQty(mId,di,ii,val,sourceEl){
   const ing=getTodayIngredient(mId,di,ii);
   ing.qty=parseFloat(val)||0;
-  autosave();renderAllIngr();renderBars();
+  autosave();refreshTodayIngredientViews(!sourceEl);
+  if(sourceEl)refreshIngredientRowTotals(sourceEl.closest('tr'),ing);
 }
 function ingrStep(mId,di,ii,d){
   const ing=todayData.meals[mId].dishes[di].ingredients[ii];
   ing.qty=Math.max(0,(+ing.qty||0)+d);
-  autosave();renderAllIngr();renderBars();
+  autosave();refreshTodayIngredientViews();
 }
 function updateIngr100(mId,di,ii,field,val){
   const ing=ensureEditableIngredient(getTodayIngredient(mId,di,ii));
   ing[field]=parseFloat(val)||0;
-  autosave();renderAllIngr();renderBars();
+  autosave();refreshTodayIngredientViews();
 }
 
 // ═══════════════════════════════════════════════════════════
