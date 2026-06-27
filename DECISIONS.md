@@ -169,3 +169,43 @@ The current single-file/global-state structure made early development fast, but 
 - The migration should preserve existing Local Storage data and backup/export compatibility.
 - The app should remain deployable as a GitHub Pages PWA.
 - Future implementation tasks should separate bug fixes, documentation, migration planning, app shell, storage/calculation porting, UI redesign, analytics, and PWA QA.
+
+---
+
+## ADR-006: Use a Parallel, Incremental React/Vite Migration
+
+**Status:** Accepted
+
+### Context
+
+The current vanilla PWA is deployed, stores user data in Local Storage, supports old backups and History entries, and remains the working production application. Replacing it in one rewrite would combine framework, data, UI, deployment, and service-worker risk in a single release.
+
+### Decision
+
+Develop the future app as a parallel React + Vite + TypeScript implementation and port modules incrementally.
+
+- Keep the vanilla app stable and deployed until the React version passes compatibility and PWA checks.
+- Preserve `pptd_v5`, `ppc_v5`, `ppwk_v5`, `ppst_v5`, and `ppl_v5` during the initial port.
+- Add a storage adapter, calculation utilities, normalization helpers, and export/import compatibility helpers before porting feature screens.
+- Preserve the internal `meals -> dishes -> ingredients` shape initially.
+- Port Today and Quick Add before Weekly Planner and History, then add analytics and themes.
+- Delay the production PWA switch until the final deployment and QA task.
+- Keep a rollback path to the vanilla app until React feature and data parity is confirmed.
+- Consider Capacitor or another native Android wrapper only after the React PWA is stable.
+
+Use simple TypeScript types and React state patterns initially. Do not add a state-management library without a demonstrated need.
+
+### Alternatives Considered
+
+- A big-bang rewrite that replaces the vanilla app in one release.
+- Continuing to expand the single-file vanilla implementation indefinitely.
+- Changing the storage schema during the first React port.
+- Switching service workers before feature and data compatibility is verified.
+
+### Consequences
+
+- Migration takes place in more, smaller tasks but each step is easier to review, test, and roll back.
+- Temporary duplication between vanilla and React implementations is expected.
+- Compatibility tests need representative Local Storage data, exports, and old backups.
+- GitHub Pages base-path and PWA behavior remain explicit release gates.
+- The deployed vanilla app remains the fallback until the final production switch succeeds.

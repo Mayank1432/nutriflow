@@ -13,6 +13,8 @@
 - [ ] React/Vite App Shell Prototype.
 - [ ] Port Storage + Calculations while preserving current Local Storage keys and backups.
 - [ ] Port Today + Quick Add.
+- [ ] Port Weekly + History with legacy History compatibility.
+- [ ] Analytics + Theme System.
 - [ ] PWA Deploy + QA for the migrated app.
 
 ## Product and Design

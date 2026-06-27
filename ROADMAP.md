@@ -20,14 +20,9 @@ Refresh current-state documentation and record the Main Chat, Sprint Chat, Codex
 
 ### Task 6 - Framework Migration Planning
 
-Plan a staged React, Vite, and TypeScript migration covering:
+Document a parallel, incremental React, Vite, and TypeScript migration. This task is planning only; it does not create the React app or change the deployed vanilla PWA.
 
-- Existing data and backup compatibility.
-- Component and navigation structure.
-- GitHub Pages deployment.
-- PWA update and offline behavior.
-- Playwright smoke tests and future calculation/storage unit tests.
-- Reversible migration phases.
+The plan covers data and backup compatibility, module order, GitHub Pages deployment, PWA behavior, testing, and rollback.
 
 ### Task 7 - React/Vite App Shell Prototype
 
@@ -61,19 +56,27 @@ Port the core daily workflow:
 
 The internal dish model remains a compatibility concern until an approved migration replaces it.
 
-### Task 10 - Analytics + Theme System
+### Task 10 - Port Weekly + History
+
+- Port Weekly Planner state, editing, totals, and copy-to-Today behavior.
+- Port History rollover, summaries, detail editing, and legacy entry compatibility.
+- Verify old History entries and Weekly Plan data before proceeding.
+
+### Task 11 - Analytics + Theme System
 
 - Light/dark themes.
 - Settings and editable nutrition/budget targets.
 - Weekly averages and protein/spend trends.
 - Macro and meal-level analysis.
 
-### Task 11 - PWA Deploy + QA
+### Task 12 - PWA Deploy + QA
 
 - GitHub Pages deployment.
+- Correct Vite base configuration for `/protein-diet-planner/`.
 - Manifest, service worker, and cache verification.
 - Local and hosted PWA smoke tests.
 - Android installed-PWA check.
+- Production switch and vanilla rollback verification.
 - Documentation and release notes.
 
 ## Documentation Rule

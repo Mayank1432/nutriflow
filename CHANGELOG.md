@@ -14,6 +14,8 @@ The format is based on Keep a Changelog.
 ### Changed
 - Refreshed project documentation for the current meal-first Today UI, legacy staple normalization, external PWA setup, and planned React/Vite migration.
 - Documented Main Chat, Sprint Chat, Codex, and QA Chat workflow responsibilities and approval boundaries.
+- Documented the parallel React/Vite migration strategy and refined the migration roadmap.
+- Recorded data compatibility, PWA deployment, and vanilla rollback planning for the future migration.
 
 ### Fixed
 - Fixed desktop Today Ingredients quantity and macro editing so live multi-digit input keeps focus.

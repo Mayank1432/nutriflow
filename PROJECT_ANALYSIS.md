@@ -154,13 +154,68 @@ When `index.html` changes, the cache name in `sw.js` and the expected name in th
 
 ## Planned Direction
 
-The current vanilla PWA remains the production base. Planned work proceeds in stages:
+The current vanilla PWA remains the production base. The migration will run in parallel and port modules incrementally; it is not a big-bang rewrite. The React version must not replace the live app until compatibility, PWA, hosted, and installed-Android checks pass.
 
-1. Framework migration planning.
-2. React/Vite app shell prototype.
-3. Storage and calculation port with compatibility tests.
-4. Today and Quick Add port.
-5. Analytics and theme system.
-6. PWA deployment and QA.
+### Target Architecture
 
-The migration must preserve Local Storage keys, backup compatibility, calculation behavior, GitHub Pages hosting, and installable/offline PWA behavior.
+- React, Vite, and TypeScript with simple, pragmatic types.
+- No state-management library unless component state and focused context become insufficient.
+- A Local Storage adapter that preserves safe JSON parsing and serialization behavior.
+- Framework-independent nutrition calculation utilities.
+- Legacy normalization and migration helpers.
+- Export/import compatibility helpers.
+- Mobile-first, app-like UI with bottom navigation for core sections.
+- Light mode by default, with dark mode added later.
+- A Vite-compatible PWA strategy handled during the final deployment task.
+- Optional Capacitor Android packaging only after the React PWA is stable.
+
+The React UI must preserve the current meal-first Today experience: no user-facing dish UI, no fixed Daily Staples section, normal ingredients across meals, smooth Quick Add, and Today Ingredients edit, delete, and move behavior.
+
+### Data Compatibility Plan
+
+The first React port must preserve these keys:
+
+- `pptd_v5`
+- `ppc_v5`
+- `ppwk_v5`
+- `ppst_v5`
+- `ppl_v5`
+
+The storage adapter will read and write the existing formats without a schema-breaking migration. Compatibility work must cover:
+
+- Safe JSON parsing and stringifying.
+- Existing exports, imports, and representative old backup files.
+- Startup normalization for legacy Today staples.
+- Old History entries containing staples or dish-style data.
+- The internal `meals -> dishes -> ingredients` shape during the initial port.
+- Existing piece-unit, library-backed, and editable snapshot calculations.
+
+Any later schema change needs a separately approved, versioned migration and rollback plan.
+
+### Module Porting Order
+
+1. Types and storage adapter.
+2. Nutrition calculation utilities.
+3. Normalization helpers.
+4. Export/import helpers.
+5. Today and Quick Add.
+6. Weekly Planner.
+7. History.
+8. Analytics and theme system.
+9. PWA deployment.
+
+Each phase should be testable before the next feature area is ported.
+
+### Deployment and Rollback
+
+The React prototype may live in a dedicated subfolder such as `react-app/` in a later task. Development should use small feature branches while `main` and the deployed vanilla app stay stable.
+
+GitHub Pages serves this project from `/protein-diet-planner/`, so Vite will need the correct base configuration. The current service worker remains unchanged during planning and feature porting. The React PWA strategy and production switch belong to the final deploy task.
+
+Before switching production:
+
+- Verify existing Local Storage and old backup compatibility.
+- Run local and hosted PWA checks.
+- Check the installed Android PWA.
+- Confirm offline behavior and update behavior.
+- Keep the vanilla release available as the rollback path until React parity is confirmed.
