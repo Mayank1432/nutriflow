@@ -39,6 +39,19 @@ A staged React/Vite/TypeScript migration is planned in `ROADMAP.md` and accepted
 
 Library lookup is supplied explicitly to calculation functions as mock data. The domain layer has no browser API access, does not reference production storage keys, and does not read, migrate, normalize, or save real data. A real storage adapter and production integration remain deferred.
 
+### React Today Prototype
+
+The prototype Today screen now renders its hardcoded `meals -> dishes -> ingredients` fixture through local React state and the mock domain helpers.
+
+- Daily and meal totals recalculate after mock additions, quantity changes, and removals.
+- Protein and calorie progress plus carbs, fat, fibre, and cost summaries are calculated from state.
+- Breakfast, Lunch, Dinner, and Snacks remain expanded and support empty states.
+- Quick Add uses an accessible bottom sheet and entered-quantity nutrition values.
+- Quantity edits scale the item's base nutrition by ratio through pure, non-mutating helpers.
+- Refreshing restores the original fixture.
+
+This screen still has no Local Storage, export/import, History, Weekly Planner, library linking, migration, or production PWA integration.
+
 ## User-Facing Areas
 
 - Today: summary metrics, meal tabs, meal ingredient rows, Quick Add, custom ingredients, and the editable Today Ingredients table.

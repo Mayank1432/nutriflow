@@ -1,5 +1,6 @@
 import type {
   Dish,
+  EnteredQuantityInput,
   FoodLibrary,
   HistoryEntry,
   Ingredient,
@@ -71,10 +72,51 @@ export function calcFromPerUnit(food: PerUnitFood | Ingredient, qty: NumericLike
   }
 }
 
+export function calcEnteredQuantityIngredient(ingredient: Ingredient): MacroTotals {
+  const baseQuantity = safeNumber(ingredient.baseQty)
+  const ratio = baseQuantity > 0 ? safeNumber(ingredient.qty) / baseQuantity : 0
+  return {
+    p: safeNumber(ingredient.baseProtein) * ratio,
+    k: safeNumber(ingredient.baseCalories) * ratio,
+    carb: safeNumber(ingredient.baseCarbs) * ratio,
+    fat: safeNumber(ingredient.baseFat) * ratio,
+    fibre: safeNumber(ingredient.baseFibre) * ratio,
+    c: safeNumber(ingredient.baseCost) * ratio,
+  }
+}
+
+export function createEnteredQuantityIngredient(input: EnteredQuantityInput): Ingredient {
+  const quantity = safeNumber(input.qty)
+  return {
+    id: input.id,
+    name: input.name.trim() || 'Unnamed food',
+    qty: quantity,
+    unit: input.unit || 'g',
+    entryMode: 'enteredQuantity',
+    baseQty: quantity,
+    baseProtein: safeNumber(input.protein),
+    baseCalories: safeNumber(input.calories),
+    baseCarbs: safeNumber(input.carbs),
+    baseFat: safeNumber(input.fat),
+    baseFibre: safeNumber(input.fibre),
+    baseCost: safeNumber(input.cost),
+  }
+}
+
+export function updateEnteredQuantityIngredientQty(
+  ingredient: Ingredient,
+  qty: NumericLike,
+): Ingredient {
+  return { ...ingredient, qty: Math.max(0, safeNumber(qty)) }
+}
+
 export function calcIngr(
   ingredient: Ingredient,
   library: FoodLibrary = {},
 ): MacroTotals {
+  if (ingredient.entryMode === 'enteredQuantity') {
+    return calcEnteredQuantityIngredient(ingredient)
+  }
   if (ingredient.libId) {
     const food = library[ingredient.libId]
     return food ? calcFromPerUnit(food, ingredient.qty) : emptyTotals()

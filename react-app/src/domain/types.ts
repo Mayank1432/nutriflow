@@ -11,10 +11,19 @@ export type MacroTotals = {
 
 export type Ingredient = {
   [key: string]: unknown
+  id?: string
   libId?: string | null
   name?: string
   qty?: NumericLike
   unit?: string
+  entryMode?: 'enteredQuantity'
+  baseQty?: NumericLike
+  baseProtein?: NumericLike
+  baseCalories?: NumericLike
+  baseCarbs?: NumericLike
+  baseFat?: NumericLike
+  baseFibre?: NumericLike
+  baseCost?: NumericLike
   pr100?: NumericLike
   kc100?: NumericLike
   carb100?: NumericLike
@@ -79,3 +88,16 @@ export type HistoryEntry = {
 export type PlanDay = Partial<Record<MealId, Ingredient[] | null>>
 
 export type WeekPlan = Record<string, PlanDay | null | undefined>
+
+export type EnteredQuantityInput = {
+  id: string
+  name: string
+  qty: NumericLike
+  unit: string
+  protein: NumericLike
+  calories: NumericLike
+  carbs: NumericLike
+  fat: NumericLike
+  fibre: NumericLike
+  cost: NumericLike
+}

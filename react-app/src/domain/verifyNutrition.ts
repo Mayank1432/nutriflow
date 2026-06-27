@@ -16,15 +16,18 @@ import {
 import {
   calcAll,
   calcDayLog,
+  calcEnteredQuantityIngredient,
   calcFromP100,
   calcIngr,
   calcPlanDay,
+  createEnteredQuantityIngredient,
   emptyTotals,
   p100pu,
   pu2p100,
   round0,
   round1,
   safeNumber,
+  updateEnteredQuantityIngredientQty,
 } from './nutrition'
 import type { MacroTotals } from './types'
 
@@ -128,6 +131,38 @@ assertTotals(calcFromP100(missingOptionalMacros), {
   fibre: 0,
   c: 0,
 }, 'missing optional macros')
+
+const enteredQuantityIngredient = createEnteredQuantityIngredient({
+  id: 'verify-entered',
+  name: 'Mock entered item',
+  qty: 100,
+  unit: 'g',
+  protein: 20,
+  calories: 200,
+  carbs: 10,
+  fat: 5,
+  fibre: 3,
+  cost: 50,
+})
+const scaledEnteredIngredient = updateEnteredQuantityIngredientQty(
+  enteredQuantityIngredient,
+  150,
+)
+
+assertTotals(calcEnteredQuantityIngredient(scaledEnteredIngredient), {
+  p: 30,
+  k: 300,
+  carb: 15,
+  fat: 7.5,
+  fibre: 4.5,
+  c: 75,
+}, 'entered quantity scaling')
+assert(enteredQuantityIngredient.qty === 100, 'quantity updates must not mutate the source')
+assertTotals(calcEnteredQuantityIngredient({
+  ...enteredQuantityIngredient,
+  baseQty: 'invalid',
+  qty: 'invalid',
+}), emptyTotals(), 'invalid entered quantity')
 
 assert(safeNumber('invalid') === 0, 'invalid numeric strings should become zero')
 assert(safeNumber(null) === 0, 'null should become zero')

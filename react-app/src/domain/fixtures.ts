@@ -222,3 +222,69 @@ export const missingArraysToday: TodayData = {
     lunch: { dishes: null },
   },
 }
+
+export const mockTodayPrototype: TodayData = {
+  dateKey: '2099-02-01',
+  meals: {
+    breakfast: {
+      dishes: [{
+        id: 'prototype-breakfast',
+        ingredients: [{
+          id: 'mock-eggs',
+          name: 'Whole eggs',
+          qty: 2,
+          unit: 'piece',
+          entryMode: 'enteredQuantity',
+          baseQty: 2,
+          baseProtein: 12,
+          baseCalories: 156,
+          baseCarbs: 1.2,
+          baseFat: 10,
+          baseFibre: 0,
+          baseCost: 16,
+        }],
+      }],
+    },
+    lunch: {
+      dishes: [{
+        id: 'prototype-lunch',
+        ingredients: [{
+          id: 'mock-chicken-rice',
+          name: 'Chicken rice bowl',
+          qty: 350,
+          unit: 'g',
+          entryMode: 'enteredQuantity',
+          baseQty: 350,
+          baseProtein: 42,
+          baseCalories: 540,
+          baseCarbs: 58,
+          baseFat: 14,
+          baseFibre: 5,
+          baseCost: 118,
+        }],
+      }],
+    },
+    dinner: {
+      dishes: [{ id: 'prototype-dinner', ingredients: [] }],
+    },
+    snacks: {
+      dishes: [{
+        id: 'prototype-snacks',
+        ingredients: [{
+          id: 'mock-yogurt',
+          name: 'Greek yogurt',
+          qty: 200,
+          unit: 'g',
+          entryMode: 'enteredQuantity',
+          baseQty: 200,
+          baseProtein: 18,
+          baseCalories: 146,
+          baseCarbs: 8,
+          baseFat: 4,
+          baseFibre: 0,
+          baseCost: 64,
+        }],
+      }],
+    },
+  },
+}

@@ -60,6 +60,8 @@ Port the core daily workflow:
 
 The internal dish model remains a compatibility concern until an approved migration replaces it.
 
+Current implementation: the React prototype demonstrates Today and Quick Add with mock-only state, calculated meal/day totals, quantity editing, removal, entered-quantity additions, and refresh reset. Real storage, library linking, migration, and production integration remain deferred.
+
 ### Task 10 - Port Weekly + History
 
 - Port Weekly Planner state, editing, totals, and copy-to-Today behavior.

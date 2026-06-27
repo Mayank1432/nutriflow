@@ -9,7 +9,7 @@ function Header() {
         NF
       </div>
       <p className="prototype-notice">
-        Prototype only — no real data is saved here.
+        Prototype only — mock data is used here. Changes reset on refresh.
       </p>
     </header>
   )

@@ -1,56 +1,148 @@
-import MacroStatCard from '../components/MacroStatCard'
-import MealPlaceholderCard from '../components/MealPlaceholderCard'
-import PlaceholderActionButton from '../components/PlaceholderActionButton'
+import { useState } from 'react'
+import DailySummaryCard from '../components/DailySummaryCard'
+import MealCard from '../components/MealCard'
+import QuickAddSheet from '../components/QuickAddSheet'
+import type { QuickAddDraft } from '../components/QuickAddForm'
 import ScreenContainer from '../components/ScreenContainer'
-import SectionHeader from '../components/SectionHeader'
-import SummaryCard from '../components/SummaryCard'
+import SuccessToast from '../components/SuccessToast'
+import { mockTodayPrototype } from '../domain/fixtures'
+import {
+  calcAll,
+  createEnteredQuantityIngredient,
+  updateEnteredQuantityIngredientQty,
+} from '../domain/nutrition'
+import type { Ingredient, MealId, TodayData } from '../domain/types'
 
-const macros = [
-  { label: 'Calories', value: '1,840 kcal', accent: '#ff8b6a' },
-  { label: 'Carbs', value: '186 g', accent: '#f1bb42' },
-  { label: 'Fat', value: '58 g', accent: '#6da9ff' },
-  { label: 'Fibre', value: '24 g', accent: '#8f73de' },
-  { label: 'Cost', value: '₹214', accent: '#48b988' },
+const meals: Array<{ id: MealId; name: string }> = [
+  { id: 'breakfast', name: 'Breakfast' },
+  { id: 'lunch', name: 'Lunch' },
+  { id: 'dinner', name: 'Dinner' },
+  { id: 'snacks', name: 'Snacks' },
 ]
 
-const meals = [
-  { label: 'Breakfast', note: '2 placeholder ingredients', color: '#ffd85f' },
-  { label: 'Lunch', note: '3 placeholder ingredients', color: '#54c893' },
-  { label: 'Dinner', note: 'Nothing planned yet', color: '#ff8d73' },
-  { label: 'Snacks', note: '1 placeholder ingredient', color: '#7da7ff' },
-]
+const blankDraft = (mealId: MealId = 'breakfast'): QuickAddDraft => ({
+  mealId,
+  name: '',
+  qty: '100',
+  unit: 'g',
+  protein: '',
+  calories: '',
+  carbs: '',
+  fat: '',
+  fibre: '',
+  cost: '',
+})
+
+function updateMealIngredients(
+  today: TodayData,
+  mealId: MealId,
+  updater: (ingredients: Ingredient[]) => Ingredient[],
+): TodayData {
+  const meal = today.meals?.[mealId]
+  const dishes = meal?.dishes ?? []
+  const firstDish = dishes[0] ?? { id: `prototype-${mealId}`, ingredients: [] }
+  const ingredients = updater([...(firstDish.ingredients ?? [])])
+
+  return {
+    ...today,
+    meals: {
+      ...today.meals,
+      [mealId]: {
+        ...meal,
+        dishes: [{ ...firstDish, ingredients }, ...dishes.slice(1)],
+      },
+    },
+  }
+}
 
 function TodayScreen() {
+  const [todayData, setTodayData] = useState<TodayData>(() => structuredClone(mockTodayPrototype))
+  const [isQuickAddOpen, setQuickAddOpen] = useState(false)
+  const [quickAddDraft, setQuickAddDraft] = useState<QuickAddDraft>(() => blankDraft())
+  const [toastMessage, setToastMessage] = useState('')
+  const totals = calcAll(todayData)
+
+  const openQuickAdd = (mealId: MealId) => {
+    setQuickAddDraft(blankDraft(mealId))
+    setQuickAddOpen(true)
+    setToastMessage('')
+  }
+
+  const addIngredient = () => {
+    const ingredient = createEnteredQuantityIngredient({
+      id: `mock-${Date.now()}`,
+      name: quickAddDraft.name,
+      qty: quickAddDraft.qty,
+      unit: quickAddDraft.unit,
+      protein: quickAddDraft.protein,
+      calories: quickAddDraft.calories,
+      carbs: quickAddDraft.carbs,
+      fat: quickAddDraft.fat,
+      fibre: quickAddDraft.fibre,
+      cost: quickAddDraft.cost,
+    })
+
+    setTodayData((current) => updateMealIngredients(
+      current,
+      quickAddDraft.mealId,
+      (ingredients) => [...ingredients, ingredient],
+    ))
+    const mealName = meals.find((meal) => meal.id === quickAddDraft.mealId)?.name
+    setToastMessage(`Added to ${mealName}.`)
+    setQuickAddOpen(false)
+    setQuickAddDraft(blankDraft())
+  }
+
+  const updateQuantity = (mealId: MealId, ingredientId: string, qty: string) => {
+    setTodayData((current) => updateMealIngredients(
+      current,
+      mealId,
+      (ingredients) => ingredients.map((ingredient) => (
+        ingredient.id === ingredientId
+          ? updateEnteredQuantityIngredientQty(ingredient, qty)
+          : ingredient
+      )),
+    ))
+  }
+
+  const removeIngredient = (mealId: MealId, ingredientId: string) => {
+    setTodayData((current) => updateMealIngredients(
+      current,
+      mealId,
+      (ingredients) => ingredients.filter((ingredient) => ingredient.id !== ingredientId),
+    ))
+    setToastMessage('Item removed.')
+  }
+
   return (
-    <ScreenContainer title="Today" subtitle="A friendly snapshot of your day.">
-      <SummaryCard label="Protein progress" value="82 / 120 g">
-        <div className="progress-track" aria-label="Protein progress: 68 percent">
-          <span style={{ width: '68%' }} />
-        </div>
-        <small>Static prototype values</small>
-      </SummaryCard>
-
-      <div className="macro-grid">
-        {macros.map((macro) => (
-          <MacroStatCard key={macro.label} {...macro} />
-        ))}
-      </div>
-
-      <SectionHeader title="Meals" detail="4 meals" />
-      <div className="meal-list">
+    <ScreenContainer title="Today" subtitle="Mock meals that respond instantly.">
+      <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
+        <span aria-hidden="true">+</span>
+        Quick Add
+      </button>
+      <DailySummaryCard totals={totals} />
+      <div className="today-meals">
         {meals.map((meal) => (
-          <MealPlaceholderCard key={meal.label} {...meal} />
+          <MealCard
+            key={meal.id}
+            mealId={meal.id}
+            mealName={meal.name}
+            todayData={todayData}
+            onAdd={() => openQuickAdd(meal.id)}
+            onQuantityChange={(ingredientId, qty) => updateQuantity(meal.id, ingredientId, qty)}
+            onRemove={(ingredientId) => removeIngredient(meal.id, ingredientId)}
+          />
         ))}
       </div>
-
-      <div className="quick-add">
-        <div>
-          <p className="eyebrow">Quick Add preview</p>
-          <h3>Add something delicious</h3>
-          <p>Search and quantity controls arrive in a later task.</p>
-        </div>
-        <PlaceholderActionButton label="Quick Add" />
-      </div>
+      {isQuickAddOpen && (
+        <QuickAddSheet
+          draft={quickAddDraft}
+          onChange={setQuickAddDraft}
+          onClose={() => setQuickAddOpen(false)}
+          onSubmit={addIngredient}
+        />
+      )}
+      <SuccessToast message={toastMessage} />
     </ScreenContainer>
   )
 }

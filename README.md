@@ -63,6 +63,8 @@ The production vanilla app remains at the repository root. `react-app/` is a sep
 
 The prototype includes compatibility-first TypeScript data types, pure nutrition helpers, and hardcoded mock fixtures in `react-app/src/domain/`. These helpers do not read production data or connect to browser storage.
 
+The React Today prototype uses mock state to demonstrate calculated daily and meal totals, quantity editing, removal, and a Quick Add bottom sheet. Quick Add nutrition values apply to the entered quantity. All changes reset when the page refreshes.
+
 Install and run it independently:
 
 ```bash
