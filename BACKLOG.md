@@ -1,31 +1,29 @@
 # Protein Diet Planner Backlog
 
-## 🔴 Critical Bugs
-- [x] Editing quantity resets nutrition values
-- [x] Fix Today Ingredients focus loss during multi-digit quantity edits.
-- [x] Delete Today/History ingredients by source path instead of leaving zero-value ghost rows.
-- [x] Allow safe meal reassignment from Today Ingredients.
-- [x] Hide user-facing Today dish/staple concepts while keeping compatible internal data.
-- [x] Normalize legacy Daily Staples into normal Today ingredients.
-- [x] Quick Add ingredients should remain editable
-- [ ] Piece-based custom ingredients calculate incorrectly because nutrition fields are treated as per-100 instead of per-piece.
-- [ ] Allow custom ingredients to enter nutrition for any serving amount, then convert automatically to the app's internal calculation format.
-- [x] Decouple History logging from autosave/copy actions so Weekly-to-Today copy updates Today only and does not automatically write to History.
-- [ ] Add explicit "Log Today" / "Save Today to History" action that calls saveTodayToHistory().
+## Compatibility and Cleanup
 
-## 🟡 Refactoring
-- [ ] Remove duplicate ingredient update logic
-- [ ] Centralize food calculations
-- [ ] Improve Local Storage handling
-- [ ] Standardize unit calculation logic for g, ml, and piece.
-- [ ] Add a unit normalization helper for converting serving-based nutrition into per-100 or per-piece values.
+- [ ] Make History display meal-only while preserving compatibility with old entries that contain legacy Staples or dish-style data.
+- [ ] Add stronger import validation and versioned normalization for old backup shapes.
+- [ ] Make custom ingredient ID generation collision-safe.
+- [ ] Review autosave durability when the page closes during the debounce window.
 
-## 🟢 Features
-- [ ] Merge both planner versions
-- [ ] Recipe Builder
-- [ ] Nutrition Score
-- [ ] Dashboard redesign
-- [ ] Analytics
-- [ ] Protein Optimizer
-- [ ] Mobile improvements
+## Framework Migration
 
+- [ ] Framework Migration Planning.
+- [ ] React/Vite App Shell Prototype.
+- [ ] Port Storage + Calculations while preserving current Local Storage keys and backups.
+- [ ] Port Today + Quick Add.
+- [ ] PWA Deploy + QA for the migrated app.
+
+## Product and Design
+
+- [ ] Option C colorful and friendly redesign.
+- [ ] Continue mobile and app-like navigation polish.
+- [ ] Add analytics and dashboard views.
+- [ ] Add a light/dark theme system and editable targets.
+- [ ] Improve Quick Add with search, categories, and quantity prompts.
+- [ ] Add reusable recipes or meal templates.
+
+## Future Platform
+
+- [ ] Consider a Capacitor or native Android wrapper only after the React/Vite PWA is stable.

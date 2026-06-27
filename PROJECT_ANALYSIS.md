@@ -1,135 +1,65 @@
 # Project Analysis
 
-## Architecture Overview
+## Current Architecture
 
-Protein Diet Planner is a static, client-side diet tracking application. The app is designed to work without a server, build step, framework, package manager, or database.
+Protein Diet Planner is a static client-side PWA built with HTML, CSS, and Vanilla JavaScript. It has no backend, database, runtime framework, or runtime build step.
 
-The active application is implemented almost entirely in `index.html`:
+Runtime files:
 
-- HTML defines the visible app shell and view containers.
-- Inline CSS defines all layout, colors, controls, cards, tables, tabs, and responsive behavior.
-- Inline JavaScript defines state, storage, calculations, rendering, event handlers, export/import, and basic PWA setup.
-- An inline web app manifest is embedded as a data URL.
-- An inline service worker is generated from a JavaScript string and registered through a blob URL.
+- `index.html`: application markup, inline styles, state, calculations, rendering, and actions.
+- `js/storage.js`: global `KEYS` and `LS` persistence helpers.
+- `manifest.json`: external web app manifest.
+- `sw.js`: external service worker and app-shell cache.
+- `icons/`: install icons.
 
-Other repository files:
+The app is hosted through GitHub Pages and can be installed as a PWA. The current service-worker cache is `protein-planner-v0.5.5`.
 
-- `README.md`: project overview, usage, feature list, technologies, and roadmap.
-- `CONTRIBUTING.md`: contribution rules focused on minimal changes, Local Storage compatibility, no frameworks, and direct `index.html` support.
-- `BACKLOG.md`: planned bugs, refactors, and feature ideas.
-- `script.js`: empty placeholder.
-- `style.css`: empty placeholder.
-- `PROJECT_ANALYSIS.md`: this analysis document.
+Playwright and npm are development-only QA tooling. They do not change the plain HTML/CSS/JavaScript runtime.
 
-There is no module system. The JavaScript relies on global constants, global mutable state, helper functions, render functions, and inline DOM event attributes such as `onclick`, `onchange`, and `oninput`.
+No React/Vite migration has started. A staged React/Vite/TypeScript migration is planned in `ROADMAP.md` and accepted in ADR-005.
 
-Main UI areas:
+## User-Facing Areas
 
-- Header metrics for today's protein, today's cost, seven-day spend, and 30-day average.
-- View tabs for Today, Weekly Plan, and History.
-- Today view with meal tabs, meal ingredient panels, editable ingredient table, and quick-add form.
-- Weekly Plan view with current-week day tabs and planned ingredients.
-- History view with last-30-days summaries and day details.
-- Cost per gram of protein table.
-- Backup and restore controls.
+- Today: summary metrics, meal tabs, meal ingredient rows, Quick Add, custom ingredients, and the editable Today Ingredients table.
+- Weekly Plan: ingredients grouped by date and meal, with copy-to-Today behavior.
+- History: recent day summaries and editable previous-day details.
+- Cost / Protein Table.
+- Backup export and import.
 
-## Data Flow
+Today is meal-first. Users do not see dish controls or a fixed Daily Staples section. Today Ingredients supports quantity and nutrition edits, meal reassignment, and source-path deletion.
 
-The app follows a direct state-to-DOM flow:
+Old History entries may still display legacy Staples or dish-style information so historical data remains readable.
 
-1. Browser loads `index.html`.
-2. Constants and helper functions are defined.
-3. Persistent state is read from Local Storage using `LS.get`.
-4. Missing meal buckets are patched into `todayData` for compatibility.
-5. Global UI state is initialized, including current view, current meal, selected history date, selected weekly day, and temporary form state.
-6. `render()` runs once at startup.
-7. Render functions calculate totals from global state and replace DOM sections with generated HTML strings.
-8. User actions call global functions through inline event handlers.
-9. Those functions mutate global state directly.
-10. Most state changes call `autosave()`.
-11. `autosave()` waits 800ms, writes state to Local Storage, snapshots today into the history log, trims old history entries, and updates the saved timestamp.
-12. Action handlers call targeted render functions or full `render()` to refresh the UI.
+## State and Data Flow
 
-The app does not use a central store, virtual DOM, router, controller layer, or immutable state updates.
+The app uses global mutable state and direct state-to-DOM rendering:
 
-Important state objects:
+1. `js/storage.js` defines `KEYS` and `LS`.
+2. `index.html` loads persisted state from Local Storage.
+3. Startup compatibility logic fills missing meal buckets and normalizes active legacy staples.
+4. Render functions derive totals and replace targeted DOM sections.
+5. Inline event handlers call global action functions.
+6. Actions update state, persist through `autosave()`, and rerender the affected UI.
 
-- `custom`: custom ingredient library entries.
-- `log`: saved daily history.
+Important state:
+
+- `todayData`: the active day, including `dateKey` and meals.
+- `custom`: custom ingredient library.
 - `weekPlan`: planned ingredients by date and meal.
-- `staples`: daily staple foods and checked states.
-- `todayData`: today's meals, dishes, and ingredients.
-- `dishForms`: transient UI state for add-dish/add-ingredient forms.
+- `log`: History entries.
+- `staples`: retained compatibility state that is normally empty after normalization.
 
-## Ingredient Model
+## Today Data Model
 
-The app uses multiple ingredient shapes. This is one of the most important things to preserve when changing code.
+The internal Today model remains:
 
-### Built-In Library Ingredients
-
-Built-in foods live in `LIB`.
-
-They store nutrition and cost as per-unit values:
-
-```js
-{
-  n: 'Chicken breast (raw)',
-  u: 'g',
-  s: 25,
-  max: 250,
-  pp: 122 / 235,
-  pr: 0.225,
-  kc: 1.20,
-  carb: 0,
-  fat: 0.031,
-  fibre: 0,
-  t: 'p'
-}
+```text
+meals -> dishes -> ingredients
 ```
 
-Fields:
+This shape is preserved for existing Local Storage data, backups, Weekly-to-Today copying, and History compatibility. The Today UI flattens ingredients for display and hides the dish concept from users. New Quick Add, custom, and copied ingredients are placed into an internal default dish.
 
-- `n`: display name.
-- `u`: unit, usually `g`, `ml`, or `piece`.
-- `s`: default serving or quantity step.
-- `max`: optional max quantity.
-- `pp`: price per unit.
-- `pr`: protein per unit.
-- `kc`: calories per unit.
-- `carb`: carbs per unit.
-- `fat`: fat per unit.
-- `fibre`: fibre per unit.
-- `t`: type, currently `p` or `v`.
-
-### Custom Library Ingredients
-
-Custom foods created through the Today quick-add form are stored in `custom`.
-
-Users enter values as per-100, but the app converts them to per-unit before storing:
-
-```js
-custom[id] = {
-  n: name,
-  u: unit,
-  s: step,
-  max: null,
-  pp: pp100 / 100,
-  pr: pr100 / 100,
-  kc: kc100 / 100,
-  carb: carb100 / 100,
-  fat: fat100 / 100,
-  fibre: fibre100 / 100,
-  t: type
-}
-```
-
-These custom entries behave like `LIB` entries and are referenced through `libId`.
-
-### Today Meal Ingredients
-
-Ingredients inside dishes can be library-backed or ad hoc.
-
-Library-backed ingredient:
+Library-backed ingredient example:
 
 ```js
 {
@@ -140,7 +70,7 @@ Library-backed ingredient:
 }
 ```
 
-Ad hoc ingredient:
+Editable snapshot example:
 
 ```js
 {
@@ -156,248 +86,81 @@ Ad hoc ingredient:
 }
 ```
 
-Ad hoc ingredients store per-100 values directly.
+Library and custom-library nutrition values are stored per unit. Editable `pr100`, `kc100`, and related fields mean per 100 g/ml, but per piece when `unit === 'piece'`.
 
-### Legacy Staples
+Quantity-only edits preserve `libId`. Direct edits to name, unit, macros, or cost use `ensureEditableIngredient()` to detach a library-backed ingredient into an editable snapshot.
 
-Legacy staples may appear in old backups or history entries. Current Today startup/import normalization converts Today staples into normal Breakfast ingredients, clears active Today staples, and keeps old History entries readable.
+## Legacy Staples
 
-```js
-{
-  id: 'st_egg',
-  name: 'Whole egg',
-  qty: 5,
-  unit: 'piece',
-  pr: 6,
-  kc: 78,
-  carb: 0.6,
-  fat: 5,
-  fibre: 0,
-  pp: 250 / 30,
-  checked: true,
-  mealId: 'breakfast'
-}
-```
+Today no longer presents Daily Staples as a separate feature. On startup and import, active legacy staples are converted into normal Breakfast ingredients, deduplicated when necessary, and removed from active staple state.
 
-Legacy staples use per-unit values and may include `mealId`; after Today normalization they are stored as ordinary ingredients inside the existing meals → dishes → ingredients shape.
+The compatibility flow:
 
-### Weekly Plan Ingredients
+- Accepts legacy staples from the top-level `staples` state or `todayData.staples`.
+- Converts per-unit nutrition into the normal editable field representation.
+- Preserves `libId` and piece-unit values where present.
+- Adds converted items to an internal Breakfast dish.
+- Clears active staple storage so repeated reloads do not duplicate ingredients.
 
-Weekly plan items are grouped by date key and meal ID:
+`calcDayLog()` continues to understand old History entries containing staples. History cleanup is deferred because old data must remain readable.
 
-```js
-weekPlan[dateKey][mealId] = [
-  { libId, name, qty, unit },
-  { name, qty, unit, pr100, kc100, pp100 }
-]
-```
+## Nutrition Calculations
 
-Library-backed weekly items use `libId`. Custom weekly items use per-100 values but currently collect only protein, calories, and cost from the Weekly Plan UI.
+- `qtyFactor(unit, qty)`: uses `qty / 100` for g/ml and `qty` for pieces.
+- `calcFromP100(item)`: calculates editable/ad hoc ingredient totals.
+- `calcFromPerUnit(food, qty)`: calculates library/custom-library totals.
+- `calcIngr(ingredient)`: selects the correct calculation path.
+- `calcDish(dish)`, `calcMealToday(mealId)`, and `calcAll()`: aggregate Today totals.
+- `calcPlanDay(dateKey)`: aggregates Weekly Plan totals through shared ingredient logic.
+- `calcDayLog(entry)`: aggregates current and legacy History shapes.
+- `pu2p100()` and `p100pu()`: convert g/ml display values while leaving piece values per piece.
 
-## Local Storage Model
+Weekly-to-Today copy deep-clones ingredient objects and does not recalculate, convert units, remove `libId`, or mutate the source plan.
 
-Local Storage is the only persistence layer.
+## Persistence
 
-Storage helper:
+`KEYS` and `LS` live in `js/storage.js` and must not be moved back into `index.html`.
 
-```js
-const LS = {
-  get(k) {
-    try {
-      const v = localStorage.getItem(k);
-      return v ? JSON.parse(v) : null;
-    } catch (e) {
-      return null;
-    }
-  },
-  set(k, v) {
-    try {
-      localStorage.setItem(k, JSON.stringify(v));
-    } catch (e) {}
-  }
-};
-```
+Current Local Storage keys:
 
-Storage keys:
+- `pptd_v5`: Today data.
+- `ppc_v5`: custom ingredient library.
+- `ppwk_v5`: Weekly Plan.
+- `ppst_v5`: legacy staple compatibility state.
+- `ppl_v5`: History log.
 
-- `pptd_v5`: `todayData`, including meals, dishes, ingredients, and collapsed states.
-- `ppc_v5`: `custom`, the custom ingredient library.
-- `ppwk_v5`: `weekPlan`, the weekly planner state.
-- `ppst_v5`: `staples`, including quantities, checked states, nutrients, and meal assignments.
-- `ppl_v5`: `log`, the daily history log.
+Export/import preserves the current backup structure, including `custom`, `log`, `weekPlan`, `staples`, and `todayData`. Storage keys and exported field names must remain compatible unless a separately approved migration is provided.
 
-Autosave behavior:
+Normal autosave persists working state. History logging is intentionally separated from ordinary autosave and Weekly-to-Today copy. Daily rollover and explicit History actions control History snapshots.
 
-- Debounced by 800ms using `saveTimer`.
-- Writes `todayData`, `custom`, `weekPlan`, and `staples`.
-- Creates a deep-copy snapshot of `{ meals: todayData.meals, staples }`.
-- Saves that snapshot as `log[todayKey()]`.
-- Adds `savedAt`.
-- Sorts log keys and keeps only the latest 30 entries.
-- Writes `log`.
-- Updates the `saved-ts` DOM label.
+## PWA
 
-Backup behavior:
+- `manifest.json` provides install metadata.
+- `sw.js` caches the app shell for offline reload.
+- `tests/pwa-smoke.spec.js` verifies hosted or local service-worker registration, cache creation, and offline reload.
+- The current cache name is `protein-planner-v0.5.5`.
 
-- `exportData()` downloads JSON containing `version`, `exportedAt`, `custom`, `log`, `weekPlan`, `staples`, and `todayData`.
-- `importData(input)` parses a selected JSON file, conditionally replaces matching state objects, writes all storage keys, and rerenders.
+When `index.html` changes, the cache name in `sw.js` and the expected name in the PWA smoke test must be updated together. `skipWaiting()` and `clients.claim()` are not part of the approved update strategy.
 
-Compatibility concerns:
+## Current Compatibility Risks
 
-- Existing storage keys must be preserved.
-- Existing object shapes must remain readable.
-- Import/export should remain compatible with current backup files.
-- No migration layer currently exists despite `version: 5` in exports.
+- Import validation and versioned migration are limited.
+- Old History entries can retain legacy Staples and dish-style display.
+- The internal dish shape remains coupled to compatibility code even though Today hides it.
+- Autosave debounce can lose a very recent change if the page closes immediately.
+- Custom ingredient ID generation should be made collision-safe.
+- Weekly custom-item fields and meal selection need further review.
+- User/imported string escaping is not uniform across every inline handler context.
 
-## Main Functions
+## Planned Direction
 
-### Constants and Lookup
+The current vanilla PWA remains the production base. Planned work proceeds in stages:
 
-- `fd(id)`: returns an ingredient from `LIB` or `custom`.
-- `clamp(id, v)`: clamps quantity based on a food's optional `max`; currently not widely used.
+1. Framework migration planning.
+2. React/Vite app shell prototype.
+3. Storage and calculation port with compatibility tests.
+4. Today and Quick Add port.
+5. Analytics and theme system.
+6. PWA deployment and QA.
 
-### State Initialization
-
-- `blankDay()`: creates a day object with meal buckets for all entries in `MEAL_DEFS`.
-- Startup meal patching ensures any missing meal ID exists in loaded `todayData`.
-
-### Persistence
-
-- `LS.get(k)`: reads and parses Local Storage JSON.
-- `LS.set(k, v)`: serializes and writes Local Storage JSON.
-- `autosave()`: debounced persistence plus daily history logging.
-
-### Dates
-
-- `todayKey()`: current local date as `YYYY-MM-DD`.
-- `pad(n)`: two-character numeric padding.
-- `getWeekDays()`: current Monday-to-Sunday week as date keys.
-- `fmtDate(k)`: short date display.
-- `fmtDateFull(k)`: weekday/month/day/year display.
-- `last30Keys()`: rolling 30 date keys.
-
-### Calculations
-
-- `zero()`: creates an empty totals accumulator.
-- `addV(a, b)`: adds two totals accumulators.
-- `calcRow(r)`: calculates totals for per-unit rows such as staples and library foods.
-- `calcIngr(ing)`: calculates one dish ingredient, using `libId` for per-unit library/custom-library foods or `pr100`/`kc100` fields for ad hoc foods.
-- `calcDish(dish)`: sums ingredients in a dish.
-- `calcMealToday(mId)`: sums checked staples assigned to the meal and dish ingredients in that meal.
-- `calcAll()`: sums all checked staples and all dish ingredients for today.
-- `calcDayLog(entry)`: calculates totals for a saved history entry.
-- `last7Cost()`: sums logged cost for the last 7 date keys.
-- `last30Avg()`: averages logged protein over available logged days.
-- `calcPlanDay(dateKey)`: calculates weekly plan totals for a date.
-- `pu2p100(pu, unit)`: converts per-unit values to per-100 display values, except pieces stay per-piece.
-- `p100pu(v, unit)`: converts per-100 display values back to per-unit storage, except pieces stay per-piece.
-
-### Rendering
-
-- `render()`: top-level render for the Today view and shared sections.
-- `renderBars()`: summary cards and progress bars.
-- `renderStaples()`: legacy no-op guard retained for compatibility.
-- `renderMealTabs()`: meal tabs with protein totals.
-- `renderMealPanels()`: active meal and ingredient rows; internal dishes are not exposed in the Today UI.
-- `renderIngrForm(mId, di)`: legacy add-ingredient form retained for compatibility with internal dish functions.
-- `renderAllIngr()`: editable table of today's meal ingredients.
-- `renderLibPills()`: quick-add library/custom food buttons.
-- `renderCostTable()`: protein cost comparison table.
-- `renderWeekPlan()`: current-week planner UI.
-- `renderHistory()`: last-30-days grid.
-- `renderHistDetail(key)`: selected history day details.
-
-### User Actions
-
-- View switching: `showView(v)`.
-- Legacy staples: `stToggle`, `stStep`, `stQty`, `stMeal`, `updateSt`, `stQtyRow`, `updateStPer`.
-- Meal/dish actions: `switchMeal`, `toggleMeal`, `openDishForm`, `closeDishForm`, `commitDish`, `removeDish`; dish controls are not user-facing in the current Today UI.
-- Ingredient actions: `toggleIngrForm`, `closeIngrForm`, `commitIngr`, `addLibIngrToDish`, `removeIngr`, `quickAddLib`, `addCustomIngr`, `updateIngr`, `updateIngrQty`, `ingrStep`, `updateIngr100`.
-- Weekly plan actions: `initWkDay`, `selWkDay`, `wkStep`, `wkSetQty`, `removeWkItem`, `addWkLib`, `addWkCustom`, `clearWeekDay`, `copyPlanToToday`.
-- Backup: `exportData`, `importData`.
-
-## Existing Features
-
-- Static browser app that can run by opening `index.html`.
-- Daily protein, cost, seven-day spend, and 30-day average metrics.
-- Protein target progress bar.
-- Seven-day budget progress bar.
-- Built-in food library.
-- Custom food creation.
-- Legacy staple normalization into normal Today ingredients.
-- Meal categories: breakfast, lunch, dinner, snacks.
-- Meal tabs with per-meal protein totals.
-- Add/remove meal ingredients while preserving internal dish storage.
-- Add library/custom-library foods to meals.
-- Add ad hoc ingredients with nutrition and cost values.
-- Editable all-ingredients table.
-- Quantity steppers and numeric inputs.
-- Per-100 nutrition/cost editing.
-- Automatic debounced Local Storage persistence.
-- Automatic daily logging.
-- Last-30-days history overview.
-- History day detail view.
-- Weekly ingredient plan for the current week.
-- Weekly plan item quantity controls.
-- Weekly plan clear-day action.
-- Copy weekly plan for today into Today meals.
-- Cost per gram of protein comparison table.
-- JSON export backup.
-- JSON import restore.
-- Inline PWA manifest.
-- Basic service worker registration when served in a compatible browser context.
-
-## Known Bugs
-
-Known from code review and `BACKLOG.md`:
-
-- Editing quantity is listed in the backlog as resetting nutrition values. In current code, quantity edits call `updateIngrQty()` and should only change `qty`; however related editing paths still need testing because library detachment and per-100 conversion are fragile.
-- Quick Add ingredients should remain editable is listed in the backlog. Quick-added foods are library-backed through `libId`, and editing some fields detaches them from the library.
-- `todayData` is not keyed by date and does not automatically reset on a new day. Opening the app tomorrow may show yesterday's current meal data under today's label.
-- `uid` is initialized with `Object.keys(custom).length`, so custom IDs can collide after deletion, import, or non-contiguous IDs.
-- Changing a library-backed ingredient's `unit` in `updateIngr()` clears `libId` without copying the library's nutrition fields first. The ingredient can then calculate as zero.
-- Changing a staple's `unit` does not convert existing per-unit nutrition/cost values, so values may be reinterpreted incorrectly.
-- `met()` has malformed template output: an extra `}` appears in the generated `<div class="mv"...>` markup.
-- Autosave is debounced, so closing the page within 800ms of a change can lose that change.
-- Seven-day spend reads from `log`, so it can lag behind visible today totals until autosave logs today.
-- `addWkLib()` uses the Today quick-add meal selector `in-meal` to choose the weekly meal, even though that selector is hidden while using Weekly Plan.
-- `addWkCustom()` always assigns custom weekly items to `snacks`.
-- Weekly custom plan items collect only protein, calories, and cost; when copied to Today, carbs, fat, and fibre are set to zero.
-- Import accepts arbitrary object shapes without validation or migration.
-- Some rendered text is escaped with `esc()`, but not every interpolation is protected equally, especially imported data and inline handler contexts.
-- Service worker caching only adds `'.'`, which is minimal and may not provide robust offline behavior.
-- The inline manifest and service worker approach may behave differently when opened as a local file versus served over HTTP.
-
-## Duplicate Logic
-
-Several concepts are implemented more than once:
-
-- Per-unit versus per-100 calculation is repeated in `calcIngr()` and `calcPlanDay()`.
-- Library item total calculation appears in `calcIngr()` and again inline inside `calcPlanDay()`.
-- Custom per-100 item total calculation appears in `calcIngr()` and again inline inside `calcPlanDay()`.
-- Rendering-time per-100 display conversion is repeated for staples and ingredients in `renderAllIngr()`.
-- Quantity parsing and clamping appears in `stQty`, `stQtyRow`, `updateIngrQty`, `ingrStep`, `wkStep`, and `wkSetQty`.
-- Add-from-library behavior is similar in `addLibIngrToDish`, `quickAddLib`, and `addWkLib`.
-- Custom ingredient parsing is similar in `commitIngr`, `addCustomIngr`, and `addWkCustom`.
-- Totals are recomputed independently in render functions rather than cached or centralized.
-- Protein threshold color logic is repeated in daily metrics, weekly plan progress, and history rendering.
-- Backup/import and autosave both manually write multiple Local Storage keys.
-
-## Possible Improvements
-
-Keep improvements minimal and compatible with the contribution rules.
-
-- Add a small date-aware wrapper around `todayData` so the app can safely handle new-day rollover without breaking existing `pptd_v5` data.
-- Centralize ingredient calculation into one helper that both `calcIngr()` and `calcPlanDay()` can reuse.
-- Add a helper for converting a library-backed item into detached per-100 fields before clearing `libId`.
-- Add a safe custom ID generator that scans existing `custom` keys and avoids collisions.
-- Add validation and normalization for imported backup data.
-- Add a versioned migration function for future Local Storage changes.
-- Centralize target constants such as protein goal, green/amber thresholds, weekly budget, history length, and autosave delay.
-- Make weekly plan meal selection explicit instead of relying on the hidden Today selector or defaulting to snacks.
-- Preserve carbs, fat, and fibre for weekly custom plan items.
-- Extract CSS into `style.css` and JavaScript into `script.js` only if direct `index.html` usage remains supported.
-- Add lightweight manual or automated calculation tests without introducing frameworks or npm packages.
-- Improve escaping consistency for imported/user-provided strings.
-- Split large render functions into smaller functions while preserving the current UI and behavior.
-- Make Local Storage write failures visible enough for debugging instead of silently swallowing all errors.
+The migration must preserve Local Storage keys, backup compatibility, calculation behavior, GitHub Pages hosting, and installable/offline PWA behavior.

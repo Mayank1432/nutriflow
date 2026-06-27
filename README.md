@@ -1,114 +1,82 @@
 # Protein Diet Planner
 
-Protein Diet Planner is a lightweight, browser-based diet tracking app focused on daily protein intake, food cost, and simple meal planning. It runs entirely on the client side and stores data in the browser using Local Storage.
-
-## Purpose
-
-The project helps users plan and track a protein-focused diet without needing an account, server, or database. It is designed for quick daily use: check staple foods, add meals and ingredients, monitor protein totals, estimate cost, and keep a rolling history of recent days.
+Protein Diet Planner is a lightweight, browser-based app for tracking daily protein, nutrition, and food cost. It runs entirely in the browser, stores data in Local Storage, and requires no account, backend, or runtime build step.
 
 ## Features
 
-- Daily protein, calories, macronutrients, fibre, and cost tracking.
-- Built-in ingredient library with common protein sources.
-- Custom ingredient creation with nutrition and price data.
-- Daily staples such as eggs, milk, and almonds with checkboxes and quantity controls.
-- Meal organization for breakfast, lunch, dinner, and snacks.
-- Dish and ingredient management inside each meal.
-- Editable all-ingredients table for quick corrections.
-- Protein target progress bar and weekly spend progress bar.
-- Weekly ingredient planning by day.
-- Copy planned ingredients into today's meals.
-- Last 30 days history view.
-- Cost-per-gram-of-protein comparison table.
+- Meal-first Today view for breakfast, lunch, dinner, and snacks.
+- Daily protein, calories, macros, fibre, and cost tracking.
+- Built-in and custom ingredient libraries.
+- Editable Today Ingredients table with quantity, nutrition, cost, meal reassignment, and delete controls.
+- Weekly ingredient planning with Weekly-to-Today copy.
+- Last-30-days History with editable previous days.
+- Cost-per-gram-of-protein comparison.
 - JSON backup export and import.
-- Basic PWA support through an inline manifest and service worker.
+- Installable PWA with an offline app shell.
 
-## Folder Structure
+Today does not expose dishes or a fixed Daily Staples section. The internal `meals -> dishes -> ingredients` structure remains for data compatibility, and legacy Today staples are normalized into normal Breakfast ingredients.
+
+## Stack
+
+- HTML5 and CSS3
+- Vanilla JavaScript
+- Browser Local Storage
+- External `manifest.json` and `sw.js`
+- Playwright for development-only PWA smoke testing
+
+The runtime app has no backend, framework, or build step. A staged React/Vite migration is planned but has not started.
+
+## Repository
 
 ```text
 Protein Diet Planner/
-├── index.html             # Main application: HTML, CSS, JavaScript, PWA setup
-├── README.md              # Project documentation
-├── PROJECT_ANALYSIS.md    # Technical analysis of the current codebase
-├── script.js              # Currently empty placeholder
-├── style.css              # Currently empty placeholder
-└── CONTRIBUTING.md        # Currently empty placeholder
+|-- index.html              # Runtime application
+|-- js/storage.js           # Local Storage keys and helper
+|-- manifest.json           # PWA manifest
+|-- sw.js                   # Service worker and app-shell cache
+|-- icons/                  # Install icons
+|-- tests/                  # Playwright PWA smoke test
+|-- README.md               # User and developer overview
+|-- CONTRIBUTING.md         # Workflow and contribution rules
+|-- PROJECT_ANALYSIS.md     # Current technical architecture
+|-- BACKLOG.md              # Pending work
+|-- ROADMAP.md              # Planned task sequence
+`-- DECISIONS.md            # Architecture decisions
 ```
 
-The active application code currently lives in `index.html`.
+## Run Locally
 
-## How to Run Locally
-
-No installation is required.
-
-1. Download or clone the project.
-2. Open `index.html` in a modern browser.
-
-For better PWA/service-worker behavior, serve the folder through a local web server:
-
-```bash
-python -m http.server 8000
-```
-
-Then open:
-
-```text
-http://localhost:8000
-```
-
-## PWA Smoke Test
-
-Install dev dependencies:
-
-```bash
-npm install
-```
-
-Install Chromium for Playwright:
-
-```bash
-npx playwright install chromium
-```
-
-Run against live GitHub Pages in PowerShell:
-
-```powershell
-$env:PWA_BASE_URL="https://mayank1432.github.io/protein-diet-planner/"
-npm run test:pwa
-```
-
-Run against a local static server:
+The page can be opened directly for basic use. Serve the repository over HTTP to test service-worker and install behavior:
 
 ```bash
 python -m http.server 4173
 ```
 
-Then in another PowerShell terminal:
+Then open `http://127.0.0.1:4173/`.
+
+The hosted app is deployed through GitHub Pages.
+
+## PWA Smoke Test
+
+Install development dependencies and Playwright Chromium once:
+
+```bash
+npm install
+npx playwright install chromium
+```
+
+Run against the local server from another PowerShell terminal:
 
 ```powershell
 $env:PWA_BASE_URL="http://127.0.0.1:4173/"
 npm run test:pwa
 ```
 
-## Technologies Used
+Run against GitHub Pages:
 
-- HTML5
-- CSS3
-- Vanilla JavaScript
-- Browser Local Storage
-- Browser File APIs for backup import/export
-- Service Worker API for basic offline support
-- Web App Manifest via inline data URL
+```powershell
+$env:PWA_BASE_URL="https://mayank1432.github.io/protein-diet-planner/"
+npm run test:pwa
+```
 
-## Future Roadmap
-
-- Split inline CSS and JavaScript into `style.css` and `script.js`.
-- Add automatic new-day rollover for daily tracking.
-- Add stronger validation for imported backup files.
-- Improve data migration support between storage versions.
-- Add tests for nutrition calculations and Local Storage behavior.
-- Add configurable protein and budget targets.
-- Add meal selection controls for weekly plan custom items.
-- Improve accessibility and keyboard navigation.
-- Add charts for protein, calorie, and spend trends.
-- Support reusable meal templates or saved recipes.
+See `ROADMAP.md` for planned migration and product work. Detailed current internals live in `PROJECT_ANALYSIS.md`.

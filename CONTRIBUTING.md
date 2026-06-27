@@ -1,82 +1,93 @@
 # Contributing to Protein Diet Planner
 
-Thanks for contributing. This project is intentionally simple: a browser-based app that works by opening `index.html` directly. Contributions should protect that simplicity.
+Keep changes focused, preserve existing user data, and treat the repository documentation as the source of truth.
 
-## Core Rules
+## Project Operating Model
 
-- Never redesign the UI unless explicitly requested.
-- Never rewrite the application.
-- Keep changes minimal and focused.
-- Preserve Local Storage compatibility.
-- Preserve existing functionality.
-- Reuse existing functions wherever possible.
-- Avoid duplicate logic.
-- Explain every modified function in your change notes.
-- Keep JavaScript readable.
-- Do not add frameworks.
-- Do not add npm packages.
-- The app must continue working by opening `index.html` directly in a browser.
+- User: Product Owner.
+- Main Chat: Project Manager and Release Manager.
+- Sprint Chat: Engineer, System Designer, and Engineering Reviewer.
+- Codex: Implementer only.
+- QA Chat: Tester only.
+- Repository docs: source of truth for current behavior, architecture, plans, and process.
 
-## Development Guidelines
+## Implementation Workflow
 
-Before making changes, read the relevant parts of `index.html` and understand the current data flow. Most behavior is implemented with plain JavaScript, global state, render functions, and Local Storage persistence.
+1. Main Chat plans the task.
+2. Main Chat gives an analysis prompt to Sprint Chat.
+3. Sprint Chat provides an analysis report.
+4. Main Chat reviews the analysis and approves the implementation direction.
+5. Sprint Chat generates the Codex prompt only.
+6. The user sends Sprint Chat's prompt directly to Codex.
+7. Codex implements and reports to Sprint Chat.
+8. Sprint Chat performs engineering review and reports to Main Chat.
+9. Main Chat reviews the engineering report and gives the QA prompt.
+10. QA Chat tests and reports `PASS`, `PASS WITH LIMITATIONS`, or `FAIL`.
+11. Main Chat reviews QA.
+12. Main Chat helps commit.
+13. Main Chat helps merge.
+14. Main Chat helps perform the post-merge live check.
+15. Main Chat closes the task only after the live check passes.
 
-Prefer small edits over broad restructuring. If a bug can be fixed by adjusting one existing function, do that instead of introducing a new architecture.
+## Codex Prompt Review Rule
 
-When adding behavior:
+Main Chat does not review every Codex prompt by default. Main Chat reviews a prompt when the task is high risk, scope is unclear, storage or schema changes are involved, deployment strategy changes, or the user asks for review.
 
-- Use existing state shapes.
-- Use existing calculation helpers when possible.
-- Use existing render/update patterns.
-- Keep storage keys compatible.
-- Keep backup import/export compatible with existing data.
-- Avoid changing user-visible behavior outside the requested scope.
+## Approval Authority
+
+Only Main Chat and the user approve:
+
+- Task scope.
+- Implementation direction.
+- Sending work to QA.
+- QA result acceptance and QA approval.
+- Commits.
+- Merges.
+- Task completion.
+
+Sprint Chat may say: "Ready to send to Main Chat for final review and QA prompt."
+
+Sprint Chat must not approve commits or merges, declare a task complete, or approve QA. Codex must not commit unless explicitly instructed, merge, or approve anything. QA Chat must not change code, approve commits or merges, or declare a task complete.
+
+## Engineering Rules
+
+- Read the relevant implementation and data flow before editing.
+- Keep changes minimal and within the approved scope.
+- Preserve Local Storage keys, stored shapes, and backup compatibility.
+- Preserve existing behavior outside the task.
+- Reuse existing helpers and avoid duplicate logic.
+- Do not add frameworks, dependencies, or build steps without approval.
+- Keep the current runtime usable as plain HTML, CSS, and JavaScript until the planned migration begins.
 
 ## Local Storage Compatibility
 
-The app stores user data in browser Local Storage. Changes must not break existing saved data.
-
-Be careful with:
-
-- Local Storage keys.
-- Ingredient object shapes.
-- Staple object shapes.
-- Weekly plan object shapes.
-- History log object shapes.
-- Custom ingredient IDs.
-- Backup export/import format.
-
-If a data shape must change, include a migration path that preserves existing user data.
-
-## JavaScript Style
-
-Use plain, readable JavaScript.
-
-- Prefer clear names over clever abbreviations for new code.
-- Keep functions small when adding new functionality.
-- Avoid repeating calculation logic.
-- Add comments only when they clarify non-obvious behavior.
-- Do not introduce build steps, bundlers, transpilers, or dependencies.
+Changes must preserve existing saved data. Take particular care with ingredient, weekly plan, History, custom-library, and legacy staple shapes. Any approved shape change needs an explicit compatibility or migration path.
 
 ## Testing Changes
 
-After any change, verify that:
+Test in proportion to the change. Runtime work should cover affected workflows, persistence, calculations, import/export, and PWA behavior where relevant. Documentation-only work needs documentation checks and confirmation that runtime files were untouched.
 
-- `index.html` opens directly in a browser.
-- Existing saved data still loads.
-- Daily totals still calculate correctly.
-- Staples still work.
-- Meals, dishes, and ingredients can still be added and edited.
-- Weekly planning still works.
-- History still renders.
-- Export and import still work.
+## Documentation Checkpoint
 
-## Change Notes
+Every task must check whether these files need updates:
 
-Every contribution should explain:
+- `CHANGELOG.md`: what shipped.
+- `BACKLOG.md`: remaining work and follow-ups.
+- `ROADMAP.md`: long-term task order changes.
+- `DECISIONS.md`: architecture or product decisions.
+- `PROJECT_ANALYSIS.md`: current architecture or state.
+- `README.md`: user-facing features or setup.
+- `CONTRIBUTING.md`: workflow or process.
 
-- What changed.
-- Why it changed.
-- Which functions were modified.
-- How each modified function behaves after the change.
-- What manual testing was performed.
+Only update documents affected by the task.
+
+## Runtime App and PWA Rule
+
+- If `index.html` changes, bump the cache name in `sw.js`.
+- Update the expected cache name in `tests/pwa-smoke.spec.js`.
+- Do not add `skipWaiting()` or `clients.claim()` unless separately approved.
+- Documentation-only changes do not require a PWA cache bump.
+
+## Change Report
+
+Implementation reports should identify what changed, why, files and functions affected, checks performed, known limitations, and Git status. Codex must not commit unless the approved prompt or Main Chat explicitly instructs it to do so.
