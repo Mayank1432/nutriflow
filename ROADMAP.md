@@ -46,6 +46,8 @@ Port persistence and nutrition logic before feature screens:
 - Port calculation and unit-conversion helpers.
 - Add focused calculation and storage tests.
 
+Current implementation: compatibility-first types and pure calculation helpers are available in `react-app/src/domain/` with mock fixtures and lightweight verification. Real Local Storage access, protected-key integration, data migration, and production feature wiring remain deferred.
+
 ### Task 9 - Port Today + Quick Add
 
 Port the core daily workflow:

@@ -61,6 +61,8 @@ The hosted app is deployed through GitHub Pages.
 
 The production vanilla app remains at the repository root. `react-app/` is a separate prototype package with static placeholder data, local navigation state, and no Local Storage or service-worker integration.
 
+The prototype includes compatibility-first TypeScript data types, pure nutrition helpers, and hardcoded mock fixtures in `react-app/src/domain/`. These helpers do not read production data or connect to browser storage.
+
 Install and run it independently:
 
 ```bash
@@ -73,6 +75,12 @@ Create a production build of the prototype:
 
 ```bash
 npm run build
+```
+
+Run the lightweight mock nutrition verification:
+
+```bash
+npm run verify:nutrition
 ```
 
 Generated `react-app/dist/` output and `node_modules/` are ignored.

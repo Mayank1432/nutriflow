@@ -28,6 +28,17 @@ A staged React/Vite/TypeScript migration is planned in `ROADMAP.md` and accepted
 - It does not replace or modify the root vanilla production app.
 - The root PWA cache remains `nutriflow-v0.6.0`.
 
+### React Mock Domain Layer
+
+`react-app/src/domain/` contains the first compatibility-focused TypeScript port:
+
+- `types.ts`: permissive types for ingredients, dishes, meals, Today, Weekly Plan, and legacy History shapes.
+- `nutrition.ts`: pure calculations for per-100, per-unit, meal, day, planner, History, conversion, and display rounding behavior.
+- `fixtures.ts`: hardcoded mock library and compatibility fixtures only.
+- `verifyNutrition.ts`: lightweight expected-total, finite-output, and non-mutation checks.
+
+Library lookup is supplied explicitly to calculation functions as mock data. The domain layer has no browser API access, does not reference production storage keys, and does not read, migrate, normalize, or save real data. A real storage adapter and production integration remain deferred.
+
 ## User-Facing Areas
 
 - Today: summary metrics, meal tabs, meal ingredient rows, Quick Add, custom ingredients, and the editable Today Ingredients table.
