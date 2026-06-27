@@ -24,7 +24,7 @@ Today does not expose dishes or a fixed Daily Staples section. The internal `mea
 - External `manifest.json` and `sw.js`
 - Playwright for development-only PWA smoke testing
 
-The runtime app has no backend, framework, or build step. A staged React/Vite migration is planned but has not started.
+The production runtime app has no backend, framework, or build step. An isolated React/Vite prototype now lives in `react-app/`; it is not the production app.
 
 ## Repository
 
@@ -36,6 +36,7 @@ nutriflow/
 |-- sw.js                   # Service worker and app-shell cache
 |-- icons/                  # Install icons
 |-- tests/                  # Playwright PWA smoke test
+|-- react-app/              # Isolated React/Vite/TypeScript prototype
 |-- README.md               # User and developer overview
 |-- CONTRIBUTING.md         # Workflow and contribution rules
 |-- PROJECT_ANALYSIS.md     # Current technical architecture
@@ -55,6 +56,26 @@ python -m http.server 4173
 Then open `http://127.0.0.1:4173/`.
 
 The hosted app is deployed through GitHub Pages.
+
+## React Prototype
+
+The production vanilla app remains at the repository root. `react-app/` is a separate prototype package with static placeholder data, local navigation state, and no Local Storage or service-worker integration.
+
+Install and run it independently:
+
+```bash
+cd react-app
+npm install
+npm run dev
+```
+
+Create a production build of the prototype:
+
+```bash
+npm run build
+```
+
+Generated `react-app/dist/` output and `node_modules/` are ignored.
 
 ## PWA Smoke Test
 

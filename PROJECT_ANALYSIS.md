@@ -16,7 +16,17 @@ The app is hosted through GitHub Pages and can be installed as a PWA. The curren
 
 Playwright and npm are development-only QA tooling. They do not change the plain HTML/CSS/JavaScript runtime.
 
-No React/Vite migration has started. A staged React/Vite/TypeScript migration is planned in `ROADMAP.md` and accepted in ADR-005.
+A staged React/Vite/TypeScript migration is planned in `ROADMAP.md` and accepted in ADR-005. Its first isolated shell prototype exists in `react-app/`; no production feature or data port has started.
+
+### React Prototype Boundary
+
+- `react-app/` is a separate Vite, React, and TypeScript package.
+- It provides static Today, Weekly, History, and More shell screens.
+- It uses local React state only for active navigation and the selected weekly day.
+- It does not read or write Local Storage.
+- It does not register a service worker or provide production PWA behavior.
+- It does not replace or modify the root vanilla production app.
+- The root PWA cache remains `nutriflow-v0.6.0`.
 
 ## User-Facing Areas
 

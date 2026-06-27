@@ -9,7 +9,8 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
--
+- Added an isolated React/Vite/TypeScript prototype shell under `react-app/`.
+- Added static mobile-first Today, Weekly, History, and More prototype screens while leaving the production vanilla app unchanged.
 
 ### Changed
 - Renamed current app and product references from Protein Diet Planner to NutriFlow.

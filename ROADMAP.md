@@ -35,6 +35,8 @@ Create a minimal mobile-first prototype without porting the full application:
 
 The prototype must not present Daily Staples or dishes as user-facing Today concepts.
 
+Current implementation: an isolated shell exists in `react-app/` with static placeholder content, local tab/day state, no Local Storage access, and no PWA registration. Production remains the root vanilla app.
+
 ### Task 8 - Port Storage + Calculations
 
 Port persistence and nutrition logic before feature screens:
