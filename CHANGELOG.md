@@ -21,6 +21,9 @@ The format is based on Keep a Changelog.
 - Added explicit empty-history and empty-meal states while keeping History free of edit, delete, and copy actions.
 
 ### Changed
+- Polished navigation and shared UI patterns across the React Today, Weekly, History, and More screens.
+- Standardized headers, notices, summaries, macro order, progress, badges, empty states, spacing, and focus treatments.
+- Expanded More into a clearly disabled placeholder hub without production actions.
 - Renamed current app and product references from Protein Diet Planner to NutriFlow.
 - Updated the planned GitHub Pages slug from `protein-diet-planner` to `nutriflow`.
 - Updated PWA metadata and cache naming for NutriFlow.

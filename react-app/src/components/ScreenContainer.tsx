@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import ScreenHeader from './ScreenHeader'
 
 type ScreenContainerProps = {
   children: ReactNode
@@ -8,14 +9,8 @@ type ScreenContainerProps = {
 
 function ScreenContainer({ children, title, subtitle }: ScreenContainerProps) {
   return (
-    <section className="screen" aria-labelledby={`${title.toLowerCase()}-title`}>
-      <div className="screen-heading">
-        <div>
-          <p className="eyebrow">Prototype view</p>
-          <h2 id={`${title.toLowerCase()}-title`}>{title}</h2>
-        </div>
-        <p>{subtitle}</p>
-      </div>
+    <section className="screen" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, '-')}-title`}>
+      <ScreenHeader title={title} subtitle={subtitle} />
       {children}
     </section>
   )

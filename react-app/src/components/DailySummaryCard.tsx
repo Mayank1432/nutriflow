@@ -18,7 +18,7 @@ function DailySummaryCard({ totals }: DailySummaryCardProps) {
       </div>
       <div className="progress-stack">
         <ProgressBar label="Protein" value={totals.p} target={120} unit="g" />
-        <ProgressBar label="Calories" value={totals.k} target={2200} unit="kcal" />
+        <ProgressBar label="kcal" value={totals.k} target={2200} unit="kcal" />
       </div>
       <div className="macro-chip-grid">
         <MacroChip label="Carbs" value={`${totals.carb.toFixed(1)} g`} />

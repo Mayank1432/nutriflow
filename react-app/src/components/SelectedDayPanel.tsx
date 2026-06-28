@@ -2,6 +2,8 @@ import { calcAll } from '../domain/nutrition'
 import { isPlannedDay, WEEK_DAY_LABELS } from '../domain/weeklyMock'
 import type { TodayData, WeekDayId } from '../domain/types'
 import MacroChip from './MacroChip'
+import StatusBadge from './StatusBadge'
+import EmptyState from './EmptyState'
 
 type SelectedDayPanelProps = {
   day: TodayData
@@ -19,18 +21,18 @@ function SelectedDayPanel({ day, dayId }: SelectedDayPanelProps) {
           <p className="eyebrow">Selected day</p>
           <h3 id="selected-day-title">{WEEK_DAY_LABELS[dayId]}</h3>
         </div>
-        <span>{planned ? 'Planned' : 'Empty'}</span>
+        <StatusBadge variant={planned ? 'success' : 'muted'}>{planned ? 'Planned' : 'Empty'}</StatusBadge>
       </div>
       <div className="selected-day-macros">
         <MacroChip label="Protein" value={`${totals.p.toFixed(1)} g`} />
-        <MacroChip label="Calories" value={`${totals.k.toFixed(0)} kcal`} />
+        <MacroChip label="kcal" value={`${totals.k.toFixed(0)} kcal`} />
         <MacroChip label="Carbs" value={`${totals.carb.toFixed(1)} g`} />
         <MacroChip label="Fat" value={`${totals.fat.toFixed(1)} g`} />
         <MacroChip label="Fibre" value={`${totals.fibre.toFixed(1)} g`} />
         <MacroChip label="Cost" value={`₹${totals.c.toFixed(0)}`} />
       </div>
       {!planned && (
-        <p className="selected-day-empty">No meals planned for this day yet.</p>
+        <EmptyState title="No meals planned yet" description="Copy another day or plan meals later." />
       )}
     </section>
   )

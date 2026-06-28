@@ -7,6 +7,7 @@ import ScreenContainer from '../components/ScreenContainer'
 import SelectedDayPanel from '../components/SelectedDayPanel'
 import SuccessToast from '../components/SuccessToast'
 import WeeklySummaryCard from '../components/WeeklySummaryCard'
+import PrototypeNotice from '../components/PrototypeNotice'
 import { mockWeekPrototype } from '../domain/fixtures'
 import type { MealId, WeekData, WeekDayId } from '../domain/types'
 import {
@@ -60,9 +61,7 @@ function WeeklyScreen() {
 
   return (
     <ScreenContainer title="Weekly Planner" subtitle="Plan your meals for the week before you start.">
-      <p className="weekly-prototype-notice">
-        Prototype only — weekly plan uses mock data. Changes reset on refresh.
-      </p>
+      <PrototypeNotice>Prototype only — weekly plan uses mock data. Changes reset on refresh.</PrototypeNotice>
       <WeeklySummaryCard summary={summary} />
       <DaySelector weekData={weekData} selectedDay={selectedDay} onSelect={setSelectedDay} />
       <SelectedDayPanel day={selectedDayData} dayId={selectedDay} />

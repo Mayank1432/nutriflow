@@ -69,6 +69,8 @@ The React Weekly Planner prototype also uses mock-only state. It provides calcul
 
 The React History prototype is mock-only and read-only. It shows newest-first saved-day cards, calculated averages, selected-day nutrition, and read-only meals. Selection resets to the newest mock day on refresh; editing, deletion, copying, and real saved data are not connected.
 
+The React prototype now shares consistent headers, notices, summaries, macro displays, statuses, empty states, and four-tab navigation. This polish remains mock-only and does not connect to production storage.
+
 Install and run it independently:
 
 ```bash

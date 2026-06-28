@@ -8,9 +8,6 @@ function Header() {
       <div className="brand-mark" aria-hidden="true">
         NF
       </div>
-      <p className="prototype-notice">
-        Prototype only — mock data is used here. Changes reset on refresh.
-      </p>
     </header>
   )
 }

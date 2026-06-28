@@ -5,6 +5,7 @@ import QuickAddSheet from '../components/QuickAddSheet'
 import type { QuickAddDraft } from '../components/QuickAddForm'
 import ScreenContainer from '../components/ScreenContainer'
 import SuccessToast from '../components/SuccessToast'
+import PrototypeNotice from '../components/PrototypeNotice'
 import { mockTodayPrototype } from '../domain/fixtures'
 import {
   calcAll,
@@ -115,7 +116,8 @@ function TodayScreen() {
   }
 
   return (
-    <ScreenContainer title="Today" subtitle="Mock meals that respond instantly.">
+    <ScreenContainer title="Today" subtitle="Track your meals and hit your protein goal.">
+      <PrototypeNotice>Prototype only — today uses mock data. Changes reset on refresh.</PrototypeNotice>
       <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
         <span aria-hidden="true">+</span>
         Quick Add

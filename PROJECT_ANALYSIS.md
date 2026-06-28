@@ -233,6 +233,8 @@ The current vanilla PWA remains the production base. The migration will run in p
 
 The React UI must preserve the current meal-first Today experience: no user-facing dish UI, no fixed Daily Staples section, normal ingredients across meals, smooth Quick Add, and Today Ingredients edit, delete, and move behavior.
 
+The isolated React prototype now has shared UI patterns for headers, notices, summaries, macros, progress, statuses, meal and ingredient cards, empty states, and four-tab navigation. Real storage integration, schema handling, and migration remain deferred.
+
 ### Data Compatibility Plan
 
 The first React port must preserve these keys:

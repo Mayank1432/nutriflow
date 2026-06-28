@@ -77,7 +77,11 @@ Current implementation: the React History prototype demonstrates newest-first mo
 - Weekly averages and protein/spend trends.
 - Macro and meal-level analysis.
 
-### Task 12 - PWA Deploy + QA
+### Task 12 – React Prototype Polish + Navigation Consistency
+
+Current implementation: shared UI patterns and four-tab navigation are consistent across the isolated mock-only React prototype. Real storage and schema work remain deferred.
+
+### Future Task - PWA Deploy + QA
 
 - GitHub Pages deployment.
 - Correct Vite base configuration for `/nutriflow/`.

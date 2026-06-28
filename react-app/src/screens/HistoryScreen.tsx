@@ -7,6 +7,7 @@ import SelectedHistoryDetail from '../components/SelectedHistoryDetail'
 import { mockHistoryPrototype } from '../domain/fixtures'
 import { calcHistorySummary } from '../domain/historyMock'
 import type { MockHistoryData } from '../domain/types'
+import PrototypeNotice from '../components/PrototypeNotice'
 
 function HistoryScreen() {
   const [historyData] = useState<MockHistoryData>(() => structuredClone(mockHistoryPrototype))
@@ -18,9 +19,7 @@ function HistoryScreen() {
 
   return (
     <ScreenContainer title="History" subtitle="Review your saved days and track your consistency.">
-      <p className="history-prototype-notice">
-        Prototype only — history uses mock saved days. Changes reset on refresh.
-      </p>
+      <PrototypeNotice>Prototype only — history uses mock saved days. Changes reset on refresh.</PrototypeNotice>
       {historyData.savedDays.length === 0 || !selectedDay ? (
         <EmptyHistoryState />
       ) : (

@@ -3,6 +3,7 @@ import { savedDayToToday } from '../domain/historyMock'
 import type { MealId, MockSavedDay } from '../domain/types'
 import MacroChip from './MacroChip'
 import MealCard from './MealCard'
+import StatusBadge from './StatusBadge'
 
 const meals: Array<{ id: MealId; name: string }> = [
   { id: 'breakfast', name: 'Breakfast' },
@@ -27,13 +28,11 @@ function SelectedHistoryDetail({ day }: SelectedHistoryDetailProps) {
           <h3 id="history-detail-title">{day.dateLabel}</h3>
           <span>{day.dayName} · {day.savedAtLabel}</span>
         </div>
-        <span className={`history-badge ${day.statusBadge.toLowerCase().replace(' ', '-')}`}>
-          {day.statusBadge}
-        </span>
+        <StatusBadge variant="info">{day.statusBadge}</StatusBadge>
       </div>
       <div className="history-detail-macros">
         <MacroChip label="Protein" value={`${totals.p.toFixed(1)} g`} />
-        <MacroChip label="Calories" value={`${totals.k.toFixed(0)} kcal`} />
+        <MacroChip label="kcal" value={`${totals.k.toFixed(0)} kcal`} />
         <MacroChip label="Carbs" value={`${totals.carb.toFixed(1)} g`} />
         <MacroChip label="Fat" value={`${totals.fat.toFixed(1)} g`} />
         <MacroChip label="Fibre" value={`${totals.fibre.toFixed(1)} g`} />

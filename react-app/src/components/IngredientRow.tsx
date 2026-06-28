@@ -5,6 +5,7 @@ type IngredientRowProps = {
   ingredient: Ingredient
   onQuantityChange?: (qty: string) => void
   onRemove?: () => void
+  mode?: 'editable' | 'readonly'
   readOnly?: boolean
 }
 
@@ -12,8 +13,10 @@ function IngredientRow({
   ingredient,
   onQuantityChange,
   onRemove,
+  mode,
   readOnly = false,
 }: IngredientRowProps) {
+  const isReadOnly = mode === 'readonly' || readOnly
   const totals = calcIngr(ingredient)
 
   return (
@@ -23,7 +26,7 @@ function IngredientRow({
           <strong>{ingredient.name || 'Unnamed food'}</strong>
           <span>{totals.p.toFixed(1)}g protein · {totals.k.toFixed(0)} kcal</span>
         </div>
-        {!readOnly && (
+        {!isReadOnly && (
           <button className="remove-button" type="button" onClick={onRemove}>
             Remove
           </button>
@@ -32,7 +35,7 @@ function IngredientRow({
       <div className="ingredient-details">
         <label>
           <span>Quantity</span>
-          {readOnly ? (
+          {isReadOnly ? (
             <strong className="quantity-readonly">
               {String(ingredient.qty ?? 0)} {ingredient.unit || 'g'}
             </strong>
@@ -50,7 +53,9 @@ function IngredientRow({
             </span>
           )}
         </label>
-        <dl>
+        <dl aria-label={`${ingredient.name || 'Ingredient'} nutrition`}>
+          <div><dt>Protein</dt><dd>{totals.p.toFixed(1)}g</dd></div>
+          <div><dt>kcal</dt><dd>{totals.k.toFixed(0)} kcal</dd></div>
           <div><dt>Carbs</dt><dd>{totals.carb.toFixed(1)}g</dd></div>
           <div><dt>Fat</dt><dd>{totals.fat.toFixed(1)}g</dd></div>
           <div><dt>Fibre</dt><dd>{totals.fibre.toFixed(1)}g</dd></div>
