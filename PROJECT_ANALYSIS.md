@@ -67,6 +67,19 @@ The Weekly screen uses a seven-day mock fixture and local React state.
 
 The Weekly prototype has no Local Storage, planner editing forms, Quick Add, Today transfer, History logging, export/import, migration, or production PWA integration.
 
+### React History Prototype
+
+The History screen uses five newest-first mock saved days and local selection state.
+
+- Summary averages are calculated from mock saved-day meal data.
+- Saved-day cards show date, day name, protein, calories, cost, fibre, meal count, and a mock status badge.
+- The newest day is selected by default.
+- Selected details show all six nutrition totals and Breakfast, Lunch, Dinner, and Snacks in read-only mode.
+- Empty meals use explicit placeholders, and an empty-history component covers a future zero-day state.
+- Refreshing resets selection to the newest mock day.
+
+History has no Local Storage, production schema, migration, real saved data, editing, deletion, restore, copy, search, filters, export/import, or production PWA integration.
+
 ## User-Facing Areas
 
 - Today: summary metrics, meal tabs, meal ingredient rows, Quick Add, custom ingredients, and the editable Today Ingredients table.

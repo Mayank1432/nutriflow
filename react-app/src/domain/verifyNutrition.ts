@@ -8,6 +8,7 @@ import {
   legacyHistoryEntry,
   missingArraysToday,
   missingOptionalMacros,
+  mockHistoryPrototype,
   mockLibrary,
   mockWeekPrototype,
   populatedToday,
@@ -31,6 +32,11 @@ import {
   updateEnteredQuantityIngredientQty,
 } from './nutrition'
 import {
+  calcHistorySummary,
+  countTrackedMeals,
+  savedDayToToday,
+} from './historyMock'
+import {
   calcWeeklySummary,
   clearWeekDay,
   copyWeekDay,
@@ -38,7 +44,7 @@ import {
   isPlannedDay,
   WEEK_DAY_IDS,
 } from './weeklyMock'
-import type { MacroTotals, WeekData } from './types'
+import type { MacroTotals, MockHistoryData, WeekData } from './types'
 
 const EPSILON = 1e-9
 
@@ -209,6 +215,33 @@ assert(
 
 const clearedWeek = clearWeekDay(copiedWeek, 'wed')
 assert(!isPlannedDay(clearedWeek.days.wed), 'cleared target day should be empty')
+
+const historySummary = calcHistorySummary(mockHistoryPrototype)
+assert(historySummary.savedDays === 5, 'history summary should count saved days')
+assertClose(historySummary.averageProtein, 69.8, 'history average protein')
+assertClose(historySummary.averageCalories, 1154.4, 'history average calories')
+assertClose(historySummary.averageCost, 160.6, 'history average cost')
+assert(historySummary.highProteinDays === 1, 'history should count high-protein badges')
+assert(
+  mockHistoryPrototype.savedDays[0].dateLabel === 'Today',
+  'history fixtures should remain newest first',
+)
+assert(
+  countTrackedMeals(mockHistoryPrototype.savedDays[0]) === 4,
+  'latest history day should count four tracked meals',
+)
+assertTotals(
+  calcAll(savedDayToToday(mockHistoryPrototype.savedDays[0])),
+  { p: 118, k: 1980, carb: 186, fat: 60, fibre: 24, c: 210 },
+  'selected history day',
+)
+
+const emptyHistory: MockHistoryData = { savedDays: [] }
+const emptyHistorySummary = calcHistorySummary(emptyHistory)
+assert(emptyHistorySummary.savedDays === 0, 'empty history should have no saved days')
+assert(emptyHistorySummary.averageProtein === 0, 'empty history average should be zero')
+assert(emptyHistorySummary.averageCalories === 0, 'empty history calories should be zero')
+assert(emptyHistorySummary.averageCost === 0, 'empty history cost should be zero')
 
 assert(safeNumber('invalid') === 0, 'invalid numeric strings should become zero')
 assert(safeNumber(null) === 0, 'null should become zero')

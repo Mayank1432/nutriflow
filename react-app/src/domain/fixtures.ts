@@ -2,6 +2,7 @@ import type {
   FoodLibrary,
   HistoryEntry,
   Ingredient,
+  MockHistoryData,
   PlanDay,
   TodayData,
   WeekData,
@@ -402,4 +403,106 @@ export const mockWeekPrototype: WeekData = {
       },
     },
   },
+}
+
+function mockHistoryIngredient(
+  id: string,
+  name: string,
+  protein: number,
+  calories: number,
+  carbs: number,
+  fat: number,
+  fibre: number,
+  cost: number,
+): Ingredient {
+  return {
+    id,
+    name,
+    qty: 1,
+    unit: 'meal',
+    entryMode: 'enteredQuantity',
+    baseQty: 1,
+    baseProtein: protein,
+    baseCalories: calories,
+    baseCarbs: carbs,
+    baseFat: fat,
+    baseFibre: fibre,
+    baseCost: cost,
+  }
+}
+
+export const mockHistoryPrototype: MockHistoryData = {
+  savedDays: [
+    {
+      id: 'history-today',
+      dateLabel: 'Today',
+      dayName: 'Thursday',
+      savedAtLabel: 'Saved at 9:15 PM',
+      statusBadge: 'High protein',
+      meals: {
+        breakfast: { dishes: [{ id: 'today-breakfast', ingredients: [
+          mockHistoryIngredient('today-breakfast-item', 'Protein oats bowl', 28, 480, 55, 14, 8, 50),
+        ] }] },
+        lunch: { dishes: [{ id: 'today-lunch', ingredients: [
+          mockHistoryIngredient('today-lunch-item', 'Chicken grain bowl', 42, 620, 65, 18, 7, 80),
+        ] }] },
+        dinner: { dishes: [{ id: 'today-dinner', ingredients: [
+          mockHistoryIngredient('today-dinner-item', 'Paneer vegetable plate', 34, 570, 42, 20, 6, 60),
+        ] }] },
+        snacks: { dishes: [{ id: 'today-snacks', ingredients: [
+          mockHistoryIngredient('today-snacks-item', 'Yogurt and fruit', 14, 310, 24, 8, 3, 20),
+        ] }] },
+      },
+    },
+    {
+      id: 'history-yesterday',
+      dateLabel: 'Yesterday',
+      dayName: 'Wednesday',
+      savedAtLabel: 'Saved at 8:42 PM',
+      statusBadge: 'Budget day',
+      meals: {
+        breakfast: { dishes: [{ id: 'yesterday-breakfast', ingredients: [
+          mockHistoryIngredient('yesterday-breakfast-item', 'Egg toast plate', 24, 420, 50, 8, 9, 35),
+        ] }] },
+        lunch: { dishes: [{ id: 'yesterday-lunch', ingredients: [
+          mockHistoryIngredient('yesterday-lunch-item', 'Soya rice bowl', 38, 650, 75, 20, 11, 70),
+        ] }] },
+        dinner: { dishes: [{ id: 'yesterday-dinner', ingredients: [
+          mockHistoryIngredient('yesterday-dinner-item', 'Lentil paneer dinner', 32, 680, 60, 24, 8, 45),
+        ] }] },
+        snacks: { dishes: [{ id: 'yesterday-snacks', ingredients: [] }] },
+      },
+    },
+    {
+      id: 'history-wed',
+      dateLabel: 'Wed, 26 Jun',
+      dayName: 'Wednesday',
+      savedAtLabel: 'Saved at 7:30 PM',
+      statusBadge: 'Partial day',
+      meals: mockTodayPrototype.meals,
+    },
+    {
+      id: 'history-tue',
+      dateLabel: 'Tue, 25 Jun',
+      dayName: 'Tuesday',
+      savedAtLabel: 'Saved at 8:05 PM',
+      statusBadge: 'Partial day',
+      meals: mockWeekPrototype.days.tue.meals,
+    },
+    {
+      id: 'history-mon',
+      dateLabel: 'Mon, 24 Jun',
+      dayName: 'Monday',
+      savedAtLabel: 'Saved at 6:20 PM',
+      statusBadge: 'Light tracking',
+      meals: {
+        breakfast: { dishes: [{ id: 'mon-breakfast', ingredients: [] }] },
+        lunch: { dishes: [{ id: 'mon-lunch', ingredients: [] }] },
+        dinner: { dishes: [{ id: 'mon-dinner', ingredients: [] }] },
+        snacks: { dishes: [{ id: 'mon-snacks', ingredients: [
+          mockHistoryIngredient('mon-snack-item', 'Quick snack plate', 18, 300, 22, 12, 2, 70),
+        ] }] },
+      },
+    },
+  ],
 }

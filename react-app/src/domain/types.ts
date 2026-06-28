@@ -102,6 +102,27 @@ export type WeeklySummary = MacroTotals & {
   averageCost: number
 }
 
+export type MockSavedDay = {
+  id: string
+  dateLabel: string
+  dayName: string
+  savedAtLabel: string
+  statusBadge: 'High protein' | 'Budget day' | 'Partial day' | 'Light tracking'
+  meals: TodayData['meals']
+}
+
+export type MockHistoryData = {
+  savedDays: MockSavedDay[]
+}
+
+export type HistorySummary = {
+  savedDays: number
+  averageProtein: number
+  averageCalories: number
+  averageCost: number
+  highProteinDays: number
+}
+
 export type EnteredQuantityInput = {
   id: string
   name: string

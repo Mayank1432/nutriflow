@@ -17,6 +17,8 @@ The format is based on Keep a Changelog.
 - Added an accessible Quick Add bottom sheet using entered-quantity nutrition and refresh-reset React state.
 - Added a mock-only React Weekly Planner with calculated week/day summaries, seven-day selection, read-only meal details, and empty states.
 - Added local deep-copy Copy Day and confirmed Clear Day actions that reset on refresh.
+- Added a mock-only, read-only React History screen with newest-first saved-day cards, calculated averages, and selected-day details.
+- Added explicit empty-history and empty-meal states while keeping History free of edit, delete, and copy actions.
 
 ### Changed
 - Renamed current app and product references from Protein Diet Planner to NutriFlow.

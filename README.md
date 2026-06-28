@@ -67,6 +67,8 @@ The React Today prototype uses mock state to demonstrate calculated daily and me
 
 The React Weekly Planner prototype also uses mock-only state. It provides calculated week/day summaries, a seven-day selector, read-only meal details, and local Copy Day/Clear Day actions. Weekly changes reset on refresh and do not transfer to Today or History.
 
+The React History prototype is mock-only and read-only. It shows newest-first saved-day cards, calculated averages, selected-day nutrition, and read-only meals. Selection resets to the newest mock day on refresh; editing, deletion, copying, and real saved data are not connected.
+
 Install and run it independently:
 
 ```bash
