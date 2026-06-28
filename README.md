@@ -65,6 +65,8 @@ The prototype includes compatibility-first TypeScript data types, pure nutrition
 
 The React Today prototype uses mock state to demonstrate calculated daily and meal totals, quantity editing, removal, and a Quick Add bottom sheet. Quick Add nutrition values apply to the entered quantity. All changes reset when the page refreshes.
 
+The React Weekly Planner prototype also uses mock-only state. It provides calculated week/day summaries, a seven-day selector, read-only meal details, and local Copy Day/Clear Day actions. Weekly changes reset on refresh and do not transfer to Today or History.
+
 Install and run it independently:
 
 ```bash

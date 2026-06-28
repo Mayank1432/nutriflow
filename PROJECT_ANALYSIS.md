@@ -52,6 +52,21 @@ The prototype Today screen now renders its hardcoded `meals -> dishes -> ingredi
 
 This screen still has no Local Storage, export/import, History, Weekly Planner, library linking, migration, or production PWA integration.
 
+### React Weekly Planner Prototype
+
+The Weekly screen uses a seven-day mock fixture and local React state.
+
+- Only one selected day is shown at a time.
+- Week totals and planned-day averages use the pure nutrition helpers.
+- Selected-day summaries cover protein, calories, carbs, fat, fibre, and cost.
+- Today meal and ingredient components are reused in read-only mode.
+- Empty days and empty meals have explicit states.
+- Copy Day deep-clones the selected mock day into another day.
+- Clear Day requires confirmation and replaces the selected day with an empty mock shape.
+- Refreshing restores the original mock week.
+
+The Weekly prototype has no Local Storage, planner editing forms, Quick Add, Today transfer, History logging, export/import, migration, or production PWA integration.
+
 ## User-Facing Areas
 
 - Today: summary metrics, meal tabs, meal ingredient rows, Quick Add, custom ingredients, and the editable Today Ingredients table.

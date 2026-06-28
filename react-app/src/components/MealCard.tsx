@@ -6,18 +6,22 @@ type MealCardProps = {
   mealId: MealId
   mealName: string
   todayData: TodayData
-  onAdd: () => void
-  onQuantityChange: (ingredientId: string, qty: string) => void
-  onRemove: (ingredientId: string) => void
+  emptyMessage?: string
+  onAdd?: () => void
+  onQuantityChange?: (ingredientId: string, qty: string) => void
+  onRemove?: (ingredientId: string) => void
+  readOnly?: boolean
 }
 
 function MealCard({
   mealId,
   mealName,
   todayData,
+  emptyMessage = 'Nothing here yet. Add your first item.',
   onAdd,
   onQuantityChange,
   onRemove,
+  readOnly = false,
 }: MealCardProps) {
   const totals = calcMealToday(todayData, mealId)
   const ingredients = (todayData.meals?.[mealId]?.dishes ?? []).flatMap(
@@ -33,20 +37,23 @@ function MealCard({
             {totals.p.toFixed(1)}g protein · {totals.k.toFixed(0)} kcal · ₹{totals.c.toFixed(0)}
           </p>
         </div>
-        <button className="meal-add-button" type="button" onClick={onAdd}>
-          + Add
-        </button>
+        {!readOnly && (
+          <button className="meal-add-button" type="button" onClick={onAdd}>
+            + Add
+          </button>
+        )}
       </div>
       <div className="today-meal-body">
         {ingredients.length === 0 ? (
-          <p className="meal-empty">Nothing here yet. Add your first item.</p>
+          <p className="meal-empty">{emptyMessage}</p>
         ) : (
           ingredients.map((ingredient, index) => (
             <IngredientRow
               key={ingredient.id || `${mealId}-${index}`}
               ingredient={ingredient}
-              onQuantityChange={(qty) => onQuantityChange(String(ingredient.id), qty)}
-              onRemove={() => onRemove(String(ingredient.id))}
+              readOnly={readOnly}
+              onQuantityChange={(qty) => onQuantityChange?.(String(ingredient.id), qty)}
+              onRemove={() => onRemove?.(String(ingredient.id))}
             />
           ))
         )}

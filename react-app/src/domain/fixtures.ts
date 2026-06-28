@@ -4,6 +4,7 @@ import type {
   Ingredient,
   PlanDay,
   TodayData,
+  WeekData,
 } from './types'
 
 export const mockLibrary: FoodLibrary = {
@@ -285,6 +286,120 @@ export const mockTodayPrototype: TodayData = {
           baseCost: 64,
         }],
       }],
+    },
+  },
+}
+
+export const mockWeekPrototype: WeekData = {
+  days: {
+    mon: mockTodayPrototype,
+    tue: {
+      dateKey: 'mock-tue',
+      meals: {
+        breakfast: {
+          dishes: [{
+            id: 'tue-breakfast',
+            ingredients: [{
+              id: 'tue-oats',
+              name: 'Fruit oats bowl',
+              qty: 320,
+              unit: 'g',
+              entryMode: 'enteredQuantity',
+              baseQty: 320,
+              baseProtein: 15,
+              baseCalories: 380,
+              baseCarbs: 62,
+              baseFat: 8,
+              baseFibre: 9,
+              baseCost: 35,
+            }],
+          }],
+        },
+        lunch: { dishes: [{ id: 'tue-lunch', ingredients: [] }] },
+        dinner: {
+          dishes: [{
+            id: 'tue-dinner',
+            ingredients: [{
+              id: 'tue-paneer',
+              name: 'Paneer dinner plate',
+              qty: 420,
+              unit: 'g',
+              entryMode: 'enteredQuantity',
+              baseQty: 420,
+              baseProtein: 32,
+              baseCalories: 520,
+              baseCarbs: 24,
+              baseFat: 32,
+              baseFibre: 5,
+              baseCost: 140,
+            }],
+          }],
+        },
+        snacks: { dishes: [{ id: 'tue-snacks', ingredients: [] }] },
+      },
+    },
+    wed: {
+      dateKey: 'mock-wed',
+      meals: {
+        breakfast: { dishes: [{ id: 'wed-breakfast', ingredients: [] }] },
+        lunch: { dishes: [{ id: 'wed-lunch', ingredients: [] }] },
+        dinner: { dishes: [{ id: 'wed-dinner', ingredients: [] }] },
+        snacks: { dishes: [{ id: 'wed-snacks', ingredients: [] }] },
+      },
+    },
+    thu: {
+      dateKey: 'mock-thu',
+      meals: {
+        breakfast: { dishes: [{ id: 'thu-breakfast', ingredients: [] }] },
+        lunch: {
+          dishes: [{
+            id: 'thu-lunch',
+            ingredients: [{
+              id: 'thu-lentils',
+              name: 'Lentil grain bowl',
+              qty: 410,
+              unit: 'g',
+              entryMode: 'enteredQuantity',
+              baseQty: 410,
+              baseProtein: 24,
+              baseCalories: 430,
+              baseCarbs: 66,
+              baseFat: 9,
+              baseFibre: 16,
+              baseCost: 72,
+            }],
+          }],
+        },
+        dinner: { dishes: [{ id: 'thu-dinner', ingredients: [] }] },
+        snacks: { dishes: [{ id: 'thu-snacks', ingredients: [] }] },
+      },
+    },
+    fri: {
+      dateKey: 'mock-fri',
+      meals: {
+        breakfast: { dishes: [] },
+        lunch: { dishes: [] },
+        dinner: { dishes: [] },
+        snacks: { dishes: [] },
+      },
+    },
+    sat: {
+      dateKey: 'mock-sat',
+      meals: {
+        breakfast: { dishes: [] },
+        lunch: { dishes: [] },
+        dinner: { dishes: [] },
+        snacks: { dishes: [] },
+      },
+    },
+    sun: {
+      dateKey: 'mock-sun',
+      meals: {
+        breakfast: { dishes: [] },
+        lunch: { dishes: [] },
+        dinner: { dishes: [] },
+        snacks: { dishes: [] },
+      },
     },
   },
 }

@@ -68,6 +68,8 @@ Current implementation: the React prototype demonstrates Today and Quick Add wit
 - Port History rollover, summaries, detail editing, and legacy entry compatibility.
 - Verify old History entries and Weekly Plan data before proceeding.
 
+Current implementation: the React Weekly Planner prototype uses mock-only state for calculated summaries, day selection, read-only meals, deep-copy Copy Day, and confirmed Clear Day actions. Real editing, storage, Today transfer, History integration, and production behavior remain deferred.
+
 ### Task 11 - Analytics + Theme System
 
 - Light/dark themes.

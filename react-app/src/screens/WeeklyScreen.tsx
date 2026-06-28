@@ -1,41 +1,113 @@
 import { useState } from 'react'
-import MealPlaceholderCard from '../components/MealPlaceholderCard'
+import ClearDayConfirm from '../components/ClearDayConfirm'
+import CopyDaySheet from '../components/CopyDaySheet'
+import DaySelector from '../components/DaySelector'
+import MealCard from '../components/MealCard'
 import ScreenContainer from '../components/ScreenContainer'
-import SectionHeader from '../components/SectionHeader'
-import SummaryCard from '../components/SummaryCard'
+import SelectedDayPanel from '../components/SelectedDayPanel'
+import SuccessToast from '../components/SuccessToast'
+import WeeklySummaryCard from '../components/WeeklySummaryCard'
+import { mockWeekPrototype } from '../domain/fixtures'
+import type { MealId, WeekData, WeekDayId } from '../domain/types'
+import {
+  calcWeeklySummary,
+  clearWeekDay,
+  copyWeekDay,
+  isPlannedDay,
+  WEEK_DAY_IDS,
+  WEEK_DAY_LABELS,
+} from '../domain/weeklyMock'
 
-const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const meals: Array<{ id: MealId; name: string }> = [
+  { id: 'breakfast', name: 'Breakfast' },
+  { id: 'lunch', name: 'Lunch' },
+  { id: 'dinner', name: 'Dinner' },
+  { id: 'snacks', name: 'Snacks' },
+]
+
+function nextCopyTarget(sourceDay: WeekDayId): WeekDayId {
+  return WEEK_DAY_IDS.find((dayId) => dayId !== sourceDay) ?? 'mon'
+}
 
 function WeeklyScreen() {
-  const [selectedDay, setSelectedDay] = useState('Mon')
+  const [weekData, setWeekData] = useState<WeekData>(() => structuredClone(mockWeekPrototype))
+  const [selectedDay, setSelectedDay] = useState<WeekDayId>('mon')
+  const [copyTargetDay, setCopyTargetDay] = useState<WeekDayId>('tue')
+  const [isCopyOpen, setCopyOpen] = useState(false)
+  const [isClearOpen, setClearOpen] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const selectedDayData = weekData.days[selectedDay]
+  const summary = calcWeeklySummary(weekData)
+
+  const openCopy = () => {
+    setCopyTargetDay(nextCopyTarget(selectedDay))
+    setCopyOpen(true)
+    setToastMessage('')
+  }
+
+  const copyDay = () => {
+    setWeekData((current) => copyWeekDay(current, selectedDay, copyTargetDay))
+    setToastMessage(`Copied ${WEEK_DAY_LABELS[selectedDay]} to ${WEEK_DAY_LABELS[copyTargetDay]}.`)
+    setSelectedDay(copyTargetDay)
+    setCopyOpen(false)
+  }
+
+  const clearDay = () => {
+    setWeekData((current) => clearWeekDay(current, selectedDay))
+    setToastMessage(`Cleared ${WEEK_DAY_LABELS[selectedDay]}.`)
+    setClearOpen(false)
+  }
 
   return (
-    <ScreenContainer title="Weekly" subtitle="Shape the week one day at a time.">
-      <SummaryCard label="Week at a glance" value="5 days sketched">
-        <p className="summary-copy">
-          Placeholder totals will become real after storage and calculations are ported.
-        </p>
-      </SummaryCard>
-
-      <div className="day-chips" aria-label="Select day">
-        {days.map((day) => (
-          <button
-            className={day === selectedDay ? 'selected' : ''}
-            type="button"
-            key={day}
-            onClick={() => setSelectedDay(day)}
-          >
-            {day}
-          </button>
+    <ScreenContainer title="Weekly Planner" subtitle="Plan your meals for the week before you start.">
+      <p className="weekly-prototype-notice">
+        Prototype only — weekly plan uses mock data. Changes reset on refresh.
+      </p>
+      <WeeklySummaryCard summary={summary} />
+      <DaySelector weekData={weekData} selectedDay={selectedDay} onSelect={setSelectedDay} />
+      <SelectedDayPanel day={selectedDayData} dayId={selectedDay} />
+      <div className="planner-actions">
+        <button className="secondary-action" type="button" onClick={openCopy}>
+          Copy Day
+        </button>
+        <button
+          className="danger-action"
+          type="button"
+          disabled={!isPlannedDay(selectedDayData)}
+          onClick={() => setClearOpen(true)}
+        >
+          Clear Day
+        </button>
+      </div>
+      <div className="weekly-meals">
+        {meals.map((meal) => (
+          <MealCard
+            key={meal.id}
+            mealId={meal.id}
+            mealName={meal.name}
+            todayData={selectedDayData}
+            readOnly
+            emptyMessage="No ingredients planned for this meal."
+          />
         ))}
       </div>
-
-      <SectionHeader title={`${selectedDay}'s meal plan`} detail="Local prototype state" />
-      <div className="meal-list">
-        <MealPlaceholderCard label="Breakfast" note="Oats, milk, and fruit placeholder" color="#ffd85f" />
-        <MealPlaceholderCard label="Lunch" note="Protein bowl placeholder" color="#54c893" />
-        <MealPlaceholderCard label="Dinner" note="Plan this meal later" color="#ff8d73" />
-      </div>
+      {isCopyOpen && (
+        <CopyDaySheet
+          sourceDay={selectedDay}
+          targetDay={copyTargetDay}
+          onTargetChange={setCopyTargetDay}
+          onClose={() => setCopyOpen(false)}
+          onCopy={copyDay}
+        />
+      )}
+      {isClearOpen && (
+        <ClearDayConfirm
+          dayName={WEEK_DAY_LABELS[selectedDay]}
+          onCancel={() => setClearOpen(false)}
+          onConfirm={clearDay}
+        />
+      )}
+      <SuccessToast message={toastMessage} />
     </ScreenContainer>
   )
 }

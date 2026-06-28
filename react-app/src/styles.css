@@ -522,6 +522,15 @@ button:focus-visible {
   color: var(--muted);
 }
 
+.quantity-readonly {
+  justify-self: end;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f3f8f5;
+  color: var(--ink);
+  font-size: 13px;
+}
+
 .ingredient-details dl {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -690,6 +699,249 @@ button:focus-visible {
   color: white;
 }
 
+.weekly-prototype-notice {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #f1cd62;
+  border-radius: 8px;
+  background: #fff8d8;
+  color: #715b18;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.weekly-summary-card {
+  display: grid;
+  gap: 17px;
+  padding: 20px;
+  border-radius: 8px;
+  background: #193f33;
+  color: white;
+  box-shadow: var(--shadow);
+}
+
+.weekly-summary-card h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.weekly-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.weekly-summary-grid > div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.weekly-summary-grid span,
+.weekly-summary-grid strong {
+  display: block;
+}
+
+.weekly-summary-grid span {
+  color: #bcd8cd;
+  font-size: 11px;
+}
+
+.weekly-summary-grid strong {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.week-day-selector {
+  display: grid;
+  grid-auto-columns: minmax(66px, 1fr);
+  grid-auto-flow: column;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 1px 7px;
+  scrollbar-width: thin;
+}
+
+.week-day-chip {
+  display: grid;
+  min-height: 60px;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  box-shadow: 0 5px 14px rgba(36, 80, 64, 0.05);
+  cursor: pointer;
+}
+
+.week-day-chip strong {
+  font-size: 13px;
+}
+
+.week-day-chip span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.week-day-chip.selected {
+  border-color: var(--green);
+  background: var(--green);
+  color: white;
+}
+
+.week-day-chip.selected span {
+  color: #dbf7e9;
+}
+
+.selected-day-panel {
+  display: grid;
+  gap: 15px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  box-shadow: var(--shadow);
+}
+
+.selected-day-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.selected-day-heading h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.selected-day-heading > span {
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--soft-green);
+  color: var(--green-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.selected-day-macros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.selected-day-macros .macro-chip {
+  border-color: var(--line);
+  background: #f3f8f5;
+}
+
+.selected-day-macros .macro-chip span {
+  color: var(--muted);
+}
+
+.selected-day-empty {
+  margin: 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f7faf8;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.planner-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.secondary-action,
+.danger-action {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.secondary-action {
+  border: 1px solid #b9dcca;
+  background: white;
+  color: var(--green-dark);
+}
+
+.danger-action {
+  border: 1px solid #f1c4bb;
+  background: #fff0ec;
+  color: #a44836;
+}
+
+.danger-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.weekly-meals {
+  display: grid;
+  gap: 12px;
+}
+
+.planner-action-sheet,
+.clear-day-confirm {
+  display: grid;
+  width: min(100%, 520px);
+  gap: 18px;
+  margin: 0 auto;
+  padding: 12px 20px max(24px, env(safe-area-inset-bottom));
+  border-radius: 8px 8px 0 0;
+  background: white;
+  box-shadow: 0 -16px 40px rgba(12, 40, 30, 0.25);
+}
+
+.planner-action-sheet h2,
+.clear-day-confirm h2 {
+  margin: 0;
+}
+
+.copy-day-field {
+  display: grid;
+  gap: 7px;
+  color: #4d655c;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.copy-day-field select {
+  height: 48px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfc;
+  color: var(--ink);
+}
+
+.clear-day-confirm {
+  align-self: center;
+  margin-bottom: 24px;
+  border-radius: 8px;
+}
+
+.clear-day-confirm > p:not(.eyebrow) {
+  margin: -8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.confirm-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .empty-state {
   display: grid;
   min-height: 290px;
@@ -842,6 +1094,14 @@ button:focus-visible {
 
   .macro-chip-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .weekly-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .selected-day-macros {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .ingredient-details {

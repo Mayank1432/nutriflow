@@ -9,6 +9,7 @@ import {
   missingArraysToday,
   missingOptionalMacros,
   mockLibrary,
+  mockWeekPrototype,
   populatedToday,
   weeklyPlannerDay,
   zeroQuantity,
@@ -29,7 +30,15 @@ import {
   safeNumber,
   updateEnteredQuantityIngredientQty,
 } from './nutrition'
-import type { MacroTotals } from './types'
+import {
+  calcWeeklySummary,
+  clearWeekDay,
+  copyWeekDay,
+  createEmptyWeekDay,
+  isPlannedDay,
+  WEEK_DAY_IDS,
+} from './weeklyMock'
+import type { MacroTotals, WeekData } from './types'
 
 const EPSILON = 1e-9
 
@@ -163,6 +172,43 @@ assertTotals(calcEnteredQuantityIngredient({
   baseQty: 'invalid',
   qty: 'invalid',
 }), emptyTotals(), 'invalid entered quantity')
+
+const weeklySummary = calcWeeklySummary(mockWeekPrototype)
+assertTotals(weeklySummary, {
+  p: 143,
+  k: 2172,
+  carb: 219.2,
+  fat: 77,
+  fibre: 35,
+  c: 445,
+}, 'weekly summary')
+assert(weeklySummary.plannedDays === 3, 'weekly summary should count planned days only')
+assertClose(weeklySummary.averageProtein, 143 / 3, 'weekly average protein')
+assertClose(weeklySummary.averageCalories, 724, 'weekly average calories')
+assertClose(weeklySummary.averageCost, 445 / 3, 'weekly average cost')
+
+const emptyWeek: WeekData = {
+  days: Object.fromEntries(
+    WEEK_DAY_IDS.map((dayId) => [dayId, createEmptyWeekDay(dayId)]),
+  ) as WeekData['days'],
+}
+const emptyWeekSummary = calcWeeklySummary(emptyWeek)
+assertTotals(emptyWeekSummary, emptyTotals(), 'empty weekly summary')
+assert(emptyWeekSummary.plannedDays === 0, 'empty week should have no planned days')
+assert(emptyWeekSummary.averageProtein === 0, 'empty week average should be zero')
+
+const copiedWeek = copyWeekDay(structuredClone(mockWeekPrototype), 'mon', 'wed')
+assert(isPlannedDay(copiedWeek.days.wed), 'copied target day should become planned')
+assert(copiedWeek.days.mon !== copiedWeek.days.wed, 'copied days must not share references')
+const copiedIngredient = copiedWeek.days.wed.meals?.breakfast?.dishes?.[0].ingredients?.[0]
+if (copiedIngredient) copiedIngredient.name = 'Changed copied mock'
+assert(
+  copiedWeek.days.mon.meals?.breakfast?.dishes?.[0].ingredients?.[0].name === 'Whole eggs',
+  'editing a copied day must not mutate its source',
+)
+
+const clearedWeek = clearWeekDay(copiedWeek, 'wed')
+assert(!isPlannedDay(clearedWeek.days.wed), 'cleared target day should be empty')
 
 assert(safeNumber('invalid') === 0, 'invalid numeric strings should become zero')
 assert(safeNumber(null) === 0, 'null should become zero')

@@ -3,11 +3,17 @@ import type { Ingredient } from '../domain/types'
 
 type IngredientRowProps = {
   ingredient: Ingredient
-  onQuantityChange: (qty: string) => void
-  onRemove: () => void
+  onQuantityChange?: (qty: string) => void
+  onRemove?: () => void
+  readOnly?: boolean
 }
 
-function IngredientRow({ ingredient, onQuantityChange, onRemove }: IngredientRowProps) {
+function IngredientRow({
+  ingredient,
+  onQuantityChange,
+  onRemove,
+  readOnly = false,
+}: IngredientRowProps) {
   const totals = calcIngr(ingredient)
 
   return (
@@ -17,24 +23,32 @@ function IngredientRow({ ingredient, onQuantityChange, onRemove }: IngredientRow
           <strong>{ingredient.name || 'Unnamed food'}</strong>
           <span>{totals.p.toFixed(1)}g protein · {totals.k.toFixed(0)} kcal</span>
         </div>
-        <button className="remove-button" type="button" onClick={onRemove}>
-          Remove
-        </button>
+        {!readOnly && (
+          <button className="remove-button" type="button" onClick={onRemove}>
+            Remove
+          </button>
+        )}
       </div>
       <div className="ingredient-details">
         <label>
           <span>Quantity</span>
-          <span className="quantity-control">
-            <input
-              type="number"
-              min="0"
-              step="any"
-              value={String(ingredient.qty ?? '')}
-              onChange={(event) => onQuantityChange(event.target.value)}
-              aria-label={`${ingredient.name || 'Ingredient'} quantity`}
-            />
-            <span>{ingredient.unit || 'g'}</span>
-          </span>
+          {readOnly ? (
+            <strong className="quantity-readonly">
+              {String(ingredient.qty ?? 0)} {ingredient.unit || 'g'}
+            </strong>
+          ) : (
+            <span className="quantity-control">
+              <input
+                type="number"
+                min="0"
+                step="any"
+                value={String(ingredient.qty ?? '')}
+                onChange={(event) => onQuantityChange?.(event.target.value)}
+                aria-label={`${ingredient.name || 'Ingredient'} quantity`}
+              />
+              <span>{ingredient.unit || 'g'}</span>
+            </span>
+          )}
         </label>
         <dl>
           <div><dt>Carbs</dt><dd>{totals.carb.toFixed(1)}g</dd></div>

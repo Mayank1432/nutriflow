@@ -15,6 +15,8 @@ The format is based on Keep a Changelog.
 - Added lightweight nutrition verification for per-100, per-unit, aggregate, invalid-value, and non-mutation behavior.
 - Added a mock-only React Today workflow with calculated summaries, expanded meal cards, quantity editing, removal, and empty meal states.
 - Added an accessible Quick Add bottom sheet using entered-quantity nutrition and refresh-reset React state.
+- Added a mock-only React Weekly Planner with calculated week/day summaries, seven-day selection, read-only meal details, and empty states.
+- Added local deep-copy Copy Day and confirmed Clear Day actions that reset on refresh.
 
 ### Changed
 - Renamed current app and product references from Protein Diet Planner to NutriFlow.

@@ -89,6 +89,19 @@ export type PlanDay = Partial<Record<MealId, Ingredient[] | null>>
 
 export type WeekPlan = Record<string, PlanDay | null | undefined>
 
+export type WeekDayId = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+
+export type WeekData = {
+  days: Record<WeekDayId, TodayData>
+}
+
+export type WeeklySummary = MacroTotals & {
+  plannedDays: number
+  averageProtein: number
+  averageCalories: number
+  averageCost: number
+}
+
 export type EnteredQuantityInput = {
   id: string
   name: string
