@@ -235,9 +235,15 @@ The React UI must preserve the current meal-first Today experience: no user-faci
 
 The isolated React prototype now has shared UI patterns for headers, notices, summaries, macros, progress, statuses, meal and ingredient cards, empty states, and four-tab navigation. Real storage integration, schema handling, and migration remain deferred.
 
-### Data Compatibility Plan
+### React Storage Schema Lock
 
-The first React port must preserve these keys:
+`STORAGE_SCHEMA.md` locks the v1 contract for future React storage work. React will start with fresh `nutriflow_react_*_v1` keys; the existing vanilla keys are protected and must not be read, written, reset, or removed by React helpers. Old vanilla Local Storage migration and old backup import are deferred.
+
+This lock is documentation-only. The React prototype still has no real Local Storage integration until Task 1.2 or later, and the root vanilla production app remains unchanged.
+
+### Protected Vanilla Data
+
+The current vanilla production app continues to use these protected keys:
 
 - `pptd_v5`
 - `ppc_v5`
@@ -245,16 +251,7 @@ The first React port must preserve these keys:
 - `ppst_v5`
 - `ppl_v5`
 
-The storage adapter will read and write the existing formats without a schema-breaking migration. Compatibility work must cover:
-
-- Safe JSON parsing and stringifying.
-- Existing exports, imports, and representative old backup files.
-- Startup normalization for legacy Today staples.
-- Old History entries containing staples or dish-style data.
-- The internal `meals -> dishes -> ingredients` shape during the initial port.
-- Existing piece-unit, library-backed, and editable snapshot calculations.
-
-Any later schema change needs a separately approved, versioned migration and rollback plan.
+The fresh React storage adapter must not read or write these keys. Old vanilla migration, old backup import, and compatibility with those formats are deferred unless a separately approved task reopens them. Every active React slice begins at `schemaVersion: 1`; later schema changes require an approved, versioned migration and rollback plan.
 
 ### Module Porting Order
 

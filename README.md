@@ -71,6 +71,8 @@ The React History prototype is mock-only and read-only. It shows newest-first sa
 
 The React prototype now shares consistent headers, notices, summaries, macro displays, statuses, empty states, and four-tab navigation. This polish remains mock-only and does not connect to production storage.
 
+The future React storage contract is locked in `STORAGE_SCHEMA.md`. Task 1.1 only documents the schema; real Local Storage helpers and screen persistence are deferred to Sprint 1 Task 1.2 – React Storage Helpers. The React prototype continues to use mock data, and the root vanilla production app remains unchanged.
+
 Install and run it independently:
 
 ```bash

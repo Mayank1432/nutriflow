@@ -12,6 +12,16 @@ NutriFlow is moving from a stable Vanilla JavaScript PWA toward a staged React/V
 - Installable and offline-capable GitHub Pages PWA.
 - Compatibility with current Local Storage and backup data.
 
+## Sprint 1 Storage Foundation
+
+### Task 1.1 – React Storage Schema Lock
+
+Document the approved v1 React storage contract in `STORAGE_SCHEMA.md`. This task is documentation-only: the React prototype remains mock-only, protected vanilla keys remain untouched, and no storage behavior is implemented.
+
+### Task 1.2 – React Storage Helpers
+
+Implement the React-only storage constants, helpers, defaults, version checks, and reset allowlist defined by the Task 1.1 contract. Task 1.2 follows the schema lock and must not use protected vanilla keys unless separately approved.
+
 ## Sprint 5 Forward Plan
 
 ### Task 5 - Documentation Refresh + Workflow Rules

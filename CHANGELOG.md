@@ -9,6 +9,7 @@ The format is based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Documented the locked React storage schema for future React Local Storage helpers; no runtime or storage behavior changed.
 - Added an isolated React/Vite/TypeScript prototype shell under `react-app/`.
 - Added static mobile-first Today, Weekly, History, and More prototype screens while leaving the production vanilla app unchanged.
 - Added compatibility-first TypeScript domain types, pure nutrition calculations, and mock-only fixtures under `react-app/src/domain/`.
