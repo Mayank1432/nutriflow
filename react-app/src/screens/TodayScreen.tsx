@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import DailySummaryCard from '../components/DailySummaryCard'
 import MealCard from '../components/MealCard'
 import QuickAddSheet from '../components/QuickAddSheet'
@@ -6,15 +6,19 @@ import type { QuickAddDraft } from '../components/QuickAddForm'
 import ScreenContainer from '../components/ScreenContainer'
 import SuccessToast from '../components/SuccessToast'
 import PrototypeNotice from '../components/PrototypeNotice'
-import { mockTodayPrototype } from '../domain/fixtures'
+import type { Ingredient, MacroTotals, MealId, TodayData } from '../domain/types'
 import {
-  calcAll,
-  createEnteredQuantityIngredient,
-  updateEnteredQuantityIngredientQty,
-} from '../domain/nutrition'
-import type { Ingredient, MealId, TodayData } from '../domain/types'
+  readReactTodayStore,
+  writeReactTodayStore,
+  type DailyTotals,
+  type FoodEntry,
+  type MealName,
+  type NutritionBasisType,
+  type ReactTodayStore,
+  type ServingUnit,
+} from '../storage'
 
-const meals: Array<{ id: MealId; name: string }> = [
+const meals: Array<{ id: MealId; name: MealName }> = [
   { id: 'breakfast', name: 'Breakfast' },
   { id: 'lunch', name: 'Lunch' },
   { id: 'dinner', name: 'Dinner' },
@@ -34,34 +38,175 @@ const blankDraft = (mealId: MealId = 'breakfast'): QuickAddDraft => ({
   cost: '',
 })
 
-function updateMealIngredients(
-  today: TodayData,
-  mealId: MealId,
-  updater: (ingredients: Ingredient[]) => Ingredient[],
-): TodayData {
-  const meal = today.meals?.[mealId]
-  const dishes = meal?.dishes ?? []
-  const firstDish = dishes[0] ?? { id: `prototype-${mealId}`, ingredients: [] }
-  const ingredients = updater([...(firstDish.ingredients ?? [])])
+const safeNumber = (value: string | number | undefined): number => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const calculateEntryTotals = (entry: FoodEntry): DailyTotals => {
+  const factor = entry.basisType === 'per_100'
+    ? entry.quantity / 100
+    : entry.quantity
 
   return {
-    ...today,
+    protein: entry.nutritionSnapshot.protein * factor,
+    calories: entry.nutritionSnapshot.calories * factor,
+    carbs: entry.nutritionSnapshot.carbs * factor,
+    fat: entry.nutritionSnapshot.fat * factor,
+    fibre: entry.nutritionSnapshot.fibre * factor,
+    cost: (entry.costSnapshot?.amount ?? 0) * factor,
+  }
+}
+
+const calculateTodayTotals = (store: ReactTodayStore): DailyTotals =>
+  meals.reduce<DailyTotals>((dayTotals, meal) => (
+    store.meals[meal.name].entries.reduce<DailyTotals>((totals, entry) => {
+      const entryTotals = calculateEntryTotals(entry)
+      return {
+        protein: totals.protein + entryTotals.protein,
+        calories: totals.calories + entryTotals.calories,
+        carbs: totals.carbs + entryTotals.carbs,
+        fat: totals.fat + entryTotals.fat,
+        fibre: totals.fibre + entryTotals.fibre,
+        cost: totals.cost + entryTotals.cost,
+      }
+    }, dayTotals)
+  ), {
+    protein: 0,
+    calories: 0,
+    carbs: 0,
+    fat: 0,
+    fibre: 0,
+    cost: 0,
+  })
+
+const toMacroTotals = (totals: DailyTotals): MacroTotals => ({
+  p: totals.protein,
+  k: totals.calories,
+  carb: totals.carbs,
+  fat: totals.fat,
+  fibre: totals.fibre,
+  c: totals.cost,
+})
+
+const toDisplayIngredient = (entry: FoodEntry): Ingredient => {
+  if (entry.basisType === 'per_unit') {
+    return {
+      id: entry.id,
+      name: entry.name,
+      qty: entry.quantity,
+      unit: entry.unit,
+      entryMode: 'enteredQuantity',
+      baseQty: 1,
+      baseProtein: entry.nutritionSnapshot.protein,
+      baseCalories: entry.nutritionSnapshot.calories,
+      baseCarbs: entry.nutritionSnapshot.carbs,
+      baseFat: entry.nutritionSnapshot.fat,
+      baseFibre: entry.nutritionSnapshot.fibre,
+      baseCost: entry.costSnapshot?.amount ?? 0,
+    }
+  }
+
+  return {
+    id: entry.id,
+    name: entry.name,
+    qty: entry.quantity,
+    unit: entry.unit,
+    pr100: entry.nutritionSnapshot.protein,
+    kc100: entry.nutritionSnapshot.calories,
+    carb100: entry.nutritionSnapshot.carbs,
+    fat100: entry.nutritionSnapshot.fat,
+    fibre100: entry.nutritionSnapshot.fibre,
+    pp100: entry.costSnapshot?.amount ?? 0,
+  }
+}
+
+const toDisplayTodayData = (store: ReactTodayStore): TodayData => ({
+  dateKey: store.date,
+  meals: Object.fromEntries(meals.map(({ id, name }) => [
+    id,
+    {
+      dishes: [{
+        id: `react-today-${id}`,
+        ingredients: store.meals[name].entries.map(toDisplayIngredient),
+      }],
+    },
+  ])),
+})
+
+const createFoodEntry = (draft: QuickAddDraft): FoodEntry => {
+  const quantity = Math.max(0, safeNumber(draft.qty))
+  const unit = draft.unit as ServingUnit
+  const basisType: NutritionBasisType =
+    unit === 'g' || unit === 'ml' ? 'per_100' : 'per_unit'
+  const quantityFactor = basisType === 'per_100' ? quantity / 100 : quantity
+  const snapshotDivisor = quantityFactor > 0 ? quantityFactor : 1
+  const timestamp = new Date().toISOString()
+
+  return {
+    id: globalThis.crypto?.randomUUID?.() ?? `today-${Date.now()}`,
+    name: draft.name.trim() || 'Unnamed food',
+    quantity,
+    unit,
+    basisType,
+    nutritionSnapshot: {
+      protein: safeNumber(draft.protein) / snapshotDivisor,
+      calories: safeNumber(draft.calories) / snapshotDivisor,
+      carbs: safeNumber(draft.carbs) / snapshotDivisor,
+      fat: safeNumber(draft.fat) / snapshotDivisor,
+      fibre: safeNumber(draft.fibre) / snapshotDivisor,
+    },
+    costSnapshot: {
+      amount: safeNumber(draft.cost) / snapshotDivisor,
+      currency: 'INR',
+    },
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  }
+}
+
+const updateTodayStore = (
+  current: ReactTodayStore,
+  mealName: MealName,
+  updateEntries: (entries: FoodEntry[]) => FoodEntry[],
+): ReactTodayStore => {
+  const updatedAt = new Date().toISOString()
+  const nextStore: ReactTodayStore = {
+    ...current,
+    updatedAt,
     meals: {
-      ...today.meals,
-      [mealId]: {
-        ...meal,
-        dishes: [{ ...firstDish, ingredients }, ...dishes.slice(1)],
+      ...current.meals,
+      [mealName]: {
+        ...current.meals[mealName],
+        entries: updateEntries(current.meals[mealName].entries),
       },
     },
+  }
+
+  return {
+    ...nextStore,
+    totals: calculateTodayTotals(nextStore),
   }
 }
 
 function TodayScreen() {
-  const [todayData, setTodayData] = useState<TodayData>(() => structuredClone(mockTodayPrototype))
+  const [todayStore, setTodayStore] = useState<ReactTodayStore>(() => readReactTodayStore())
   const [isQuickAddOpen, setQuickAddOpen] = useState(false)
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddDraft>(() => blankDraft())
   const [toastMessage, setToastMessage] = useState('')
-  const totals = calcAll(todayData)
+  const totals = calculateTodayTotals(todayStore)
+  const todayData = toDisplayTodayData(todayStore)
+
+  useEffect(() => {
+    writeReactTodayStore(todayStore)
+  }, [todayStore])
+
+  const persistUpdate = (
+    mealName: MealName,
+    updateEntries: (entries: FoodEntry[]) => FoodEntry[],
+  ) => {
+    setTodayStore((current) => updateTodayStore(current, mealName, updateEntries))
+  }
 
   const openQuickAdd = (mealId: MealId) => {
     setQuickAddDraft(blankDraft(mealId))
@@ -70,59 +215,42 @@ function TodayScreen() {
   }
 
   const addIngredient = () => {
-    const ingredient = createEnteredQuantityIngredient({
-      id: `mock-${Date.now()}`,
-      name: quickAddDraft.name,
-      qty: quickAddDraft.qty,
-      unit: quickAddDraft.unit,
-      protein: quickAddDraft.protein,
-      calories: quickAddDraft.calories,
-      carbs: quickAddDraft.carbs,
-      fat: quickAddDraft.fat,
-      fibre: quickAddDraft.fibre,
-      cost: quickAddDraft.cost,
-    })
+    const entry = createFoodEntry(quickAddDraft)
+    const meal = meals.find(({ id }) => id === quickAddDraft.mealId)
+    if (!meal) return
 
-    setTodayData((current) => updateMealIngredients(
-      current,
-      quickAddDraft.mealId,
-      (ingredients) => [...ingredients, ingredient],
-    ))
-    const mealName = meals.find((meal) => meal.id === quickAddDraft.mealId)?.name
-    setToastMessage(`Added to ${mealName}.`)
+    persistUpdate(meal.name, (entries) => [...entries, entry])
+    setToastMessage(`Added to ${meal.name}.`)
     setQuickAddOpen(false)
     setQuickAddDraft(blankDraft())
   }
 
-  const updateQuantity = (mealId: MealId, ingredientId: string, qty: string) => {
-    setTodayData((current) => updateMealIngredients(
-      current,
-      mealId,
-      (ingredients) => ingredients.map((ingredient) => (
-        ingredient.id === ingredientId
-          ? updateEnteredQuantityIngredientQty(ingredient, qty)
-          : ingredient
-      )),
-    ))
+  const updateQuantity = (mealName: MealName, entryId: string, qty: string) => {
+    const quantity = Math.max(0, safeNumber(qty))
+    const updatedAt = new Date().toISOString()
+    persistUpdate(mealName, (entries) => entries.map((entry) => (
+      entry.id === entryId
+        ? { ...entry, quantity, updatedAt }
+        : entry
+    )))
   }
 
-  const removeIngredient = (mealId: MealId, ingredientId: string) => {
-    setTodayData((current) => updateMealIngredients(
-      current,
-      mealId,
-      (ingredients) => ingredients.filter((ingredient) => ingredient.id !== ingredientId),
-    ))
+  const removeIngredient = (mealName: MealName, entryId: string) => {
+    persistUpdate(
+      mealName,
+      (entries) => entries.filter((entry) => entry.id !== entryId),
+    )
     setToastMessage('Item removed.')
   }
 
   return (
     <ScreenContainer title="Today" subtitle="Track your meals and hit your protein goal.">
-      <PrototypeNotice>Prototype only — today uses mock data. Changes reset on refresh.</PrototypeNotice>
+      <PrototypeNotice>React Today data is stored locally on this device.</PrototypeNotice>
       <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
         <span aria-hidden="true">+</span>
         Quick Add
       </button>
-      <DailySummaryCard totals={totals} />
+      <DailySummaryCard totals={toMacroTotals(totals)} />
       <div className="today-meals">
         {meals.map((meal) => (
           <MealCard
@@ -131,8 +259,8 @@ function TodayScreen() {
             mealName={meal.name}
             todayData={todayData}
             onAdd={() => openQuickAdd(meal.id)}
-            onQuantityChange={(ingredientId, qty) => updateQuantity(meal.id, ingredientId, qty)}
-            onRemove={(ingredientId) => removeIngredient(meal.id, ingredientId)}
+            onQuantityChange={(entryId, qty) => updateQuantity(meal.name, entryId, qty)}
+            onRemove={(entryId) => removeIngredient(meal.name, entryId)}
           />
         ))}
       </div>
