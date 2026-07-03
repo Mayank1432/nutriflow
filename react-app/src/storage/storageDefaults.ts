@@ -96,7 +96,7 @@ export const createDefaultReactDailyStaplesStore = (): ReactDailyStaplesStore =>
 export const createDefaultReactSettingsStore = (): ReactSettingsStore => ({
   schemaVersion: CURRENT_REACT_SCHEMA_VERSION,
   updatedAt: nowIso(),
-  theme: "light",
+  theme: { mode: "light" },
   weekStartDay: "Monday",
   macroGoals: {
     protein: { enabled: true, value: 120 },

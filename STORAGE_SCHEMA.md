@@ -140,7 +140,9 @@ interface MacroGoal {
 
 interface SettingsStore extends VersionedSlice {
   schemaVersion: 1;
-  theme: "light" | "dark";
+  theme: {
+    mode: "light" | "dark";
+  };
   weekStartDay: "Monday";
   macroGoals: {
     protein: MacroGoal;
@@ -155,7 +157,7 @@ interface SettingsStore extends VersionedSlice {
 }
 ```
 
-The default theme is `light`; dark mode will be stored in Settings when implemented later. The UI name is **Macro Goals**. Defaults are:
+The default theme mode is `light`; Task 3.2 stores `light` or `dark` in `theme.mode`. The UI name is **Macro Goals**. Defaults are:
 
 - Protein: enabled, `120` g.
 - Calories: disabled.

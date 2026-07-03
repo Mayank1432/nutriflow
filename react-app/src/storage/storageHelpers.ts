@@ -240,7 +240,8 @@ const isReactSettingsStore: StoreValidator<ReactSettingsStore> = (
   if (
     !isRecord(value) ||
     !hasValidSchemaVersion(value) ||
-    (value.theme !== "light" && value.theme !== "dark") ||
+    !isRecord(value.theme) ||
+    (value.theme.mode !== "light" && value.theme.mode !== "dark") ||
     value.weekStartDay !== "Monday" ||
     !isRecord(value.macroGoals) ||
     !isRecord(value.preferences)

@@ -1,13 +1,14 @@
 import ScreenContainer from '../components/ScreenContainer'
 import StatusBadge from '../components/StatusBadge'
-import { readReactSettingsStore } from '../storage'
+import type { ReactSettingsStore } from '../storage'
 
 type SettingsScreenProps = {
   onBack: () => void
+  settings: ReactSettingsStore
+  onToggleTheme: () => void
 }
 
-function SettingsScreen({ onBack }: SettingsScreenProps) {
-  const settings = readReactSettingsStore()
+function SettingsScreen({ onBack, settings, onToggleTheme }: SettingsScreenProps) {
   const goals = [
     ['Protein', settings.macroGoals.protein.enabled, `${settings.macroGoals.protein.value ?? 120}g`],
     ['Calories', settings.macroGoals.calories.enabled, 'Disabled'],
@@ -24,8 +25,10 @@ function SettingsScreen({ onBack }: SettingsScreenProps) {
       <section className="about-card" aria-labelledby="theme-settings-title">
         <p className="eyebrow">Appearance</p>
         <h3 id="theme-settings-title">Theme</h3>
-        <p><strong>Light</strong> · Default</p>
-        <p>Dark mode is unavailable and coming later.</p>
+        <p><strong>{settings.theme.mode === 'dark' ? 'Dark' : 'Light'}</strong>{settings.theme.mode === 'light' ? ' · Default' : ''}</p>
+        <button className="secondary-action" type="button" onClick={onToggleTheme}>
+          Use {settings.theme.mode === 'light' ? 'Dark' : 'Light'} theme
+        </button>
       </section>
 
       <section className="about-card" aria-labelledby="macro-goals-title">

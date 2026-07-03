@@ -143,7 +143,9 @@ export interface MacroGoals {
 }
 
 export interface ReactSettingsStore extends VersionedSlice {
-  theme: "light" | "dark";
+  theme: {
+    mode: "light" | "dark";
+  };
   weekStartDay: "Monday";
   macroGoals: MacroGoals;
   preferences: Record<string, unknown>;

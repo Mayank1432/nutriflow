@@ -12,6 +12,22 @@
   --surface: #ffffff;
   --soft-green: #e7f7ef;
   --shadow: 0 10px 26px rgba(36, 80, 64, 0.08);
+  --page: #edf4f0;
+  --app-background: #f8fbf9;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e5f1ec;
+  --muted: #a9bdb5;
+  --line: #355148;
+  --green: #55c998;
+  --green-dark: #7cdbb5;
+  --surface: #1d302a;
+  --soft-green: #233f35;
+  --shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+  --page: #13221d;
+  --app-background: #172822;
 }
 
 * {
@@ -23,6 +39,12 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: linear-gradient(#f5faf7 0 190px, transparent 190px), #edf4f0;
+}
+
+.theme-root {
+  min-height: 100vh;
+  color: var(--ink);
+  background: var(--page);
 }
 
 button {
@@ -38,7 +60,7 @@ button:focus-visible {
   width: min(100%, 760px);
   min-height: 100vh;
   margin: 0 auto;
-  background: #f8fbf9;
+  background: var(--app-background);
   box-shadow: 0 0 50px rgba(39, 73, 62, 0.08);
 }
 
