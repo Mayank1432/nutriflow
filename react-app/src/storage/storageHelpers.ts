@@ -159,7 +159,9 @@ const isIngredientDefinition = (
 const isMacroGoal = (value: unknown): value is MacroGoal =>
   isRecord(value) &&
   typeof value.enabled === "boolean" &&
-  (value.value === undefined || isNumber(value.value));
+  (value.enabled
+    ? isNumber(value.value) && value.value > 0
+    : value.value === null);
 
 const isWeeklyDay = (value: unknown, index: number): value is WeeklyDay => {
   const expected = WEEK_DAY_PAIRS[index];

@@ -130,7 +130,7 @@ export interface ReactDailyStaplesStore extends VersionedSlice {
 
 export interface MacroGoal {
   enabled: boolean;
-  value?: number;
+  value: number | null;
 }
 
 export interface MacroGoals {

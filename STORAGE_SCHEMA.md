@@ -135,7 +135,7 @@ Key: `nutriflow_react_settings_v1`
 ```ts
 interface MacroGoal {
   enabled: boolean;
-  value?: number;
+  value: number | null;
 }
 
 interface SettingsStore extends VersionedSlice {

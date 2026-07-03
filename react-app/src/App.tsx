@@ -5,7 +5,7 @@ import MoreScreen from './screens/MoreScreen'
 import TodayScreen from './screens/TodayScreen'
 import WeeklyScreen from './screens/WeeklyScreen'
 import SettingsScreen from './screens/SettingsScreen'
-import { readReactSettingsStore, writeReactSettingsStore } from './storage'
+import { readReactSettingsStore, writeReactSettingsStore, type MacroGoals } from './storage'
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('today')
@@ -21,6 +21,17 @@ function App() {
     if (writeReactSettingsStore(updated)) setSettings(updated)
   }
 
+  const saveMacroGoals = (macroGoals: MacroGoals): boolean => {
+    const updated = {
+      ...settings,
+      updatedAt: new Date().toISOString(),
+      macroGoals,
+    }
+    if (!writeReactSettingsStore(updated)) return false
+    setSettings(updated)
+    return true
+  }
+
   const screens = {
     today: <TodayScreen />,
     weekly: <WeeklyScreen />,
@@ -30,6 +41,7 @@ function App() {
           onBack={() => setShowSettings(false)}
           settings={settings}
           onToggleTheme={toggleTheme}
+          onSaveMacroGoals={saveMacroGoals}
         />
       : <MoreScreen onOpenSettings={() => setShowSettings(true)} />,
   }
