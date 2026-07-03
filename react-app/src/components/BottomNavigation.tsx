@@ -1,7 +1,7 @@
 import type { TabId } from './AppShell'
 import NavItem from './NavItem'
 
-type BottomNavProps = {
+type BottomNavigationProps = {
   activeTab: TabId
   onTabChange: (tab: TabId) => void
 }
@@ -13,7 +13,7 @@ const items: Array<{ id: TabId; icon: string; label: string }> = [
   { id: 'more', icon: '•••', label: 'More' },
 ]
 
-function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {
   return (
     <nav className="bottom-nav" aria-label="Primary navigation">
       {items.map((item) => (
@@ -28,4 +28,4 @@ function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   )
 }
 
-export default BottomNav
+export default BottomNavigation

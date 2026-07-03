@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import BottomNav from './BottomNav'
+import BottomNavigation from './BottomNavigation'
 import { DrawerProvider } from './DrawerContext'
 import HamburgerDrawer, { type DrawerDestination } from './HamburgerDrawer'
 
@@ -19,7 +19,13 @@ function AppShell({ activeTab, children, onTabChange, activeDestination, onDrawe
     <DrawerProvider value={() => setDrawerOpen(true)}>
     <div className="app-frame">
       <main className="app-main">{children}</main>
-      <BottomNav activeTab={activeTab} onTabChange={onTabChange} />
+      <BottomNavigation
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setDrawerOpen(false)
+          onTabChange(tab)
+        }}
+      />
       <HamburgerDrawer
         activeDestination={activeDestination}
         open={drawerOpen}

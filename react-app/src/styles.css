@@ -268,7 +268,7 @@ button:focus-visible {
 }
 
 .app-main {
-  padding: 24px 16px 110px;
+  padding: 24px 16px calc(100px + env(safe-area-inset-bottom));
 }
 
 .screen {
@@ -1417,7 +1417,7 @@ button:focus-visible {
 
 .bottom-nav {
   position: fixed;
-  z-index: 10;
+  z-index: 110;
   right: 0;
   bottom: 0;
   left: 0;
@@ -1428,8 +1428,8 @@ button:focus-visible {
   margin: 0 auto;
   padding: 8px 10px max(8px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 -8px 25px rgba(39, 73, 62, 0.09);
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .nav-item {
@@ -1442,7 +1442,7 @@ button:focus-visible {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #74877f;
+  color: var(--muted);
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
@@ -1451,6 +1451,11 @@ button:focus-visible {
 .nav-item.active {
   background: var(--soft-green);
   color: var(--green-dark);
+}
+
+.nav-item:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .nav-icon {
@@ -1465,7 +1470,7 @@ button:focus-visible {
   }
 
   .app-main {
-    padding: 30px 32px 120px;
+    padding: 30px 32px calc(110px + env(safe-area-inset-bottom));
   }
 
   .macro-grid {
