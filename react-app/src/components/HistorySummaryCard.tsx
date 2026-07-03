@@ -16,7 +16,7 @@ function HistorySummaryCard({ summary }: HistorySummaryCardProps) {
   return (
     <section className="history-summary-card" aria-labelledby="history-summary-title">
       <div>
-        <p className="eyebrow">Mock history summary</p>
+        <p className="eyebrow">Saved history summary</p>
         <h3 id="history-summary-title">Your recent consistency</h3>
       </div>
       <div className="history-summary-grid">

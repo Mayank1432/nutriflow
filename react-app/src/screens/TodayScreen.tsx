@@ -8,10 +8,13 @@ import SuccessToast from '../components/SuccessToast'
 import PrototypeNotice from '../components/PrototypeNotice'
 import type { Ingredient, MacroTotals, MealId, TodayData } from '../domain/types'
 import {
+  readReactHistoryStore,
   readReactTodayStore,
+  writeReactHistoryStore,
   writeReactTodayStore,
   type DailyTotals,
   type FoodEntry,
+  type HistoryDay,
   type MealName,
   type NutritionBasisType,
   type ReactTodayStore,
@@ -243,12 +246,40 @@ function TodayScreen() {
     setToastMessage('Item removed.')
   }
 
+  const saveTodayToHistory = () => {
+    const savedAt = new Date().toISOString()
+    const historyDay: HistoryDay = {
+      id: globalThis.crypto?.randomUUID?.() ?? `history-${Date.now()}`,
+      date: todayStore.date,
+      savedAt,
+      meals: structuredClone(todayStore.meals),
+      totals: structuredClone(calculateTodayTotals(todayStore)),
+    }
+    const currentHistory = readReactHistoryStore()
+    const nextHistory = {
+      ...currentHistory,
+      updatedAt: savedAt,
+      savedDays: [...currentHistory.savedDays, historyDay]
+        .sort((a, b) => b.savedAt.localeCompare(a.savedAt)),
+      deletedDays: currentHistory.deletedDays ?? [],
+    }
+
+    setToastMessage(
+      writeReactHistoryStore(nextHistory)
+        ? 'Today saved to History.'
+        : 'Could not save Today to History.',
+    )
+  }
+
   return (
     <ScreenContainer title="Today" subtitle="Track your meals and hit your protein goal.">
       <PrototypeNotice>React Today data is stored locally on this device.</PrototypeNotice>
       <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
         <span aria-hidden="true">+</span>
         Quick Add
+      </button>
+      <button className="secondary-action" type="button" onClick={saveTodayToHistory}>
+        Save Today to History
       </button>
       <DailySummaryCard totals={toMacroTotals(totals)} />
       <div className="today-meals">
