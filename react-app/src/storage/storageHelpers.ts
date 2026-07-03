@@ -59,7 +59,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isString = (value: unknown): value is string => typeof value === "string";
 const isNumber = (value: unknown): value is number =>
-  typeof value === "number" && Number.isFinite(value);
+  typeof value === "number" && Number.isFinite(value) && value >= 0;
 const isOptionalString = (value: unknown): value is string | undefined =>
   value === undefined || isString(value);
 
@@ -138,6 +138,7 @@ const isIngredientDefinition = (
   isString(value.name) &&
   SERVING_UNITS.includes(value.unit as ServingUnit) &&
   isNumber(value.defaultQuantity) &&
+  value.defaultQuantity > 0 &&
   SERVING_UNITS.includes(value.defaultUnit as ServingUnit) &&
   (value.defaultMeal === undefined ||
     MEAL_NAMES.includes(value.defaultMeal as MealName)) &&

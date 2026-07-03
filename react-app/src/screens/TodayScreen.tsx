@@ -62,7 +62,7 @@ const calculateEntryTotals = (entry: FoodEntry): DailyTotals => {
   }
 }
 
-const calculateTodayTotals = (store: ReactTodayStore): DailyTotals =>
+export const calculateTodayTotals = (store: ReactTodayStore): DailyTotals =>
   meals.reduce<DailyTotals>((dayTotals, meal) => (
     store.meals[meal.name].entries.reduce<DailyTotals>((totals, entry) => {
       const entryTotals = calculateEntryTotals(entry)
