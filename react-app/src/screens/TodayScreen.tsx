@@ -319,7 +319,12 @@ function TodayScreen() {
   }
 
   return (
-    <ScreenContainer title="Today" subtitle="Track your meals and hit your protein goal.">
+    <ScreenContainer
+      title="Today"
+      subtitle="Track your meals and hit your protein goal."
+      showDateRow
+      dateLabel={todayStore.date}
+    >
       <PrototypeNotice>React Today data is stored locally on this device.</PrototypeNotice>
       <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
         <span aria-hidden="true">+</span>

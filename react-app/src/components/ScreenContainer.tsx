@@ -1,16 +1,29 @@
 import type { ReactNode } from 'react'
-import ScreenHeader from './ScreenHeader'
+import MobileHeader from './MobileHeader'
 
 type ScreenContainerProps = {
   children: ReactNode
   title: string
   subtitle: string
+  showDateRow?: boolean
+  dateLabel?: string
 }
 
-function ScreenContainer({ children, title, subtitle }: ScreenContainerProps) {
+function ScreenContainer({
+  children,
+  title,
+  subtitle,
+  showDateRow,
+  dateLabel,
+}: ScreenContainerProps) {
   return (
     <section className="screen" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, '-')}-title`}>
-      <ScreenHeader title={title} subtitle={subtitle} />
+      <MobileHeader
+        screenTitle={title}
+        subtitle={subtitle}
+        showDateRow={showDateRow}
+        dateLabel={dateLabel}
+      />
       {children}
     </section>
   )
