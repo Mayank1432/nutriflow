@@ -9,10 +9,13 @@ import { DailyStaplesManager } from '../components/DailyStaples'
 const tools = [
   { label: 'Analytics', description: 'Trends and charts will live here.', tone: 'green' as const },
   { label: 'Export / Import', description: 'Backup compatibility comes in a later port.', tone: 'blue' as const },
-  { label: 'Settings', description: 'Goals, preferences, and themes are planned.', tone: 'coral' as const },
 ]
 
-function MoreScreen() {
+type MoreScreenProps = {
+  onOpenSettings: () => void
+}
+
+function MoreScreen({ onOpenSettings }: MoreScreenProps) {
   return (
     <ScreenContainer title="More" subtitle="Prototype tools, placeholders, and app information.">
       <PrototypeNotice>Ingredient Library definitions are stored locally in the React app.</PrototypeNotice>
@@ -28,6 +31,9 @@ function MoreScreen() {
       </SummaryCard>
       <IngredientLibrary />
       <DailyStaplesManager />
+      <button className="secondary-action" type="button" onClick={onOpenSettings}>
+        Open Settings
+      </button>
       <div className="tool-grid">
         {tools.map((tool) => (
           <PlaceholderCard key={tool.label} {...tool} />
