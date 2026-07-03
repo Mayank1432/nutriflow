@@ -13,6 +13,7 @@ function MobileHeader({
   dateLabel,
   onMenuClick,
 }: MobileHeaderProps) {
+  const openDrawer = useOpenDrawer()
   const titleId = `${screenTitle.toLowerCase().replace(/\s+/g, '-')}-title`
 
   return (
@@ -22,7 +23,7 @@ function MobileHeader({
           className="mobile-menu-button"
           type="button"
           aria-label="Open menu"
-          onClick={onMenuClick}
+          onClick={onMenuClick ?? openDrawer}
         >
           <span aria-hidden="true">☰</span>
         </button>
@@ -46,3 +47,4 @@ function MobileHeader({
 }
 
 export default MobileHeader
+import { useOpenDrawer } from './DrawerContext'

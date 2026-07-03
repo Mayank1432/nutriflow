@@ -138,6 +138,77 @@ button:focus-visible {
   color: var(--muted);
 }
 
+.drawer-overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.hamburger-drawer {
+  width: min(84vw, 320px);
+  height: 100%;
+  padding: 18px;
+  overflow-y: auto;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.drawer-heading {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+
+.drawer-heading button,
+.hamburger-drawer nav button {
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+}
+
+.drawer-heading button {
+  min-width: 44px;
+  font-size: 26px;
+}
+
+.hamburger-drawer nav h2 {
+  margin: 22px 8px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.hamburger-drawer nav button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.hamburger-drawer nav button.active {
+  background: var(--soft-green);
+  color: var(--green-dark);
+  font-weight: 800;
+}
+
+.drawer-heading button:focus-visible,
+.hamburger-drawer nav button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.drawer-focus-section {
+  outline: 2px solid var(--green);
+  outline-offset: 4px;
+  border-radius: var(--radius);
+}
+
 .mobile-date-row {
   display: flex;
   align-items: center;

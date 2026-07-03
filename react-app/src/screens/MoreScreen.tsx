@@ -13,9 +13,11 @@ const tools = [
 
 type MoreScreenProps = {
   onOpenSettings: () => void
+  focusSection: 'ingredient-library' | 'daily-staples' | null
 }
 
-function MoreScreen({ onOpenSettings }: MoreScreenProps) {
+function MoreScreen({ onOpenSettings, focusSection }: MoreScreenProps) {
+  const focusClass = (section: typeof focusSection) => focusSection === section ? ' drawer-focus-section' : ''
   return (
     <ScreenContainer title="More" subtitle="Prototype tools, placeholders, and app information.">
       <PrototypeNotice>Ingredient Library definitions are stored locally in the React app.</PrototypeNotice>
@@ -29,8 +31,8 @@ function MoreScreen({ onOpenSettings }: MoreScreenProps) {
         </div>
         <p>Today, Weekly, and History use React storage persistence. The React app remains isolated from the production vanilla app.</p>
       </SummaryCard>
-      <IngredientLibrary />
-      <DailyStaplesManager />
+      <div id="ingredient-library" className={focusClass('ingredient-library')}><IngredientLibrary /></div>
+      <div id="daily-staples" className={focusClass('daily-staples')}><DailyStaplesManager /></div>
       <button className="secondary-action" type="button" onClick={onOpenSettings}>
         Open Settings
       </button>
