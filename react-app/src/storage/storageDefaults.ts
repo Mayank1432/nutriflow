@@ -3,6 +3,7 @@ import type {
   DailyTotals,
   MealsByName,
   ReactHistoryStore,
+  ReactDailyStaplesStore,
   ReactIngredientsStore,
   ReactMetaStore,
   ReactSettingsStore,
@@ -86,6 +87,12 @@ export const createDefaultReactIngredientsStore = (): ReactIngredientsStore => (
   ingredients: [],
 });
 
+export const createDefaultReactDailyStaplesStore = (): ReactDailyStaplesStore => ({
+  schemaVersion: CURRENT_REACT_SCHEMA_VERSION,
+  updatedAt: nowIso(),
+  staples: [],
+});
+
 export const createDefaultReactSettingsStore = (): ReactSettingsStore => ({
   schemaVersion: CURRENT_REACT_SCHEMA_VERSION,
   updatedAt: nowIso(),
@@ -118,6 +125,7 @@ export const createDefaultReactStores = (): ReactStores => ({
   weekly: createDefaultReactWeeklyStore(),
   history: createDefaultReactHistoryStore(),
   ingredients: createDefaultReactIngredientsStore(),
+  dailyStaples: createDefaultReactDailyStaplesStore(),
   settings: createDefaultReactSettingsStore(),
   meta: createDefaultReactMetaStore(),
 });

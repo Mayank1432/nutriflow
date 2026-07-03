@@ -37,6 +37,7 @@ export interface CostSnapshot {
 export interface FoodEntry {
   id: string;
   ingredientId?: string;
+  stapleId?: string;
   name: string;
   quantity: number;
   unit: ServingUnit;
@@ -108,6 +109,25 @@ export interface ReactIngredientsStore extends VersionedSlice {
   ingredients: IngredientDefinition[];
 }
 
+export interface DailyStapleDefinition {
+  id: string;
+  ingredientId?: string;
+  name: string;
+  defaultQuantity: number;
+  defaultMeal: MealName;
+  unit: ServingUnit;
+  basisType: NutritionBasisType;
+  nutrition: NutritionSnapshot;
+  cost?: CostSnapshot;
+  isArchived?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReactDailyStaplesStore extends VersionedSlice {
+  staples: DailyStapleDefinition[];
+}
+
 export interface MacroGoal {
   enabled: boolean;
   value?: number;
@@ -143,6 +163,7 @@ export interface ReactStores {
   weekly: ReactWeeklyStore;
   history: ReactHistoryStore;
   ingredients: ReactIngredientsStore;
+  dailyStaples: ReactDailyStaplesStore;
   settings: ReactSettingsStore;
   meta: ReactMetaStore;
 }

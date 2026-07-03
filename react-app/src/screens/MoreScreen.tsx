@@ -4,6 +4,7 @@ import PrototypeNotice from '../components/PrototypeNotice'
 import SummaryCard from '../components/SummaryCard'
 import StatusBadge from '../components/StatusBadge'
 import IngredientLibrary from '../components/IngredientLibrary'
+import { DailyStaplesManager } from '../components/DailyStaples'
 
 const tools = [
   { label: 'Analytics', description: 'Trends and charts will live here.', tone: 'green' as const },
@@ -26,6 +27,7 @@ function MoreScreen() {
         <p>Today, Weekly, and History use React storage persistence. The React app remains isolated from the production vanilla app.</p>
       </SummaryCard>
       <IngredientLibrary />
+      <DailyStaplesManager />
       <div className="tool-grid">
         {tools.map((tool) => (
           <PlaceholderCard key={tool.label} {...tool} />

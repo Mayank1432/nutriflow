@@ -7,6 +7,7 @@ import ScreenContainer from '../components/ScreenContainer'
 import SuccessToast from '../components/SuccessToast'
 import PrototypeNotice from '../components/PrototypeNotice'
 import TodayIngredients from '../components/TodayIngredients'
+import { ActiveDailyStaples } from '../components/DailyStaples'
 import type { Ingredient, MacroTotals, MealId, TodayData } from '../domain/types'
 import {
   readReactHistoryStore,
@@ -14,6 +15,7 @@ import {
   writeReactHistoryStore,
   writeReactTodayStore,
   type DailyTotals,
+  type DailyStapleDefinition,
   type FoodEntry,
   type HistoryDay,
   type MealName,
@@ -273,6 +275,24 @@ function TodayScreen() {
     setToastMessage('Item removed.')
   }
 
+  const addStapleToToday = (staple: DailyStapleDefinition) => {
+    const timestamp = new Date().toISOString()
+    persistUpdate(staple.defaultMeal, (entries) => [...entries, {
+      id: globalThis.crypto?.randomUUID?.() ?? `today-${Date.now()}`,
+      ingredientId: staple.ingredientId,
+      stapleId: staple.id,
+      name: staple.name,
+      quantity: staple.defaultQuantity,
+      unit: staple.unit,
+      basisType: staple.basisType,
+      nutritionSnapshot: structuredClone(staple.nutrition),
+      costSnapshot: staple.cost ? structuredClone(staple.cost) : undefined,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }])
+    setToastMessage(`Added ${staple.name} to ${staple.defaultMeal}.`)
+  }
+
   const saveTodayToHistory = () => {
     const savedAt = new Date().toISOString()
     const historyDay: HistoryDay = {
@@ -309,6 +329,7 @@ function TodayScreen() {
         Save Today to History
       </button>
       <DailySummaryCard totals={toMacroTotals(totals)} />
+      <ActiveDailyStaples onAdd={addStapleToToday} />
       <div className="today-meals">
         {meals.map((meal) => (
           <MealCard

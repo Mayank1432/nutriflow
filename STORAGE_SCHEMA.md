@@ -25,6 +25,7 @@ The active React v1 keys are:
 - `nutriflow_react_ingredients_v1`
 - `nutriflow_react_settings_v1`
 - `nutriflow_react_meta_v1`
+- `nutriflow_react_daily_staples_v1`
 
 These are the only active keys in the initial React schema.
 
@@ -32,7 +33,6 @@ These are the only active keys in the initial React schema.
 
 - `nutriflow_react_shopping_v1`
 - `nutriflow_react_pantry_v1`
-- `nutriflow_react_daily_staples_v1`
 
 These names are reserved only. They must not be created as active empty slices before their approved future sprints.
 
@@ -322,9 +322,11 @@ Task 1.1 does not implement reset behavior.
 
 React v1 storage starts fresh. Migration from old vanilla Local Storage and old vanilla backup import are deferred. React storage helpers must not read protected vanilla keys unless a future Main Chat-approved migration task explicitly reopens that work.
 
-## 18. Future Reserved Slices
+## 18. Daily Staples and Future Reserved Slices
 
-Shopping, Pantry, and Daily Staples keys are reserved. No active empty slices are created now; their schemas will be added only in their approved sprints.
+Daily Staples is active in its approved sprint under `nutriflow_react_daily_staples_v1`. Its versioned store contains reusable `DailyStapleDefinition` records with stable ID, optional Ingredient Library reference, name, default quantity and meal, explicit unit and basis, nutrition/cost snapshots, archive status, and timestamps. Staples never contain active meal entries.
+
+Shopping and Pantry remain reserved; no active empty slices are created for them.
 
 ## 19. Implementation Rules for Task 1.2
 

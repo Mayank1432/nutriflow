@@ -1,5 +1,6 @@
 import {
   createDefaultReactHistoryStore,
+  createDefaultReactDailyStaplesStore,
   createDefaultReactIngredientsStore,
   createDefaultReactMetaStore,
   createDefaultReactSettingsStore,
@@ -15,6 +16,7 @@ import {
 import { safeJsonParse, safeJsonStringify } from "./storageJson";
 import type {
   CostSnapshot,
+  DailyStapleDefinition,
   DailyTotals,
   FoodEntry,
   HistoryDay,
@@ -25,6 +27,7 @@ import type {
   MealsByName,
   NutritionSnapshot,
   ReactHistoryStore,
+  ReactDailyStaplesStore,
   ReactIngredientsStore,
   ReactMetaStore,
   ReactSettingsStore,
@@ -102,6 +105,7 @@ const isFoodEntry = (value: unknown): value is FoodEntry =>
   isRecord(value) &&
   isString(value.id) &&
   isOptionalString(value.ingredientId) &&
+  isOptionalString(value.stapleId) &&
   isString(value.name) &&
   isNumber(value.quantity) &&
   SERVING_UNITS.includes(value.unit as ServingUnit) &&
@@ -205,6 +209,30 @@ const isReactIngredientsStore: StoreValidator<ReactIngredientsStore> = (
   hasValidSchemaVersion(value) &&
   Array.isArray(value.ingredients) &&
   value.ingredients.every(isIngredientDefinition);
+
+const isDailyStapleDefinition = (value: unknown): value is DailyStapleDefinition =>
+  isRecord(value) &&
+  isString(value.id) &&
+  isOptionalString(value.ingredientId) &&
+  isString(value.name) &&
+  isNumber(value.defaultQuantity) &&
+  value.defaultQuantity > 0 &&
+  MEAL_NAMES.includes(value.defaultMeal as MealName) &&
+  SERVING_UNITS.includes(value.unit as ServingUnit) &&
+  (value.basisType === "per_100" || value.basisType === "per_unit") &&
+  isNutritionSnapshot(value.nutrition) &&
+  (value.cost === undefined || isCostSnapshot(value.cost)) &&
+  hasOnlyOptionalBoolean(value.isArchived) &&
+  isString(value.createdAt) &&
+  isString(value.updatedAt);
+
+const isReactDailyStaplesStore: StoreValidator<ReactDailyStaplesStore> = (
+  value,
+): value is ReactDailyStaplesStore =>
+  isRecord(value) &&
+  hasValidSchemaVersion(value) &&
+  Array.isArray(value.staples) &&
+  value.staples.every(isDailyStapleDefinition);
 
 const isReactSettingsStore: StoreValidator<ReactSettingsStore> = (
   value,
@@ -410,6 +438,27 @@ export const resetReactIngredientsStore = (): ReactIngredientsStore =>
     REACT_STORAGE_KEYS.ingredients,
     createDefaultReactIngredientsStore,
     isReactIngredientsStore,
+  );
+
+export const readReactDailyStaplesStore = (): ReactDailyStaplesStore =>
+  readReactStore(
+    REACT_STORAGE_KEYS.dailyStaples,
+    createDefaultReactDailyStaplesStore,
+    isReactDailyStaplesStore,
+  );
+export const writeReactDailyStaplesStore = (
+  store: ReactDailyStaplesStore,
+): boolean =>
+  writeReactStore(
+    REACT_STORAGE_KEYS.dailyStaples,
+    store,
+    isReactDailyStaplesStore,
+  );
+export const resetReactDailyStaplesStore = (): ReactDailyStaplesStore =>
+  resetReactStore(
+    REACT_STORAGE_KEYS.dailyStaples,
+    createDefaultReactDailyStaplesStore,
+    isReactDailyStaplesStore,
   );
 
 export const readReactSettingsStore = (): ReactSettingsStore =>

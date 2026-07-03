@@ -10,4 +10,4 @@ This module is infrastructure for the schema in the root `STORAGE_SCHEMA.md`.
 - Reset helpers remove only allowlisted React keys.
 - Never use `localStorage.clear()`.
 
-Reserved Shopping, Pantry, and Daily Staples key names are documented constants only. They are not active or included in the runtime allowlist.
+Shopping and Pantry remain reserved constants. Daily Staples is active and included in the React-only runtime allowlist.
