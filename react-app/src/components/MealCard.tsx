@@ -9,7 +9,7 @@ type MealCardProps = {
   todayData: TodayData
   emptyMessage?: string
   onAdd?: () => void
-  onQuantityChange?: (ingredientId: string, qty: string) => void
+  onQuantityChange?: (ingredientId: string, qty: number) => void
   onRemove?: (ingredientId: string) => void
   mode?: 'editable' | 'readonly'
   readOnly?: boolean
@@ -51,13 +51,13 @@ function MealCard({
         {ingredients.length === 0 ? (
           <EmptyState title="No foods yet" description={emptyMessage} icon="+" />
         ) : (
-          ingredients.map((ingredient, index) => (
+          ingredients.filter((ingredient) => typeof ingredient.id === 'string').map((ingredient) => (
             <IngredientRow
-              key={ingredient.id || `${mealId}-${index}`}
+              key={ingredient.id}
               ingredient={ingredient}
               mode={isReadOnly ? 'readonly' : 'editable'}
-              onQuantityChange={(qty) => onQuantityChange?.(String(ingredient.id), qty)}
-              onRemove={() => onRemove?.(String(ingredient.id))}
+              onQuantityCommit={(qty) => onQuantityChange?.(ingredient.id as string, qty)}
+              onRemove={() => onRemove?.(ingredient.id as string)}
             />
           ))
         )}

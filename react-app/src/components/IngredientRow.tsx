@@ -1,9 +1,10 @@
+import { useEffect, useState } from 'react'
 import { calcIngr } from '../domain/nutrition'
 import type { Ingredient } from '../domain/types'
 
 type IngredientRowProps = {
   ingredient: Ingredient
-  onQuantityChange?: (qty: string) => void
+  onQuantityCommit?: (qty: number) => void
   onRemove?: () => void
   mode?: 'editable' | 'readonly'
   readOnly?: boolean
@@ -11,13 +12,41 @@ type IngredientRowProps = {
 
 function IngredientRow({
   ingredient,
-  onQuantityChange,
+  onQuantityCommit,
   onRemove,
   mode,
   readOnly = false,
 }: IngredientRowProps) {
   const isReadOnly = mode === 'readonly' || readOnly
   const totals = calcIngr(ingredient)
+  const persistedQuantity = String(ingredient.qty ?? 0)
+  const [quantityDraft, setQuantityDraft] = useState(persistedQuantity)
+
+  useEffect(() => {
+    setQuantityDraft(persistedQuantity)
+  }, [ingredient.id, persistedQuantity])
+
+  const commitQuantity = () => {
+    const trimmed = quantityDraft.trim()
+    if (trimmed === '') {
+      setQuantityDraft(persistedQuantity)
+      return
+    }
+
+    const quantity = Number(trimmed)
+    if (!Number.isFinite(quantity)) {
+      setQuantityDraft(persistedQuantity)
+      return
+    }
+
+    if (quantity <= 0) {
+      onRemove?.()
+      return
+    }
+
+    onQuantityCommit?.(quantity)
+    setQuantityDraft(String(quantity))
+  }
 
   return (
     <div className="ingredient-row">
@@ -45,8 +74,16 @@ function IngredientRow({
                 type="number"
                 min="0"
                 step="any"
-                value={String(ingredient.qty ?? '')}
-                onChange={(event) => onQuantityChange?.(event.target.value)}
+                value={quantityDraft}
+                onChange={(event) => setQuantityDraft(event.target.value)}
+                onBlur={commitQuantity}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                  if (event.key === 'Escape') {
+                    setQuantityDraft(persistedQuantity)
+                    event.currentTarget.blur()
+                  }
+                }}
                 aria-label={`${ingredient.name || 'Ingredient'} quantity`}
               />
               <span>{ingredient.unit || 'g'}</span>

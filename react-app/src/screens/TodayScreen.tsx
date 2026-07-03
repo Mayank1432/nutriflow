@@ -6,6 +6,7 @@ import type { QuickAddDraft } from '../components/QuickAddForm'
 import ScreenContainer from '../components/ScreenContainer'
 import SuccessToast from '../components/SuccessToast'
 import PrototypeNotice from '../components/PrototypeNotice'
+import TodayIngredients from '../components/TodayIngredients'
 import type { Ingredient, MacroTotals, MealId, TodayData } from '../domain/types'
 import {
   readReactHistoryStore,
@@ -192,8 +193,34 @@ const updateTodayStore = (
   }
 }
 
+const normalizeTodayStore = (store: ReactTodayStore): ReactTodayStore => {
+  const mealsChanged = meals.some(({ name }) => (
+    store.meals[name].entries.some((entry) => (
+      !Number.isFinite(entry.quantity) || entry.quantity <= 0
+    ))
+  ))
+  if (!mealsChanged) return store
+
+  const normalized: ReactTodayStore = {
+    ...store,
+    updatedAt: new Date().toISOString(),
+    meals: Object.fromEntries(meals.map(({ name }) => [
+      name,
+      {
+        ...store.meals[name],
+        entries: store.meals[name].entries.filter((entry) => (
+          Number.isFinite(entry.quantity) && entry.quantity > 0
+        )),
+      },
+    ])) as ReactTodayStore['meals'],
+  }
+  return { ...normalized, totals: calculateTodayTotals(normalized) }
+}
+
 function TodayScreen() {
-  const [todayStore, setTodayStore] = useState<ReactTodayStore>(() => readReactTodayStore())
+  const [todayStore, setTodayStore] = useState<ReactTodayStore>(
+    () => normalizeTodayStore(readReactTodayStore()),
+  )
   const [isQuickAddOpen, setQuickAddOpen] = useState(false)
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddDraft>(() => blankDraft())
   const [toastMessage, setToastMessage] = useState('')
@@ -228,8 +255,8 @@ function TodayScreen() {
     setQuickAddDraft(blankDraft())
   }
 
-  const updateQuantity = (mealName: MealName, entryId: string, qty: string) => {
-    const quantity = Math.max(0, safeNumber(qty))
+  const updateQuantity = (mealName: MealName, entryId: string, quantity: number) => {
+    if (!Number.isFinite(quantity) || quantity <= 0) return
     const updatedAt = new Date().toISOString()
     persistUpdate(mealName, (entries) => entries.map((entry) => (
       entry.id === entryId
@@ -295,6 +322,11 @@ function TodayScreen() {
           />
         ))}
       </div>
+      <TodayIngredients
+        todayStore={todayStore}
+        onQuantityCommit={updateQuantity}
+        onRemove={removeIngredient}
+      />
       {isQuickAddOpen && (
         <QuickAddSheet
           draft={quickAddDraft}
