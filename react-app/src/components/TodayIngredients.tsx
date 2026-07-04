@@ -1,6 +1,7 @@
 import type { Ingredient } from '../domain/types'
 import type { FoodEntry, MealName, ReactTodayStore } from '../storage'
 import IngredientRow from './IngredientRow'
+import EmptyState from './EmptyState'
 
 const mealNames: readonly MealName[] = [
   'Breakfast',
@@ -66,7 +67,11 @@ function TodayIngredients({
       </div>
       <div className="today-meal-body">
         {rows.length === 0 ? (
-          <p>No ingredients tracked today.</p>
+          <EmptyState
+            title="Your day is ready to fill"
+            description="Foods you add to meals will appear here in one easy-to-scan list."
+            icon="＋"
+          />
         ) : rows.map(({ mealName, entry }) => (
           <div key={entry.id}>
             <p className="eyebrow">{mealName}</p>

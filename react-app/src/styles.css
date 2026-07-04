@@ -473,6 +473,41 @@ button:focus-visible {
   cursor: pointer;
 }
 
+.today-dashboard {
+  display: grid;
+  gap: 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.today-dashboard .today-quick-add-button {
+  width: 100%;
+  min-height: 54px;
+  font-size: 15px;
+}
+
+.today-history-button {
+  width: 100%;
+}
+
+.today-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 2px 0;
+}
+
+.today-section-heading h2 {
+  margin: 2px 0 0;
+  font-size: 22px;
+}
+
+.today-section-heading > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .today-quick-add-button span {
   font-size: 21px;
 }
@@ -485,6 +520,11 @@ button:focus-visible {
   background: #193f33;
   color: white;
   box-shadow: var(--shadow);
+}
+
+.today-dashboard .daily-summary {
+  gap: 20px;
+  padding: 22px;
 }
 
 .daily-summary-heading,
@@ -565,7 +605,38 @@ button:focus-visible {
 
 .today-meals {
   display: grid;
-  gap: 14px;
+  gap: 16px;
+}
+
+.today-dashboard .today-meal-heading {
+  padding: 17px;
+}
+
+.today-dashboard .today-meal-body {
+  padding: 3px 0;
+}
+
+.today-dashboard .ingredient-row {
+  gap: 15px;
+  padding: 17px;
+}
+
+.today-dashboard .ingredient-row-heading strong {
+  line-height: 1.35;
+}
+
+.today-dashboard .ingredient-row-heading span {
+  line-height: 1.45;
+}
+
+.today-dashboard .ingredient-details dl {
+  gap: 8px;
+}
+
+.today-dashboard .ingredient-details dl > div {
+  padding: 9px;
+  border-radius: calc(var(--radius) - 4px);
+  background: var(--soft-green);
 }
 
 .today-meal-card {
@@ -1511,8 +1582,7 @@ button:focus-visible {
   }
 
   .today-quick-add-button {
-    justify-self: end;
-    min-width: 160px;
+    justify-self: stretch;
     padding-inline: 20px;
   }
 

@@ -11,8 +11,8 @@ function DailySummaryCard({ totals }: DailySummaryCardProps) {
     <section className="daily-summary" aria-labelledby="daily-summary-title">
       <div className="daily-summary-heading">
         <div>
-          <p className="eyebrow">Mock daily totals</p>
-          <h3 id="daily-summary-title">Your nutrition snapshot</h3>
+          <p className="eyebrow">Daily summary</p>
+          <h3 id="daily-summary-title">Today at a glance</h3>
         </div>
         <span>Today</span>
       </div>

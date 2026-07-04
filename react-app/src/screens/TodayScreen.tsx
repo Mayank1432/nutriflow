@@ -341,34 +341,44 @@ function TodayScreen() {
       showDateRow
       dateLabel={todayStore.date}
     >
-      <PrototypeNotice>React Today data is stored locally on this device.</PrototypeNotice>
-      <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
-        <span aria-hidden="true">+</span>
-        Quick Add
-      </button>
-      <button className="secondary-action" type="button" onClick={saveTodayToHistory}>
-        Save Today to History
-      </button>
-      <DailySummaryCard totals={toMacroTotals(totals)} />
-      <ActiveDailyStaples onAdd={addStapleToToday} />
-      <div className="today-meals">
-        {meals.map((meal) => (
-          <MealCard
-            key={meal.id}
-            mealId={meal.id}
-            mealName={meal.name}
-            todayData={todayData}
-            onAdd={() => openQuickAdd(meal.id)}
-            onQuantityChange={(entryId, qty) => updateQuantity(meal.name, entryId, qty)}
-            onRemove={(entryId) => removeIngredient(meal.name, entryId)}
-          />
-        ))}
+      <div className="today-dashboard">
+        <PrototypeNotice>React Today data is stored locally on this device.</PrototypeNotice>
+        <DailySummaryCard totals={toMacroTotals(totals)} />
+        <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
+          <span aria-hidden="true">+</span>
+          Quick Add
+        </button>
+        <button className="secondary-action today-history-button" type="button" onClick={saveTodayToHistory}>
+          Save Today to History
+        </button>
+        <ActiveDailyStaples onAdd={addStapleToToday} />
+        <div className="today-section-heading">
+          <div>
+            <p className="eyebrow">Your day</p>
+            <h2>Meals</h2>
+          </div>
+          <span>4 meal groups</span>
+        </div>
+        <div className="today-meals">
+          {meals.map((meal) => (
+            <MealCard
+              key={meal.id}
+              mealId={meal.id}
+              mealName={meal.name}
+              todayData={todayData}
+              emptyMessage="Start building this meal with Quick Add."
+              onAdd={() => openQuickAdd(meal.id)}
+              onQuantityChange={(entryId, qty) => updateQuantity(meal.name, entryId, qty)}
+              onRemove={(entryId) => removeIngredient(meal.name, entryId)}
+            />
+          ))}
+        </div>
+        <TodayIngredients
+          todayStore={todayStore}
+          onQuantityCommit={updateQuantity}
+          onRemove={removeIngredient}
+        />
       </div>
-      <TodayIngredients
-        todayStore={todayStore}
-        onQuantityCommit={updateQuantity}
-        onRemove={removeIngredient}
-      />
       {isQuickAddOpen && (
         <QuickAddSheet
           draft={quickAddDraft}
