@@ -1,71 +1,89 @@
+import { useRef } from 'react'
 import type { FormEvent } from 'react'
-import type { MealId } from '../domain/types'
+import type {
+  DailyStapleDefinition,
+  IngredientDefinition,
+  MealName,
+} from '../storage'
+
+export type QuickAddSource =
+  | { kind: 'ingredient'; item: IngredientDefinition }
+  | { kind: 'staple'; item: DailyStapleDefinition }
 
 export type QuickAddDraft = {
-  mealId: MealId
-  name: string
-  qty: string
-  unit: string
-  protein: string
-  calories: string
-  carbs: string
-  fat: string
-  fibre: string
-  cost: string
+  sourceKey: string
+  quantity: string
+  meal: MealName
 }
 
 type QuickAddFormProps = {
   draft: QuickAddDraft
+  sources: QuickAddSource[]
+  error: string
   onChange: (draft: QuickAddDraft) => void
-  onSubmit: () => void
+  onSubmit: (action: 'more' | 'return') => void
 }
 
-const mealOptions: Array<{ id: MealId; label: string }> = [
-  { id: 'breakfast', label: 'Breakfast' },
-  { id: 'lunch', label: 'Lunch' },
-  { id: 'dinner', label: 'Dinner' },
-  { id: 'snacks', label: 'Snacks' },
-]
+const mealOptions: MealName[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
 
-const nutritionFields = [
-  ['protein', 'Protein', 'g'],
-  ['calories', 'Calories', 'kcal'],
-  ['carbs', 'Carbs', 'g'],
-  ['fat', 'Fat', 'g'],
-  ['fibre', 'Fibre', 'g'],
-  ['cost', 'Cost', '₹'],
-] as const
+export const sourceKey = (source: QuickAddSource) =>
+  `${source.kind}:${source.item.id}`
 
-function QuickAddForm({ draft, onChange, onSubmit }: QuickAddFormProps) {
-  const update = (field: keyof QuickAddDraft, value: string) => {
-    onChange({ ...draft, [field]: value })
+function QuickAddForm({
+  draft,
+  sources,
+  error,
+  onChange,
+  onSubmit,
+}: QuickAddFormProps) {
+  const submittingRef = useRef(false)
+
+  const selectSource = (key: string) => {
+    const source = sources.find((candidate) => sourceKey(candidate) === key)
+    if (!source) {
+      onChange({ ...draft, sourceKey: key })
+      return
+    }
+
+    onChange({
+      sourceKey: key,
+      quantity: String(source.item.defaultQuantity),
+      meal: source.item.defaultMeal ?? draft.meal,
+    })
   }
 
-  const submit = (event: FormEvent) => {
+  const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    onSubmit()
+    if (submittingRef.current) return
+    submittingRef.current = true
+    const action = (event.nativeEvent as SubmitEvent).submitter
+      ?.getAttribute('data-action')
+    onSubmit(action === 'more' ? 'more' : 'return')
+    window.setTimeout(() => {
+      submittingRef.current = false
+    }, 300)
   }
 
   return (
     <form className="quick-add-form" onSubmit={submit}>
-      <p className="form-mode">Nutrition values are for the entered quantity.</p>
+      <p className="form-mode">
+        Choose a saved ingredient or active daily staple. The saved definition is copied into Today.
+      </p>
       <div className="form-grid">
         <label>
-          <span>Meal</span>
-          <select value={draft.mealId} onChange={(event) => update('mealId', event.target.value)}>
-            {mealOptions.map((meal) => (
-              <option key={meal.id} value={meal.id}>{meal.label}</option>
+          <span>Item</span>
+          <select
+            required
+            value={draft.sourceKey}
+            onChange={(event) => selectSource(event.target.value)}
+          >
+            <option value="">Select an item</option>
+            {sources.map((source) => (
+              <option key={sourceKey(source)} value={sourceKey(source)}>
+                {source.item.name} · {source.kind === 'ingredient' ? 'Ingredient Library' : 'Daily Staple'}
+              </option>
             ))}
           </select>
-        </label>
-        <label>
-          <span>Food name</span>
-          <input
-            required
-            value={draft.name}
-            onChange={(event) => update('name', event.target.value)}
-            placeholder="e.g. Paneer wrap"
-          />
         </label>
         <label>
           <span>Quantity</span>
@@ -74,34 +92,46 @@ function QuickAddForm({ draft, onChange, onSubmit }: QuickAddFormProps) {
             type="number"
             min="0.01"
             step="any"
-            value={draft.qty}
-            onChange={(event) => update('qty', event.target.value)}
+            value={draft.quantity}
+            onChange={(event) => onChange({ ...draft, quantity: event.target.value })}
           />
         </label>
         <label>
-          <span>Unit</span>
-          <select value={draft.unit} onChange={(event) => update('unit', event.target.value)}>
-            <option value="g">g</option>
-            <option value="ml">ml</option>
-            <option value="piece">piece</option>
+          <span>Meal</span>
+          <select
+            value={draft.meal}
+            onChange={(event) => onChange({ ...draft, meal: event.target.value as MealName })}
+          >
+            {mealOptions.map((meal) => (
+              <option key={meal} value={meal}>{meal}</option>
+            ))}
           </select>
         </label>
-        {nutritionFields.map(([field, label, suffix]) => (
-          <label key={field}>
-            <span>{label} <small>{suffix}</small></span>
-            <input
-              type="number"
-              min="0"
-              step="any"
-              value={draft[field]}
-              onChange={(event) => update(field, event.target.value)}
-            />
-          </label>
-        ))}
       </div>
-      <button className="primary-action quick-add-submit" type="submit">
-        Add to meal
-      </button>
+      {error && <p className="quick-add-error" role="alert">{error}</p>}
+      {!sources.length && (
+        <p className="quick-add-error" role="status">
+          Add an Ingredient Library item or an active Daily Staple first.
+        </p>
+      )}
+      <div className="quick-add-actions">
+        <button
+          className="secondary-action"
+          type="submit"
+          data-action="more"
+          disabled={!sources.length}
+        >
+          Add More
+        </button>
+        <button
+          className="primary-action"
+          type="submit"
+          data-action="return"
+          disabled={!sources.length}
+        >
+          Add &amp; Return
+        </button>
+      </div>
     </form>
   )
 }

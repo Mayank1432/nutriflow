@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import DailySummaryCard from '../components/DailySummaryCard'
 import MealCard from '../components/MealCard'
 import QuickAddSheet from '../components/QuickAddSheet'
-import type { QuickAddDraft } from '../components/QuickAddForm'
+import {
+  sourceKey,
+  type QuickAddDraft,
+  type QuickAddSource,
+} from '../components/QuickAddForm'
 import ScreenContainer from '../components/ScreenContainer'
 import SuccessToast from '../components/SuccessToast'
 import PrototypeNotice from '../components/PrototypeNotice'
@@ -11,6 +15,8 @@ import { ActiveDailyStaples } from '../components/DailyStaples'
 import type { Ingredient, MacroTotals, MealId, TodayData } from '../domain/types'
 import {
   readReactHistoryStore,
+  readReactIngredientsStore,
+  readReactDailyStaplesStore,
   readReactTodayStore,
   writeReactHistoryStore,
   writeReactTodayStore,
@@ -19,9 +25,7 @@ import {
   type FoodEntry,
   type HistoryDay,
   type MealName,
-  type NutritionBasisType,
   type ReactTodayStore,
-  type ServingUnit,
 } from '../storage'
 
 const meals: Array<{ id: MealId; name: MealName }> = [
@@ -32,16 +36,9 @@ const meals: Array<{ id: MealId; name: MealName }> = [
 ]
 
 const blankDraft = (mealId: MealId = 'breakfast'): QuickAddDraft => ({
-  mealId,
-  name: '',
-  qty: '100',
-  unit: 'g',
-  protein: '',
-  calories: '',
-  carbs: '',
-  fat: '',
-  fibre: '',
-  cost: '',
+  sourceKey: '',
+  quantity: '',
+  meal: meals.find((meal) => meal.id === mealId)?.name ?? 'Breakfast',
 })
 
 const safeNumber = (value: string | number | undefined): number => {
@@ -140,32 +137,21 @@ const toDisplayTodayData = (store: ReactTodayStore): TodayData => ({
   ])),
 })
 
-const createFoodEntry = (draft: QuickAddDraft): FoodEntry => {
-  const quantity = Math.max(0, safeNumber(draft.qty))
-  const unit = draft.unit as ServingUnit
-  const basisType: NutritionBasisType =
-    unit === 'g' || unit === 'ml' ? 'per_100' : 'per_unit'
-  const quantityFactor = basisType === 'per_100' ? quantity / 100 : quantity
-  const snapshotDivisor = quantityFactor > 0 ? quantityFactor : 1
+const createFoodEntry = (source: QuickAddSource, quantity: number): FoodEntry => {
   const timestamp = new Date().toISOString()
 
   return {
     id: globalThis.crypto?.randomUUID?.() ?? `today-${Date.now()}`,
-    name: draft.name.trim() || 'Unnamed food',
+    ingredientId: source.kind === 'ingredient'
+      ? source.item.id
+      : source.item.ingredientId,
+    stapleId: source.kind === 'staple' ? source.item.id : undefined,
+    name: source.item.name,
     quantity,
-    unit,
-    basisType,
-    nutritionSnapshot: {
-      protein: safeNumber(draft.protein) / snapshotDivisor,
-      calories: safeNumber(draft.calories) / snapshotDivisor,
-      carbs: safeNumber(draft.carbs) / snapshotDivisor,
-      fat: safeNumber(draft.fat) / snapshotDivisor,
-      fibre: safeNumber(draft.fibre) / snapshotDivisor,
-    },
-    costSnapshot: {
-      amount: safeNumber(draft.cost) / snapshotDivisor,
-      currency: 'INR',
-    },
+    unit: source.kind === 'ingredient' ? source.item.defaultUnit : source.item.unit,
+    basisType: source.item.basisType,
+    nutritionSnapshot: structuredClone(source.item.nutrition),
+    costSnapshot: source.item.cost ? structuredClone(source.item.cost) : undefined,
     createdAt: timestamp,
     updatedAt: timestamp,
   }
@@ -225,6 +211,8 @@ function TodayScreen() {
   )
   const [isQuickAddOpen, setQuickAddOpen] = useState(false)
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddDraft>(() => blankDraft())
+  const [quickAddError, setQuickAddError] = useState('')
+  const [quickAddSources, setQuickAddSources] = useState<QuickAddSource[]>([])
   const [toastMessage, setToastMessage] = useState('')
   const totals = calculateTodayTotals(todayStore)
   const todayData = toDisplayTodayData(todayStore)
@@ -241,20 +229,48 @@ function TodayScreen() {
   }
 
   const openQuickAdd = (mealId: MealId) => {
+    setQuickAddSources([
+      ...readReactIngredientsStore().ingredients
+        .filter((ingredient) => !ingredient.archived)
+        .map((item): QuickAddSource => ({ kind: 'ingredient', item })),
+      ...readReactDailyStaplesStore().staples
+        .filter((staple) => !staple.isArchived)
+        .map((item): QuickAddSource => ({ kind: 'staple', item })),
+    ])
     setQuickAddDraft(blankDraft(mealId))
     setQuickAddOpen(true)
+    setQuickAddError('')
     setToastMessage('')
   }
 
-  const addIngredient = () => {
-    const entry = createFoodEntry(quickAddDraft)
-    const meal = meals.find(({ id }) => id === quickAddDraft.mealId)
-    if (!meal) return
+  const addIngredient = (action: 'more' | 'return') => {
+    const source = quickAddSources.find((candidate) => (
+      sourceKey(candidate) === quickAddDraft.sourceKey
+    ))
+    const quantity = Number(quickAddDraft.quantity)
+    if (!source) {
+      setQuickAddError('Select an item to add.')
+      return
+    }
+    if (
+      quickAddDraft.quantity.trim() === ''
+      || !Number.isFinite(quantity)
+      || quantity <= 0
+    ) {
+      setQuickAddError('Quantity must be a positive finite number.')
+      return
+    }
 
-    persistUpdate(meal.name, (entries) => [...entries, entry])
-    setToastMessage(`Added to ${meal.name}.`)
-    setQuickAddOpen(false)
-    setQuickAddDraft(blankDraft())
+    persistUpdate(
+      quickAddDraft.meal,
+      (entries) => [...entries, createFoodEntry(source, quantity)],
+    )
+    setToastMessage(`Added ${source.item.name} to ${quickAddDraft.meal}.`)
+    setQuickAddError('')
+    if (action === 'return') {
+      setQuickAddOpen(false)
+      setQuickAddDraft(blankDraft())
+    }
   }
 
   const updateQuantity = (mealName: MealName, entryId: string, quantity: number) => {
@@ -356,6 +372,8 @@ function TodayScreen() {
       {isQuickAddOpen && (
         <QuickAddSheet
           draft={quickAddDraft}
+          sources={quickAddSources}
+          error={quickAddError}
           onChange={setQuickAddDraft}
           onClose={() => setQuickAddOpen(false)}
           onSubmit={addIngredient}

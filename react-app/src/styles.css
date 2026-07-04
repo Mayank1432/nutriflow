@@ -823,6 +823,21 @@ button:focus-visible {
   width: 100%;
 }
 
+.quick-add-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.quick-add-actions button {
+  min-height: 44px;
+}
+
+.quick-add-error {
+  color: var(--color-danger, #b42318);
+  margin: 0;
+}
+
 .success-toast {
   position: fixed;
   z-index: 40;

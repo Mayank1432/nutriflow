@@ -1,14 +1,26 @@
 import { useEffect } from 'react'
-import QuickAddForm, { type QuickAddDraft } from './QuickAddForm'
+import QuickAddForm, {
+  type QuickAddDraft,
+  type QuickAddSource,
+} from './QuickAddForm'
 
 type QuickAddSheetProps = {
   draft: QuickAddDraft
+  sources: QuickAddSource[]
+  error: string
   onChange: (draft: QuickAddDraft) => void
   onClose: () => void
-  onSubmit: () => void
+  onSubmit: (action: 'more' | 'return') => void
 }
 
-function QuickAddSheet({ draft, onChange, onClose, onSubmit }: QuickAddSheetProps) {
+function QuickAddSheet({
+  draft,
+  sources,
+  error,
+  onChange,
+  onClose,
+  onSubmit,
+}: QuickAddSheetProps) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
@@ -30,14 +42,20 @@ function QuickAddSheet({ draft, onChange, onClose, onSubmit }: QuickAddSheetProp
         <div className="sheet-handle" aria-hidden="true" />
         <div className="sheet-heading">
           <div>
-            <p className="eyebrow">Mock entry</p>
+            <p className="eyebrow">Today</p>
             <h2 id="quick-add-title">Quick Add</h2>
           </div>
           <button className="sheet-close" type="button" onClick={onClose} aria-label="Close Quick Add">
             ×
           </button>
         </div>
-        <QuickAddForm draft={draft} onChange={onChange} onSubmit={onSubmit} />
+        <QuickAddForm
+          draft={draft}
+          sources={sources}
+          error={error}
+          onChange={onChange}
+          onSubmit={onSubmit}
+        />
       </section>
     </div>
   )
