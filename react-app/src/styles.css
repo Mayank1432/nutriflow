@@ -841,6 +841,170 @@ button:focus-visible {
 }
 
 .quick-add-sheet {
+  position: fixed;
+  inset: 0;
+  width: min(100%, 760px);
+  max-height: none;
+  margin: 0 auto;
+  padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  border-radius: 0;
+  background: var(--app-background);
+}
+
+.quick-add-sheet .sheet-heading {
+  position: sticky;
+  z-index: 2;
+  top: -18px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--app-background);
+}
+
+.quick-add-search {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quick-add-search input {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.quick-add-categories {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+}
+
+.quick-add-categories button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.quick-add-categories button.active {
+  border-color: var(--green);
+  background: var(--soft-green);
+  color: var(--green-dark);
+}
+
+.quick-add-library-section {
+  display: grid;
+  gap: 10px;
+}
+
+.quick-add-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quick-add-section-heading h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.quick-add-section-heading > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quick-add-food-list {
+  display: grid;
+  gap: 8px;
+}
+
+.quick-add-food-card {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.quick-add-food-card.selected {
+  border-color: var(--green);
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+
+.quick-add-food-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.quick-add-food-copy > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quick-add-source-badge {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--soft-green);
+  color: var(--green-dark);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.quick-add-empty {
+  display: grid;
+  gap: 6px;
+  padding: 26px 18px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-align: center;
+}
+
+.quick-add-empty strong {
+  color: var(--ink);
+}
+
+.quick-add-form {
+  gap: 20px;
+}
+
+.quick-add-form .form-grid {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.quick-add-actions {
+  position: sticky;
+  bottom: calc(-24px - env(safe-area-inset-bottom));
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+  background: var(--app-background);
+}
+
+@media (min-width: 600px) {
+  .quick-add-food-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.quick-add-sheet {
   width: min(100%, 760px);
   max-height: calc(100vh - 40px);
   margin: 0 auto;
@@ -1917,4 +2081,22 @@ button:focus-visible { outline-color: var(--focus); }
   .ingredient-details dl {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
+}
+
+/* Quick Add Library is a full-screen mobile workflow. */
+.sheet-backdrop {
+  align-items: stretch;
+  padding: 0;
+}
+
+.quick-add-sheet {
+  position: fixed;
+  inset: 0;
+  width: min(100%, 760px);
+  max-height: none;
+  margin: 0 auto;
+  padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  border-radius: 0;
+  background: var(--app-background);
 }

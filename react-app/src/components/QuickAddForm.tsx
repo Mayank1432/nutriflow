@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import type {
   DailyStapleDefinition,
@@ -25,6 +25,8 @@ type QuickAddFormProps = {
 }
 
 const mealOptions: MealName[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
+const categoryLabels = ['High protein', 'Low cost', 'Veg', 'Animal', 'Custom/Saved'] as const
+type CategoryLabel = typeof categoryLabels[number]
 
 export const sourceKey = (source: QuickAddSource) =>
   `${source.kind}:${source.item.id}`
@@ -37,6 +39,8 @@ function QuickAddForm({
   onSubmit,
 }: QuickAddFormProps) {
   const submittingRef = useRef(false)
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState<CategoryLabel | null>(null)
 
   const selectSource = (key: string) => {
     const source = sources.find((candidate) => sourceKey(candidate) === key)
@@ -64,27 +68,108 @@ function QuickAddForm({
     }, 300)
   }
 
+  const matchesCategory = (source: QuickAddSource, selected: CategoryLabel) => {
+    const categoryText = source.kind === 'ingredient'
+      ? `${source.item.category ?? ''} ${source.item.name}`.toLowerCase()
+      : source.item.name.toLowerCase()
+    if (selected === 'High protein') return source.item.nutrition.protein >= 10
+    if (selected === 'Low cost') return (source.item.cost?.amount ?? Number.POSITIVE_INFINITY) <= 50
+    if (selected === 'Custom/Saved') return source.kind === 'ingredient'
+    if (selected === 'Animal') {
+      return /(chicken|egg|fish|meat|mutton|beef|pork|tuna|prawn)/.test(categoryText)
+    }
+    return /(veg|plant|paneer|tofu|dal|lentil|bean|chickpea|soy)/.test(categoryText)
+  }
+
+  const normalizedSearch = search.trim().toLowerCase()
+  const visibleSources = sources.filter((source) => (
+    (!normalizedSearch || source.item.name.toLowerCase().includes(normalizedSearch))
+    && (!category || matchesCategory(source, category))
+  ))
+  const recommendedSources = [...visibleSources]
+    .sort((left, right) => (
+      Number(right.kind === 'staple') - Number(left.kind === 'staple')
+      || right.item.nutrition.protein - left.item.nutrition.protein
+    ))
+    .slice(0, 4)
+
+  const sourceCard = (source: QuickAddSource) => {
+    const key = sourceKey(source)
+    const selected = draft.sourceKey === key
+    return (
+      <button
+        className={`quick-add-food-card${selected ? ' selected' : ''}`}
+        key={key}
+        type="button"
+        aria-pressed={selected}
+        onClick={() => selectSource(key)}
+      >
+        <span className="quick-add-food-copy">
+          <strong>{source.item.name}</strong>
+          <span>
+            {source.item.nutrition.protein.toFixed(1)}g protein · {source.item.defaultQuantity} {source.kind === 'ingredient' ? source.item.defaultUnit : source.item.unit}
+          </span>
+        </span>
+        <span className="quick-add-source-badge">
+          {source.kind === 'ingredient' ? 'Ingredient Library' : 'Daily Staples'}
+        </span>
+      </button>
+    )
+  }
+
   return (
     <form className="quick-add-form" onSubmit={submit}>
-      <p className="form-mode">
-        Choose a saved ingredient or active daily staple. The saved definition is copied into Today.
-      </p>
-      <div className="form-grid">
-        <label>
-          <span>Item</span>
-          <select
-            required
-            value={draft.sourceKey}
-            onChange={(event) => selectSource(event.target.value)}
+      <label className="quick-add-search">
+        <span>Search foods</span>
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search Ingredient Library and Daily Staples"
+        />
+      </label>
+      <div className="quick-add-categories" aria-label="Food categories">
+        {categoryLabels.map((label) => (
+          <button
+            key={label}
+            type="button"
+            className={category === label ? 'active' : ''}
+            aria-pressed={category === label}
+            onClick={() => setCategory(category === label ? null : label)}
           >
-            <option value="">Select an item</option>
-            {sources.map((source) => (
-              <option key={sourceKey(source)} value={sourceKey(source)}>
-                {source.item.name} · {source.kind === 'ingredient' ? 'Ingredient Library' : 'Daily Staple'}
-              </option>
-            ))}
-          </select>
-        </label>
+            {label}
+          </button>
+        ))}
+      </div>
+      {!sources.length ? (
+        <div className="quick-add-empty" role="status">
+          <strong>Your food library is empty</strong>
+          <span>Add an Ingredient Library item or active Daily Staple first.</span>
+        </div>
+      ) : !visibleSources.length ? (
+        <div className="quick-add-empty" role="status">
+          <strong>No matching foods</strong>
+          <span>Try another search or clear the selected category.</span>
+        </div>
+      ) : (
+        <>
+          <section className="quick-add-library-section" aria-labelledby="recommended-foods-title">
+            <div className="quick-add-section-heading">
+              <h3 id="recommended-foods-title">Recommended Foods</h3>
+              <span>{recommendedSources.length}</span>
+            </div>
+            <div className="quick-add-food-list">{recommendedSources.map(sourceCard)}</div>
+          </section>
+          <section className="quick-add-library-section" aria-labelledby="all-foods-title">
+            <div className="quick-add-section-heading">
+              <h3 id="all-foods-title">All Foods</h3>
+              <span>{visibleSources.length}</span>
+            </div>
+            <div className="quick-add-food-list">{visibleSources.map(sourceCard)}</div>
+          </section>
+        </>
+      )}
+      <div className="form-grid">
         <label>
           <span>Quantity</span>
           <input
@@ -109,11 +194,6 @@ function QuickAddForm({
         </label>
       </div>
       {error && <p className="quick-add-error" role="alert">{error}</p>}
-      {!sources.length && (
-        <p className="quick-add-error" role="status">
-          Add an Ingredient Library item or an active Daily Staple first.
-        </p>
-      )}
       <div className="quick-add-actions">
         <button
           className="secondary-action"

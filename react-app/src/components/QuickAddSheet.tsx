@@ -39,10 +39,9 @@ function QuickAddSheet({
         aria-modal="true"
         aria-labelledby="quick-add-title"
       >
-        <div className="sheet-handle" aria-hidden="true" />
         <div className="sheet-heading">
           <div>
-            <p className="eyebrow">Today</p>
+            <p className="eyebrow">Today · Food Library</p>
             <h2 id="quick-add-title">Quick Add</h2>
           </div>
           <button className="sheet-close" type="button" onClick={onClose} aria-label="Close Quick Add">
