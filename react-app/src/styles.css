@@ -185,8 +185,11 @@ button:focus-visible {
 }
 
 .hamburger-drawer nav button {
-  display: block;
+  display: flex;
   width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 10px 12px;
   text-align: left;
 }
@@ -195,6 +198,35 @@ button:focus-visible {
   background: var(--soft-green);
   color: var(--green-dark);
   font-weight: 800;
+}
+
+.hamburger-drawer nav button.coming-soon {
+  color: var(--muted);
+}
+
+.coming-soon-badge {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft-green);
+  color: var(--green-dark);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.drawer-feedback {
+  position: sticky;
+  bottom: -18px;
+  min-height: 44px;
+  margin: 20px -18px -18px;
+  padding: 12px 18px max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .drawer-heading button:focus-visible,
