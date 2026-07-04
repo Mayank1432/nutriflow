@@ -3,7 +3,7 @@ import BottomNavigation from './BottomNavigation'
 import { DrawerProvider } from './DrawerContext'
 import HamburgerDrawer, { type DrawerDestination } from './HamburgerDrawer'
 
-export type TabId = 'today' | 'weekly' | 'history' | 'more'
+export type TabId = 'today' | 'weekly' | 'history' | 'analytics' | 'more'
 
 type AppShellProps = {
   activeTab: TabId

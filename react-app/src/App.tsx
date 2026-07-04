@@ -12,7 +12,6 @@ import type { DrawerDestination } from './components/HamburgerDrawer'
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('today')
   const [showSettings, setShowSettings] = useState(false)
-  const [showAnalytics, setShowAnalytics] = useState(false)
   const [moreSection, setMoreSection] = useState<'ingredient-library' | 'daily-staples' | null>(null)
   const [settings, setSettings] = useState(() => readReactSettingsStore())
 
@@ -40,9 +39,8 @@ function App() {
     today: <TodayScreen />,
     weekly: <WeeklyScreen />,
     history: <HistoryScreen />,
-    more: showAnalytics
-      ? <AnalyticsScreen />
-      : showSettings
+    analytics: <AnalyticsScreen />,
+    more: showSettings
       ? <SettingsScreen
           onBack={() => setShowSettings(false)}
           settings={settings}
@@ -54,22 +52,19 @@ function App() {
 
   const navigateDrawer = (destination: DrawerDestination) => {
     if (destination === 'analytics') {
-      setActiveTab('more'); setShowAnalytics(true); setShowSettings(false); setMoreSection(null); return
+      setActiveTab('analytics'); setShowSettings(false); setMoreSection(null); return
     }
     if (destination === 'settings') {
-      setActiveTab('more'); setShowAnalytics(false); setShowSettings(true); setMoreSection(null); return
+      setActiveTab('more'); setShowSettings(true); setMoreSection(null); return
     }
     if (destination === 'ingredient-library' || destination === 'daily-staples') {
-      setActiveTab('more'); setShowAnalytics(false); setShowSettings(false); setMoreSection(destination); return
+      setActiveTab('more'); setShowSettings(false); setMoreSection(destination); return
     }
     setActiveTab(destination)
-    setShowAnalytics(false)
     setShowSettings(false)
     setMoreSection(null)
   }
-  const activeDestination: DrawerDestination = showAnalytics
-    ? 'analytics'
-    : showSettings
+  const activeDestination: DrawerDestination = showSettings
     ? 'settings'
     : moreSection ?? activeTab
 

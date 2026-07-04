@@ -10,7 +10,7 @@ const items: Array<{ id: TabId; icon: string; label: string }> = [
   { id: 'today', icon: '●', label: 'Today' },
   { id: 'weekly', icon: '▦', label: 'Weekly' },
   { id: 'history', icon: '◷', label: 'History' },
-  { id: 'more', icon: '•••', label: 'More' },
+  { id: 'analytics', icon: '▥', label: 'Analytics' },
 ]
 
 function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {
