@@ -5,12 +5,14 @@ import MoreScreen from './screens/MoreScreen'
 import TodayScreen from './screens/TodayScreen'
 import WeeklyScreen from './screens/WeeklyScreen'
 import SettingsScreen from './screens/SettingsScreen'
+import AnalyticsScreen from './screens/AnalyticsScreen'
 import { readReactSettingsStore, writeReactSettingsStore, type MacroGoals } from './storage'
 import type { DrawerDestination } from './components/HamburgerDrawer'
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('today')
   const [showSettings, setShowSettings] = useState(false)
+  const [showAnalytics, setShowAnalytics] = useState(false)
   const [moreSection, setMoreSection] = useState<'ingredient-library' | 'daily-staples' | null>(null)
   const [settings, setSettings] = useState(() => readReactSettingsStore())
 
@@ -38,7 +40,9 @@ function App() {
     today: <TodayScreen />,
     weekly: <WeeklyScreen />,
     history: <HistoryScreen />,
-    more: showSettings
+    more: showAnalytics
+      ? <AnalyticsScreen />
+      : showSettings
       ? <SettingsScreen
           onBack={() => setShowSettings(false)}
           settings={settings}
@@ -49,17 +53,23 @@ function App() {
   }
 
   const navigateDrawer = (destination: DrawerDestination) => {
+    if (destination === 'analytics') {
+      setActiveTab('more'); setShowAnalytics(true); setShowSettings(false); setMoreSection(null); return
+    }
     if (destination === 'settings') {
-      setActiveTab('more'); setShowSettings(true); setMoreSection(null); return
+      setActiveTab('more'); setShowAnalytics(false); setShowSettings(true); setMoreSection(null); return
     }
     if (destination === 'ingredient-library' || destination === 'daily-staples') {
-      setActiveTab('more'); setShowSettings(false); setMoreSection(destination); return
+      setActiveTab('more'); setShowAnalytics(false); setShowSettings(false); setMoreSection(destination); return
     }
     setActiveTab(destination)
+    setShowAnalytics(false)
     setShowSettings(false)
     setMoreSection(null)
   }
-  const activeDestination: DrawerDestination = showSettings
+  const activeDestination: DrawerDestination = showAnalytics
+    ? 'analytics'
+    : showSettings
     ? 'settings'
     : moreSection ?? activeTab
 

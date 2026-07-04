@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 export type DrawerDestination =
   | 'today' | 'weekly' | 'history' | 'more'
-  | 'ingredient-library' | 'daily-staples' | 'settings'
+  | 'analytics' | 'ingredient-library' | 'daily-staples' | 'settings'
 
 type HamburgerDrawerProps = {
   activeDestination: DrawerDestination
@@ -13,7 +13,7 @@ type HamburgerDrawerProps = {
 
 const groups: Array<{ label: string; links: Array<[DrawerDestination, string]> }> = [
   { label: 'Main', links: [['today', 'Today'], ['weekly', 'Weekly'], ['history', 'History'], ['more', 'More']] },
-  { label: 'Tools', links: [['ingredient-library', 'Ingredient Library'], ['daily-staples', 'Daily Staples']] },
+  { label: 'Tools', links: [['analytics', 'Analytics'], ['ingredient-library', 'Ingredient Library'], ['daily-staples', 'Daily Staples']] },
   { label: 'Settings', links: [['settings', 'Settings']] },
 ]
 

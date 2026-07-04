@@ -1755,6 +1755,132 @@ button:focus-visible { outline-color: var(--focus); }
   font-weight: 900;
 }
 
+.analytics-dashboard {
+  display: grid;
+  gap: 16px;
+}
+
+.analytics-card {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.analytics-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.analytics-card-heading h2 {
+  margin: 2px 0 0;
+  font-size: 18px;
+}
+
+.analytics-card-heading > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.analytics-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.analytics-metric {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: calc(var(--radius) - 4px);
+  background: var(--soft-green);
+}
+
+.analytics-metric span,
+.analytics-goal-row span,
+.analytics-history-strip span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.analytics-metric strong {
+  font-size: 15px;
+}
+
+.analytics-empty {
+  margin: 0;
+  padding: 20px;
+  border: 1px dashed var(--line);
+  border-radius: calc(var(--radius) - 4px);
+  color: var(--muted);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.analytics-goals {
+  display: grid;
+  gap: 14px;
+}
+
+.analytics-goal-row {
+  display: grid;
+  gap: 8px;
+}
+
+.analytics-goal-row > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.analytics-goal-row.is-disabled {
+  grid-template-columns: 1fr auto;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.analytics-progress {
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.analytics-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+}
+
+.analytics-history-strip {
+  display: grid;
+  gap: 8px;
+}
+
+.analytics-history-strip > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+
+@media (min-width: 600px) {
+  .analytics-metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (min-width: 600px) {
   .ingredient-details dl {
     grid-template-columns: repeat(6, minmax(0, 1fr));
