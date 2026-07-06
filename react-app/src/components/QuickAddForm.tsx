@@ -92,6 +92,20 @@ function QuickAddForm({
       || right.item.nutrition.protein - left.item.nutrition.protein
     ))
     .slice(0, 4)
+  const selectedSource = sources.find((source) => sourceKey(source) === draft.sourceKey)
+  const selectedUnit = selectedSource
+    ? selectedSource.kind === 'ingredient'
+      ? selectedSource.item.defaultUnit
+      : selectedSource.item.unit
+    : ''
+
+  const adjustQuantity = (direction: -1 | 1) => {
+    const current = Number(draft.quantity)
+    const next = Number.isFinite(current)
+      ? Math.max(0.01, current + direction)
+      : 0.01
+    onChange({ ...draft, quantity: String(Number(next.toFixed(2))) })
+  }
 
   const sourceCard = (source: QuickAddSource) => {
     const key = sourceKey(source)
@@ -170,17 +184,44 @@ function QuickAddForm({
         </>
       )}
       <div className="form-grid">
-        <label>
-          <span>Quantity</span>
-          <input
-            required
-            type="number"
-            min="0.01"
-            step="any"
-            value={draft.quantity}
-            onChange={(event) => onChange({ ...draft, quantity: event.target.value })}
-          />
-        </label>
+        <fieldset className="quick-add-quantity">
+          <legend>Confirm quantity</legend>
+          <div className="quick-add-quantity-control">
+            <button
+              type="button"
+              aria-label="Decrease quantity"
+              onClick={() => adjustQuantity(-1)}
+              disabled={!selectedSource || Number(draft.quantity) <= 0.01}
+            >
+              −
+            </button>
+            <label>
+              <span className="sr-only">Quantity</span>
+              <input
+                required
+                type="number"
+                min="0.01"
+                step="any"
+                value={draft.quantity}
+                onChange={(event) => onChange({ ...draft, quantity: event.target.value })}
+              />
+              {selectedUnit && <span>{selectedUnit}</span>}
+            </label>
+            <button
+              type="button"
+              aria-label="Increase quantity"
+              onClick={() => adjustQuantity(1)}
+              disabled={!selectedSource}
+            >
+              +
+            </button>
+          </div>
+          {selectedSource && (
+            <small>
+              Default: {selectedSource.item.defaultQuantity} {selectedUnit}. Adjustments apply only to this add.
+            </small>
+          )}
+        </fieldset>
         <label>
           <span>Meal</span>
           <select

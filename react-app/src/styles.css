@@ -991,6 +991,72 @@ button:focus-visible {
   border-top: 1px solid var(--line);
 }
 
+.quick-add-quantity {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.quick-add-quantity legend {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quick-add-quantity-control {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+}
+
+.quick-add-quantity-control > button {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft-green);
+  color: var(--green-dark);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.quick-add-quantity-control > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.quick-add-quantity-control label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding-right: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.quick-add-quantity-control input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+}
+
+.quick-add-quantity-control label > span:last-child,
+.quick-add-quantity small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .quick-add-actions {
   position: sticky;
   bottom: calc(-24px - env(safe-area-inset-bottom));
