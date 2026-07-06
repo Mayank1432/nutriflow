@@ -1173,7 +1173,7 @@ button:focus-visible {
 
 .success-toast {
   position: fixed;
-  z-index: 40;
+  z-index: 70;
   right: 18px;
   bottom: 92px;
   left: 18px;

@@ -260,6 +260,10 @@ function TodayScreen() {
       setQuickAddError('Quantity must be a positive finite number.')
       return
     }
+    if (!meals.some(({ name }) => name === quickAddDraft.meal)) {
+      setQuickAddError('Select a valid meal.')
+      return
+    }
 
     persistUpdate(
       quickAddDraft.meal,
@@ -389,7 +393,7 @@ function TodayScreen() {
           onSubmit={addIngredient}
         />
       )}
-      <SuccessToast message={toastMessage} />
+      <SuccessToast message={toastMessage} onDismiss={() => setToastMessage('')} />
     </ScreenContainer>
   )
 }
