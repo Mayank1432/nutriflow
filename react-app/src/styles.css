@@ -607,6 +607,76 @@ button:focus-visible {
   font-size: 13px;
 }
 
+.today-goal-progress {
+  display: grid;
+  gap: 8px;
+}
+
+.today-goal-numbers {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.today-goal-track {
+  overflow: hidden;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.today-goal-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+}
+
+.today-protein-hero .today-goal-track {
+  background: var(--soft-green);
+}
+
+.today-protein-hero .today-goal-track > span {
+  background: var(--surface);
+}
+
+.today-goal-progress small {
+  width: fit-content;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.today-protein-hero .today-goal-progress small {
+  color: inherit;
+}
+
+.today-goal-progress.protein.over small,
+.today-goal-progress.protein.achieved small {
+  color: var(--green-dark);
+  font-weight: 800;
+}
+
+.today-protein-hero .today-goal-progress.protein.over small,
+.today-protein-hero .today-goal-progress.protein.achieved small {
+  color: inherit;
+}
+
+.today-goal-progress.calories.over .today-goal-track > span {
+  background: currentColor;
+}
+
+.today-goal-progress.no-goal {
+  padding: 10px;
+  border: 1px dashed var(--line);
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.today-goal-progress.no-goal > span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .today-supporting-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

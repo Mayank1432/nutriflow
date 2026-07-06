@@ -17,6 +17,7 @@ import {
   readReactHistoryStore,
   readReactIngredientsStore,
   readReactDailyStaplesStore,
+  readReactSettingsStore,
   readReactTodayStore,
   writeReactHistoryStore,
   writeReactTodayStore,
@@ -221,6 +222,7 @@ function TodayScreen() {
     .slice(0, 7)
     .reverse()
     .map((day) => ({ id: day.id, date: day.date, protein: day.totals.protein }))
+  const macroGoals = readReactSettingsStore().macroGoals
 
   useEffect(() => {
     writeReactTodayStore(todayStore)
@@ -352,7 +354,12 @@ function TodayScreen() {
     >
       <div className="today-dashboard">
         <PrototypeNotice>React Today data is stored locally on this device.</PrototypeNotice>
-        <DailySummaryCard totals={toMacroTotals(totals)} proteinTrend={proteinTrend} />
+        <DailySummaryCard
+          totals={toMacroTotals(totals)}
+          proteinTrend={proteinTrend}
+          proteinGoal={macroGoals.protein}
+          caloriesGoal={macroGoals.calories}
+        />
         <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
           <span aria-hidden="true">+</span>
           Quick Add
