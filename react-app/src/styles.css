@@ -559,6 +559,167 @@ button:focus-visible {
   padding: 22px;
 }
 
+.today-dashboard-cards {
+  display: grid;
+  gap: 12px;
+}
+
+.today-protein-hero,
+.today-dashboard-stat,
+.today-trend-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.today-protein-hero {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  background: var(--green-dark);
+  color: var(--surface);
+}
+
+.today-protein-hero > div {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.today-protein-hero .eyebrow {
+  color: inherit;
+}
+
+.today-protein-hero strong {
+  font-size: clamp(38px, 12vw, 56px);
+  line-height: 0.9;
+}
+
+.today-protein-hero strong span {
+  margin-left: 4px;
+  font-size: 18px;
+}
+
+.today-protein-hero > p {
+  margin: 0;
+  opacity: 0.82;
+  font-size: 13px;
+}
+
+.today-supporting-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.today-dashboard-stat {
+  display: grid;
+  gap: 8px;
+  padding: 17px;
+  background: var(--surface);
+}
+
+.today-dashboard-stat.calories {
+  border-top: 5px solid var(--green);
+  background: var(--soft-green);
+}
+
+.today-dashboard-stat.cost {
+  border-top: 5px solid var(--green-dark);
+}
+
+.today-dashboard-stat > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.today-dashboard-stat strong {
+  font-size: 23px;
+}
+
+.today-dashboard-stat small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.today-trend-card {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  background: var(--surface);
+}
+
+.today-trend-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.today-trend-heading h3 {
+  margin: 2px 0 0;
+  font-size: 18px;
+}
+
+.today-trend-heading > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.today-trend-empty {
+  margin: 0;
+  padding: 20px;
+  border: 1px dashed var(--line);
+  border-radius: calc(var(--radius) - 4px);
+  color: var(--muted);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.today-trend-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+  min-height: 150px;
+}
+
+.today-trend-bars > div {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 6px;
+  min-width: 0;
+  text-align: center;
+}
+
+.today-trend-value,
+.today-trend-date {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-trend-track {
+  position: relative;
+  overflow: hidden;
+  min-height: 100px;
+  border-radius: 999px;
+  background: var(--soft-green);
+}
+
+.today-trend-track > span {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: inherit;
+  background: var(--green);
+}
+
 .daily-summary-heading,
 .progress-label,
 .today-meal-heading,

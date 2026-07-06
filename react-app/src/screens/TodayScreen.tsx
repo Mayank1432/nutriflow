@@ -216,6 +216,11 @@ function TodayScreen() {
   const [toastMessage, setToastMessage] = useState('')
   const totals = calculateTodayTotals(todayStore)
   const todayData = toDisplayTodayData(todayStore)
+  const proteinTrend = [...readReactHistoryStore().savedDays]
+    .sort((left, right) => right.savedAt.localeCompare(left.savedAt))
+    .slice(0, 7)
+    .reverse()
+    .map((day) => ({ id: day.id, date: day.date, protein: day.totals.protein }))
 
   useEffect(() => {
     writeReactTodayStore(todayStore)
@@ -347,7 +352,7 @@ function TodayScreen() {
     >
       <div className="today-dashboard">
         <PrototypeNotice>React Today data is stored locally on this device.</PrototypeNotice>
-        <DailySummaryCard totals={toMacroTotals(totals)} />
+        <DailySummaryCard totals={toMacroTotals(totals)} proteinTrend={proteinTrend} />
         <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
           <span aria-hidden="true">+</span>
           Quick Add
