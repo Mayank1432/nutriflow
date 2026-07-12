@@ -13,6 +13,7 @@ type QuickAddSheetProps = {
   onOpenDailyStaples?: () => void
   onOpenIngredientLibrary?: () => void
   onSubmit: (action: 'more' | 'return') => void
+  onSaveCost: (ingredientId: string, amount: number) => { ok: boolean; message: string }
 }
 
 function QuickAddSheet({
@@ -24,6 +25,7 @@ function QuickAddSheet({
   onOpenDailyStaples,
   onOpenIngredientLibrary,
   onSubmit,
+  onSaveCost,
 }: QuickAddSheetProps) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -63,6 +65,7 @@ function QuickAddSheet({
           onOpenDailyStaples={onOpenDailyStaples}
           onOpenIngredientLibrary={onOpenIngredientLibrary}
           onSubmit={onSubmit}
+          onSaveCost={onSaveCost}
         />
       </section>
     </div>

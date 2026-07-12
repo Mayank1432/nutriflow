@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import type {
   DailyStapleDefinition,
@@ -24,6 +24,7 @@ type QuickAddFormProps = {
   onOpenDailyStaples?: () => void
   onOpenIngredientLibrary?: () => void
   onSubmit: (action: 'more' | 'return') => void
+  onSaveCost: (ingredientId: string, amount: number) => { ok: boolean; message: string }
 }
 
 const mealOptions: MealName[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
@@ -41,10 +42,14 @@ function QuickAddForm({
   onOpenDailyStaples,
   onOpenIngredientLibrary,
   onSubmit,
+  onSaveCost,
 }: QuickAddFormProps) {
   const submittingRef = useRef(false)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<CategoryLabel | null>(null)
+  const [isEditingCost, setEditingCost] = useState(false)
+  const [costDraft, setCostDraft] = useState('')
+  const [costMessage, setCostMessage] = useState('')
 
   const selectSource = (key: string) => {
     const source = sources.find((candidate) => sourceKey(candidate) === key)
@@ -90,18 +95,50 @@ function QuickAddForm({
     (!normalizedSearch || source.item.name.toLowerCase().includes(normalizedSearch))
     && (!category || matchesCategory(source, category))
   ))
-  const recommendedSources = [...visibleSources]
-    .sort((left, right) => (
-      Number(right.kind === 'staple') - Number(left.kind === 'staple')
-      || right.item.nutrition.protein - left.item.nutrition.protein
-    ))
-    .slice(0, 4)
   const selectedSource = sources.find((source) => sourceKey(source) === draft.sourceKey)
   const selectedUnit = selectedSource
     ? selectedSource.kind === 'ingredient'
       ? selectedSource.item.defaultUnit
       : selectedSource.item.unit
     : ''
+  const selectedQuantity = Number(draft.quantity)
+  const previewFactor = selectedSource && Number.isFinite(selectedQuantity)
+    ? selectedSource.item.basisType === 'per_100'
+      ? selectedQuantity / 100
+      : selectedQuantity
+    : 0
+  const selectedPreview = selectedSource ? {
+    protein: selectedSource.item.nutrition.protein * previewFactor,
+    carbs: selectedSource.item.nutrition.carbs * previewFactor,
+    fat: selectedSource.item.nutrition.fat * previewFactor,
+    fibre: selectedSource.item.nutrition.fibre * previewFactor,
+    calories: selectedSource.item.nutrition.calories * previewFactor,
+    cost: (selectedSource.item.cost?.amount ?? 0) * previewFactor,
+  } : null
+
+  useEffect(() => {
+    setEditingCost(false)
+    setCostMessage('')
+  }, [draft.sourceKey])
+
+  const openCostEditor = () => {
+    if (selectedSource?.kind !== 'ingredient') return
+    setCostDraft(String(selectedSource.item.cost?.amount ?? 0))
+    setCostMessage('')
+    setEditingCost(true)
+  }
+
+  const saveCost = () => {
+    if (selectedSource?.kind !== 'ingredient') return
+    const amount = Number(costDraft)
+    if (costDraft.trim() === '' || !Number.isFinite(amount) || amount < 0) {
+      setCostMessage('Price must be a finite, non-negative number.')
+      return
+    }
+    const result = onSaveCost(selectedSource.item.id, amount)
+    setCostMessage(result.message)
+    if (result.ok) setEditingCost(false)
+  }
 
   const adjustQuantity = (direction: -1 | 1) => {
     const current = Number(draft.quantity)
@@ -122,21 +159,17 @@ function QuickAddForm({
         aria-pressed={selected}
         onClick={() => selectSource(key)}
       >
+        <span className="quick-add-food-icon" aria-hidden="true">{source.kind === 'ingredient' ? '◉' : '⚡'}</span>
         <span className="quick-add-food-copy">
-          <strong>{source.item.name}</strong>
-          <span>
-            {source.item.nutrition.protein.toFixed(1)}g protein · {source.item.defaultQuantity} {source.kind === 'ingredient' ? source.item.defaultUnit : source.item.unit}
+          <span className="quick-add-food-heading">
+            <strong title={source.item.name}>{source.item.name}</strong>
+            <b>{source.item.nutrition.protein.toFixed(1)}g Protein</b>
           </span>
-          <small>
-            <span className="metric-protein">P {source.item.nutrition.protein.toFixed(1)}g</span>
-            <span className="metric-carbs">C {source.item.nutrition.carbs.toFixed(1)}g</span>
-            <span className="metric-fat">F {source.item.nutrition.fat.toFixed(1)}g</span>
-            <span>{source.item.cost ? `₹${source.item.cost.amount.toFixed(0)}` : 'No cost'}</span>
-          </small>
+          <span>{source.item.defaultQuantity} {source.kind === 'ingredient' ? source.item.defaultUnit : source.item.unit} · <span className="quick-add-source-badge">{source.kind === 'ingredient' ? 'Ingredient Library' : 'Daily Staples'}</span></span>
+          <small>{source.item.nutrition.calories.toFixed(0)} kcal · {source.item.cost ? `₹${source.item.cost.amount.toFixed(2).replace(/\.00$/, '')}` : 'No cost'}</small>
+          <small className="quick-add-macro-line"><span className="metric-protein">{source.item.nutrition.protein.toFixed(1)}g Protein</span> · <span className="metric-carbs">{source.item.nutrition.carbs.toFixed(1)}g Carbs</span> · <span className="metric-fat">{source.item.nutrition.fat.toFixed(1)}g Fat</span> · <span>{source.item.nutrition.fibre.toFixed(1)}g Fibre</span></small>
         </span>
-        <span className="quick-add-source-badge">
-          {source.kind === 'ingredient' ? 'Ingredient Library' : 'Daily Staples'}
-        </span>
+        <span className="quick-add-selected-mark" aria-hidden="true">{selected ? '✓' : '›'}</span>
       </button>
     )
   }
@@ -190,22 +223,33 @@ function QuickAddForm({
           <span>Try another search or clear the selected category.</span>
         </div>
       ) : (
-        <>
-          <section className="quick-add-library-section" aria-labelledby="recommended-foods-title">
-            <div className="quick-add-section-heading">
-              <h3 id="recommended-foods-title">Recommended Foods</h3>
-              <span>{recommendedSources.length}</span>
-            </div>
-            <div className="quick-add-food-list">{recommendedSources.map(sourceCard)}</div>
-          </section>
-          <section className="quick-add-library-section" aria-labelledby="all-foods-title">
+        <section className="quick-add-library-section" aria-labelledby="all-foods-title">
             <div className="quick-add-section-heading">
               <h3 id="all-foods-title">All Foods</h3>
               <span>{visibleSources.length}</span>
             </div>
             <div className="quick-add-food-list">{visibleSources.map(sourceCard)}</div>
-          </section>
-        </>
+        </section>
+      )}
+      {selectedSource && selectedPreview && (
+        <section className="quick-add-selected-summary" aria-label="Selected food summary">
+          <span className="quick-add-selected-label">Selected</span>
+          <strong>{selectedSource.item.name}</strong>
+          <p className="quick-add-macro-line"><span className="metric-protein">{selectedPreview.protein.toFixed(1)}g Protein</span> · <span className="metric-carbs">{selectedPreview.carbs.toFixed(1)}g Carbs</span> · <span className="metric-fat">{selectedPreview.fat.toFixed(1)}g Fat</span> · <span>{selectedPreview.fibre.toFixed(1)}g Fibre</span></p>
+          <p>{selectedPreview.calories.toFixed(0)} kcal · ₹{selectedPreview.cost.toFixed(2).replace(/\.00$/, '')}</p>
+          {selectedSource.kind === 'ingredient' && !isEditingCost && (
+            <button className="quick-add-edit-cost" type="button" onClick={openCostEditor} aria-label={`Edit cost for ${selectedSource.item.name}`}>Edit cost</button>
+          )}
+          {selectedSource.kind === 'ingredient' && isEditingCost && (
+            <div className="quick-add-cost-editor">
+              <p>Current cost: ₹{(selectedSource.item.cost?.amount ?? 0).toFixed(2).replace(/\.00$/, '')} {selectedSource.item.basisType === 'per_100' ? `per 100 ${selectedSource.item.defaultUnit}` : `per ${selectedSource.item.defaultUnit}`}</p>
+              <label><span>Price</span><span className="quick-add-price-input"><b aria-hidden="true">₹</b><input type="number" min="0" step="any" value={costDraft} onChange={(event) => setCostDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); saveCost() } else if (event.key === 'Escape') { event.preventDefault(); setEditingCost(false); setCostMessage('') } }} /></span></label>
+              <p>Basis: {selectedSource.item.basisType === 'per_100' ? `100 ${selectedSource.item.defaultUnit}` : selectedSource.item.defaultUnit}</p>
+              <div><button type="button" className="secondary-action" onClick={() => { setEditingCost(false); setCostMessage('') }}>Cancel</button><button type="button" className="primary-action" onClick={saveCost}>Save cost</button></div>
+            </div>
+          )}
+          {costMessage && <p className={isEditingCost ? 'quick-add-error' : 'quick-add-cost-success'} role="status">{costMessage}</p>}
+        </section>
       )}
       <div className="form-grid">
         <fieldset className="quick-add-quantity">
@@ -258,15 +302,6 @@ function QuickAddForm({
           </select>
         </label>
       </div>
-      {selectedSource && (
-        <section className="quick-add-selected-summary" aria-label="Selected food summary">
-          <div>
-            <span>Selected food</span>
-            <strong>{selectedSource.item.name}</strong>
-          </div>
-          <p>{draft.quantity || '—'} {selectedUnit} · Add to {draft.meal}</p>
-        </section>
-      )}
       {error && <p className="quick-add-error" role="alert">{error}</p>}
       {!selectedSource && sources.length > 0 && (
         <p className="quick-add-action-hint">Select a food to confirm quantity and use Add More or Add &amp; Return.</p>
