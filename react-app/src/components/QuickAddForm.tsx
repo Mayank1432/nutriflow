@@ -47,6 +47,7 @@ function QuickAddForm({
   const submittingRef = useRef(false)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<CategoryLabel | null>(null)
+  const [isAllFoodsOpen, setAllFoodsOpen] = useState(false)
   const [isEditingCost, setEditingCost] = useState(false)
   const [costDraft, setCostDraft] = useState('')
   const [costMessage, setCostMessage] = useState('')
@@ -60,7 +61,7 @@ function QuickAddForm({
 
     onChange({
       sourceKey: key,
-      quantity: String(source.item.defaultQuantity),
+      quantity: String(quickAddDefaultQuantity(source)),
       meal: source.item.defaultMeal ?? draft.meal,
     })
   }
@@ -95,12 +96,22 @@ function QuickAddForm({
     (!normalizedSearch || source.item.name.toLowerCase().includes(normalizedSearch))
     && (!category || matchesCategory(source, category))
   ))
+  const isSearching = normalizedSearch.length > 0
   const selectedSource = sources.find((source) => sourceKey(source) === draft.sourceKey)
   const selectedUnit = selectedSource
     ? selectedSource.kind === 'ingredient'
       ? selectedSource.item.defaultUnit
       : selectedSource.item.unit
     : ''
+
+  function quickAddDefaultQuantity(source: QuickAddSource) {
+    if (source.kind === 'staple' || source.item.defaultQuantity !== 100) {
+      return source.item.defaultQuantity
+    }
+    if (source.item.defaultUnit === 'g') return 25
+    if (source.item.defaultUnit === 'piece') return 1
+    return source.item.defaultQuantity
+  }
   const selectedQuantity = Number(draft.quantity)
   const previewFactor = selectedSource && Number.isFinite(selectedQuantity)
     ? selectedSource.item.basisType === 'per_100'
@@ -217,18 +228,39 @@ function QuickAddForm({
             </div>
           )}
         </div>
-      ) : !visibleSources.length ? (
+      ) : isSearching && !visibleSources.length ? (
         <div className="quick-add-empty" role="status">
-          <strong>No matching foods</strong>
+          <strong>No foods found</strong>
           <span>Try another search or clear the selected category.</span>
         </div>
+      ) : isSearching ? (
+        <section className="quick-add-library-section" aria-labelledby="search-results-title">
+          <div className="quick-add-section-heading">
+            <h3 id="search-results-title">Search results</h3>
+            <span>{visibleSources.length}</span>
+          </div>
+          <div className="quick-add-food-list">{visibleSources.map(sourceCard)}</div>
+        </section>
       ) : (
-        <section className="quick-add-library-section" aria-labelledby="all-foods-title">
-            <div className="quick-add-section-heading">
-              <h3 id="all-foods-title">All Foods</h3>
-              <span>{visibleSources.length}</span>
+        <section className="quick-add-library-section quick-add-all-foods" aria-labelledby="all-foods-title">
+          <button
+            className="quick-add-disclosure"
+            type="button"
+            aria-expanded={isAllFoodsOpen}
+            aria-controls="all-foods-list"
+            onClick={() => setAllFoodsOpen((current) => !current)}
+          >
+            <span id="all-foods-title">All Foods</span>
+            <span>{visibleSources.length}</span>
+            <span aria-hidden="true">{isAllFoodsOpen ? '▲' : '▼'}</span>
+          </button>
+          {isAllFoodsOpen && (
+            <div className="quick-add-food-list" id="all-foods-list">
+              {visibleSources.length
+                ? visibleSources.map(sourceCard)
+                : <div className="quick-add-empty" role="status"><strong>No foods found</strong><span>Clear the selected category to browse all foods.</span></div>}
             </div>
-            <div className="quick-add-food-list">{visibleSources.map(sourceCard)}</div>
+          )}
         </section>
       )}
       {selectedSource && selectedPreview && (
@@ -254,6 +286,7 @@ function QuickAddForm({
       <div className="form-grid">
         <fieldset className="quick-add-quantity">
           <legend>Confirm quantity</legend>
+          <span className="quick-add-quantity-label">Quantity</span>
           <div className="quick-add-quantity-control">
             <button
               type="button"
@@ -263,17 +296,17 @@ function QuickAddForm({
             >
               −
             </button>
-            <label>
-              <span className="sr-only">Quantity</span>
+            <label className="quick-add-quantity-value">
               <input
                 required
                 type="number"
                 min="0.01"
                 step="any"
+                aria-label="Quantity"
                 value={draft.quantity}
                 onChange={(event) => onChange({ ...draft, quantity: event.target.value })}
               />
-              {selectedUnit && <span>{selectedUnit}</span>}
+              {selectedUnit && <span className="quick-add-quantity-unit">{selectedUnit}</span>}
             </label>
             <button
               type="button"
@@ -286,7 +319,7 @@ function QuickAddForm({
           </div>
           {selectedSource && (
             <small>
-              Default: {selectedSource.item.defaultQuantity} {selectedUnit}. Adjustments apply only to this add.
+              Default: {quickAddDefaultQuantity(selectedSource)} {selectedUnit} · Adjustments apply only to this add.
             </small>
           )}
         </fieldset>
