@@ -8,24 +8,25 @@ export type TabId = 'today' | 'weekly' | 'history' | 'analytics' | 'more'
 type AppShellProps = {
   activeTab: TabId
   children: ReactNode
+  hideBottomNavigation?: boolean
   onTabChange: (tab: TabId) => void
   activeDestination: DrawerDestination
   onDrawerNavigate: (destination: DrawerDestination) => void
 }
 
-function AppShell({ activeTab, children, onTabChange, activeDestination, onDrawerNavigate }: AppShellProps) {
+function AppShell({ activeTab, children, hideBottomNavigation = false, onTabChange, activeDestination, onDrawerNavigate }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   return (
     <DrawerProvider value={() => setDrawerOpen(true)}>
     <div className="app-frame">
       <main className="app-main">{children}</main>
-      <BottomNavigation
+      {!hideBottomNavigation && <BottomNavigation
         activeTab={activeTab}
         onTabChange={(tab) => {
           setDrawerOpen(false)
           onTabChange(tab)
         }}
-      />
+      />}
       <HamburgerDrawer
         activeDestination={activeDestination}
         open={drawerOpen}

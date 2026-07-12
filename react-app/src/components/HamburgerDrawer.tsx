@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 export type DrawerDestination =
   | 'today' | 'weekly' | 'history' | 'more'
   | 'analytics' | 'ingredient-library' | 'daily-staples' | 'settings'
+  | 'quick-add' | 'today-ingredients' | 'custom-ingredient'
+  | 'macro-goals' | 'theme'
 
 type HamburgerDrawerProps = {
   activeDestination: DrawerDestination
@@ -23,7 +25,7 @@ const groups: Array<{ label: string; links: DrawerLink[] }> = [
     label: 'Main',
     links: [
       { id: 'today', label: 'Today', destination: 'today', activeFor: 'today' },
-      { id: 'quick-add', label: 'Quick Add', destination: 'today' },
+      { id: 'quick-add', label: 'Quick Add', destination: 'quick-add' },
       { id: 'analytics', label: 'Analytics', destination: 'analytics', activeFor: 'analytics' },
       { id: 'weekly-planner', label: 'Weekly Planner', destination: 'weekly', activeFor: 'weekly' },
       { id: 'history', label: 'History', destination: 'history', activeFor: 'history' },
@@ -34,9 +36,9 @@ const groups: Array<{ label: string; links: DrawerLink[] }> = [
   {
     label: 'Today Tools',
     links: [
-      { id: 'today-ingredients', label: 'Today Ingredients', destination: 'today' },
+      { id: 'today-ingredients', label: 'Today Ingredients', destination: 'today-ingredients' },
       { id: 'daily-staples', label: 'Daily Staples', destination: 'daily-staples', activeFor: 'daily-staples' },
-      { id: 'custom-ingredient', label: 'Custom Ingredient' },
+      { id: 'custom-ingredient', label: 'Custom Ingredient', destination: 'custom-ingredient' },
       { id: 'cost-protein-table', label: 'Cost / Protein Table' },
     ],
   },
@@ -54,8 +56,8 @@ const groups: Array<{ label: string; links: DrawerLink[] }> = [
     label: 'Settings',
     links: [
       { id: 'settings', label: 'Settings', destination: 'settings', activeFor: 'settings' },
-      { id: 'macro-goals', label: 'Macro Goals', destination: 'settings' },
-      { id: 'theme', label: 'Theme', destination: 'settings' },
+      { id: 'macro-goals', label: 'Macro Goals', destination: 'macro-goals' },
+      { id: 'theme', label: 'Theme', destination: 'theme' },
       { id: 'app-info-help', label: 'App Info / Help' },
     ],
   },

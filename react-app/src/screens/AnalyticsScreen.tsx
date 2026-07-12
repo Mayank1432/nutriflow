@@ -152,6 +152,18 @@ function AnalyticsScreen() {
       subtitle="Read-only insights from your saved nutrition data."
     >
       <div className="analytics-dashboard">
+        <section className="analytics-highlight-grid" aria-label="Analytics highlights">
+          <article className="analytics-highlight protein">
+            <span>Average Protein</span>
+            <strong>{historyAverage.protein.toFixed(1)}g</strong>
+            <small>Last {recentHistory.length} saved {recentHistory.length === 1 ? 'day' : 'days'}</small>
+          </article>
+          <article className="analytics-highlight spend">
+            <span>Weekly Spend</span>
+            <strong>₹{weekly.cost.toFixed(0)}</strong>
+            <small>Current planned week</small>
+          </article>
+        </section>
         <section className="analytics-card analytics-hero" aria-labelledby="analytics-today-title">
           <div className="analytics-card-heading">
             <div>
@@ -167,7 +179,7 @@ function AnalyticsScreen() {
           )}
         </section>
 
-        <section className="analytics-card" aria-labelledby="analytics-weekly-title">
+        <section className="analytics-card analytics-weekly" aria-labelledby="analytics-weekly-title">
           <div className="analytics-card-heading">
             <div>
               <p className="eyebrow">Planned week</p>
@@ -182,7 +194,7 @@ function AnalyticsScreen() {
           )}
         </section>
 
-        <section className="analytics-card" aria-labelledby="analytics-history-title">
+        <section className="analytics-card analytics-history" aria-labelledby="analytics-history-title">
           <div className="analytics-card-heading">
             <div>
               <p className="eyebrow">Recent trend</p>
@@ -210,7 +222,7 @@ function AnalyticsScreen() {
           )}
         </section>
 
-        <section className="analytics-card" aria-labelledby="analytics-goals-title">
+        <section className="analytics-card analytics-goal-card" aria-labelledby="analytics-goals-title">
           <div className="analytics-card-heading">
             <div>
               <p className="eyebrow">Macro Goals</p>

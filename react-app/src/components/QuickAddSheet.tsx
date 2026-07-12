@@ -10,6 +10,8 @@ type QuickAddSheetProps = {
   error: string
   onChange: (draft: QuickAddDraft) => void
   onClose: () => void
+  onOpenDailyStaples?: () => void
+  onOpenIngredientLibrary?: () => void
   onSubmit: (action: 'more' | 'return') => void
 }
 
@@ -19,6 +21,8 @@ function QuickAddSheet({
   error,
   onChange,
   onClose,
+  onOpenDailyStaples,
+  onOpenIngredientLibrary,
   onSubmit,
 }: QuickAddSheetProps) {
   useEffect(() => {
@@ -40,9 +44,12 @@ function QuickAddSheet({
         aria-labelledby="quick-add-title"
       >
         <div className="sheet-heading">
+          <button className="sheet-back" type="button" onClick={onClose} aria-label="Back to Today">
+            ←
+          </button>
           <div>
-            <p className="eyebrow">Today · Food Library</p>
             <h2 id="quick-add-title">Quick Add</h2>
+            <p>Adding to {draft.meal}</p>
           </div>
           <button className="sheet-close" type="button" onClick={onClose} aria-label="Close Quick Add">
             ×
@@ -53,6 +60,8 @@ function QuickAddSheet({
           sources={sources}
           error={error}
           onChange={onChange}
+          onOpenDailyStaples={onOpenDailyStaples}
+          onOpenIngredientLibrary={onOpenIngredientLibrary}
           onSubmit={onSubmit}
         />
       </section>

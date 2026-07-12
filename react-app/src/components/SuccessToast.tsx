@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 
 type SuccessToastProps = {
-  message: string
+  message: ReactNode
   onDismiss?: () => void
 }
 

@@ -12,6 +12,9 @@ type DailySummaryCardProps = {
   proteinTrend: ProteinTrendPoint[]
   proteinGoal: MacroGoal
   caloriesGoal: MacroGoal
+  todayCost: number
+  weeklyCost: number
+  averageDailyCost: number
 }
 
 type GoalProgressProps = {
@@ -23,6 +26,23 @@ type GoalProgressProps = {
 }
 
 const formatCalories = (value: number): string => {
+  if (Number.isInteger(value)) return value.toFixed(0)
+  if (Math.abs(value) < 1) return Number(value.toPrecision(3)).toString()
+  return Number(value.toFixed(1)).toString()
+}
+
+const trendChart = {
+  width: 320,
+  height: 112,
+  left: 18,
+  right: 18,
+  top: 16,
+  bottom: 24,
+} as const
+
+const formatProtein = (value: number): string => Number(value.toFixed(1)).toString()
+
+const formatCost = (value: number): string => {
   if (Number.isInteger(value)) return value.toFixed(0)
   if (Math.abs(value) < 1) return Number(value.toPrecision(3)).toString()
   return Number(value.toFixed(1)).toString()
@@ -84,30 +104,68 @@ function DailySummaryCard({
   proteinTrend,
   proteinGoal,
   caloriesGoal,
+  todayCost,
+  weeklyCost,
+  averageDailyCost,
 }: DailySummaryCardProps) {
-  const maxProtein = Math.max(...proteinTrend.map((point) => point.protein), 1)
+  const trendPoints = proteinTrend.filter((point) => Number.isFinite(point.protein))
+  const usableWidth = trendChart.width - trendChart.left - trendChart.right
+  const chartBottom = trendChart.height - trendChart.bottom
+  const usableHeight = chartBottom - trendChart.top
+  const minProtein = trendPoints.length
+    ? Math.min(...trendPoints.map((point) => point.protein))
+    : 0
+  const maxProtein = trendPoints.length
+    ? Math.max(...trendPoints.map((point) => point.protein))
+    : 0
+  const plottedPoints = trendPoints.map((point, index) => {
+    const x = trendPoints.length === 1
+      ? trendChart.left + usableWidth / 2
+      : trendChart.left + (index * usableWidth) / (trendPoints.length - 1)
+    const y = maxProtein === minProtein
+      ? trendChart.top + usableHeight / 2
+      : chartBottom - ((point.protein - minProtein) / (maxProtein - minProtein)) * usableHeight
+    return { ...point, x, y }
+  })
+  const trendPath = plottedPoints.length > 1
+    ? plottedPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
+    : ''
+  const latestPoint = plottedPoints.at(-1)
+  const chartLabel = `7-Day Protein Trend. ${plottedPoints.length} saved ${plottedPoints.length === 1 ? 'day' : 'days'}.${latestPoint ? ` Latest value: ${formatProtein(latestPoint.protein)} grams.` : ''}`
 
   return (
     <section className="today-dashboard-cards" aria-labelledby="daily-summary-title">
       <h2 className="sr-only" id="daily-summary-title">Today dashboard</h2>
 
-      <article className="today-protein-hero">
-        <div>
-          <p className="eyebrow">Today&apos;s Protein</p>
-          <strong>{totals.p.toFixed(1)}<span>g</span></strong>
-        </div>
-        <GoalProgress current={totals.p} goal={proteinGoal} label="Protein" unit="g" kind="protein" />
-      </article>
-
-      <div className="today-supporting-cards">
-        <article className="today-dashboard-stat calories">
-          <span>Today&apos;s Calories</span>
-          <strong>{formatCalories(totals.k)} <small>kcal</small></strong>
-          <GoalProgress current={totals.k} goal={caloriesGoal} label="Calories" unit="kcal" kind="calories" />
-        </article>
+      <div className="today-metric-cards">
         <article className="today-dashboard-stat cost">
           <span>Today&apos;s Cost</span>
-          <strong>₹{totals.c.toFixed(0)}</strong>
+          <strong>₹{formatCost(todayCost)}</strong>
+        </article>
+        <article className="today-dashboard-stat weekly-cost">
+          <span>This Week&apos;s Cost</span>
+          <strong>₹{formatCost(weeklyCost)}</strong>
+        </article>
+        <article className="today-dashboard-stat average-cost">
+          <span>Avg Daily Cost</span>
+          <strong>₹{formatCost(averageDailyCost)}</strong>
+        </article>
+      </div>
+
+      <div className="today-progress-panels">
+        <article className="today-progress-panel protein">
+          <div className="today-progress-heading">
+            <span>Protein Progress</span>
+            <strong>Daily goal</strong>
+          </div>
+          <GoalProgress current={totals.p} goal={proteinGoal} label="Protein" unit="g" kind="protein" />
+        </article>
+        <article className="today-progress-panel calories">
+          <div className="today-progress-heading">
+            <span>Calories Progress</span>
+            <strong>Daily goal</strong>
+          </div>
+          <GoalProgress current={totals.k} goal={caloriesGoal} label="Calories" unit="kcal" kind="calories" />
         </article>
       </div>
 
@@ -117,23 +175,50 @@ function DailySummaryCard({
             <p className="eyebrow">History preview</p>
             <h3>7-Day Protein Trend</h3>
           </div>
-          <span>{proteinTrend.length}/7 days</span>
+          <span>{plottedPoints.length}/7 days</span>
         </div>
-        {proteinTrend.length < 2 ? (
+        {plottedPoints.length === 0 ? (
           <p className="today-trend-empty">
-            Save at least two days to History to start seeing your protein trend.
+            Save a day to History to start seeing your protein trend.
           </p>
         ) : (
-          <div className="today-trend-bars" aria-label="Recent protein totals by saved day">
-            {proteinTrend.map((point) => (
-              <div key={point.id}>
-                <span className="today-trend-value">{point.protein.toFixed(0)}g</span>
-                <span className="today-trend-track">
-                  <span style={{ height: `${Math.max(8, (point.protein / maxProtein) * 100)}%` }} />
-                </span>
-                <span className="today-trend-date">{point.date.slice(5)}</span>
-              </div>
-            ))}
+          <div className="today-trend-chart">
+            <svg
+              viewBox={`0 0 ${trendChart.width} ${trendChart.height}`}
+              role="img"
+              aria-label={chartLabel}
+            >
+              <line className="today-trend-baseline" x1={trendChart.left} x2={trendChart.width - trendChart.right} y1={chartBottom} y2={chartBottom} />
+              {trendPath && <path className="today-trend-line" d={trendPath} />}
+              {plottedPoints.map((point, index) => (
+                <g key={point.id} className="today-trend-point">
+                  <circle cx={point.x} cy={point.y} r="3.5">
+                    <title>{point.date}: {formatProtein(point.protein)} grams protein</title>
+                  </circle>
+                  {(index === 0 || index === plottedPoints.length - 1) && (
+                    <text
+                      className="today-trend-date"
+                      x={point.x}
+                      y={trendChart.height - 5}
+                      textAnchor={index === 0 ? 'start' : 'end'}
+                    >
+                      {point.date.slice(5)}
+                    </text>
+                  )}
+                </g>
+              ))}
+              {latestPoint && (
+                <text
+                  className="today-trend-latest"
+                  x={latestPoint.x}
+                  y={Math.max(trendChart.top + 8, latestPoint.y - 8)}
+                  textAnchor={latestPoint.x > trendChart.width / 2 ? 'end' : 'start'}
+                >
+                  {formatProtein(latestPoint.protein)}g
+                </text>
+              )}
+            </svg>
+            {plottedPoints.length === 1 && <p>One saved day so far. Add another day to reveal the trend.</p>}
           </div>
         )}
       </article>
