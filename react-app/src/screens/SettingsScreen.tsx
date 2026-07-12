@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ScreenContainer from '../components/ScreenContainer'
 import type { MacroGoals, ReactSettingsStore } from '../storage'
 
@@ -7,15 +7,27 @@ type SettingsScreenProps = {
   settings: ReactSettingsStore
   onToggleTheme: () => void
   onSaveMacroGoals: (goals: MacroGoals) => boolean
+  focusSection?: { type: 'macro-goals' | 'theme'; token: number } | null
+  onFocusConsumed?: (token: number) => void
 }
 
 const goalNames = ['protein', 'calories', 'carbs', 'fat', 'fibre', 'cost'] as const
 const labels = { protein: 'Protein', calories: 'Calories', carbs: 'Carbs', fat: 'Fat', fibre: 'Fibre', cost: 'Cost' }
 
-function SettingsScreen({ onBack, settings, onToggleTheme, onSaveMacroGoals }: SettingsScreenProps) {
+function SettingsScreen({ onBack, settings, onToggleTheme, onSaveMacroGoals, focusSection, onFocusConsumed }: SettingsScreenProps) {
   const [enabled, setEnabled] = useState(() => Object.fromEntries(goalNames.map((name) => [name, settings.macroGoals[name].enabled])) as Record<typeof goalNames[number], boolean>)
   const [values, setValues] = useState(() => Object.fromEntries(goalNames.map((name) => [name, settings.macroGoals[name].value === null ? '' : String(settings.macroGoals[name].value)])) as Record<typeof goalNames[number], string>)
   const [message, setMessage] = useState('')
+  const themeRef = useRef<HTMLElement>(null)
+  const macroGoalsRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!focusSection) return
+    const target = focusSection.type === 'theme' ? themeRef.current : macroGoalsRef.current
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    target?.focus({ preventScroll: true })
+    onFocusConsumed?.(focusSection.token)
+  }, [focusSection, onFocusConsumed])
 
   const save = () => {
     const goals = {} as MacroGoals
@@ -36,10 +48,10 @@ function SettingsScreen({ onBack, settings, onToggleTheme, onSaveMacroGoals }: S
 
   return <ScreenContainer title="Settings" subtitle="Manage app preferences and goals.">
     <button className="secondary-action" type="button" onClick={onBack}>← Back to More</button>
-    <section className="about-card"><h3>Theme</h3><p><strong>{settings.theme.mode === 'dark' ? 'Dark' : 'Light'}</strong></p>
+    <section ref={themeRef} tabIndex={-1} className="about-card"><h3>Theme</h3><p><strong>{settings.theme.mode === 'dark' ? 'Dark' : 'Light'}</strong></p>
       <button className="secondary-action" type="button" onClick={onToggleTheme}>Use {settings.theme.mode === 'light' ? 'Dark' : 'Light'} theme</button>
     </section>
-    <section className="about-card" aria-labelledby="macro-goals-title"><h3 id="macro-goals-title">Macro Goals</h3>
+    <section ref={macroGoalsRef} tabIndex={-1} className="about-card" aria-labelledby="macro-goals-title"><h3 id="macro-goals-title">Macro Goals</h3>
       <div className="quick-add-form form-grid">
         {goalNames.map((name) => <div key={name}>
           <label><input type="checkbox" checked={enabled[name]} onChange={(event) => setEnabled((current) => ({ ...current, [name]: event.target.checked }))} /> <span>{labels[name]}</span></label>

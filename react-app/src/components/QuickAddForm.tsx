@@ -21,6 +21,8 @@ type QuickAddFormProps = {
   sources: QuickAddSource[]
   error: string
   onChange: (draft: QuickAddDraft) => void
+  onOpenDailyStaples?: () => void
+  onOpenIngredientLibrary?: () => void
   onSubmit: (action: 'more' | 'return') => void
 }
 
@@ -36,6 +38,8 @@ function QuickAddForm({
   sources,
   error,
   onChange,
+  onOpenDailyStaples,
+  onOpenIngredientLibrary,
   onSubmit,
 }: QuickAddFormProps) {
   const submittingRef = useRef(false)
@@ -123,6 +127,12 @@ function QuickAddForm({
           <span>
             {source.item.nutrition.protein.toFixed(1)}g protein · {source.item.defaultQuantity} {source.kind === 'ingredient' ? source.item.defaultUnit : source.item.unit}
           </span>
+          <small>
+            <span className="metric-protein">P {source.item.nutrition.protein.toFixed(1)}g</span>
+            <span className="metric-carbs">C {source.item.nutrition.carbs.toFixed(1)}g</span>
+            <span className="metric-fat">F {source.item.nutrition.fat.toFixed(1)}g</span>
+            <span>{source.item.cost ? `₹${source.item.cost.amount.toFixed(0)}` : 'No cost'}</span>
+          </small>
         </span>
         <span className="quick-add-source-badge">
           {source.kind === 'ingredient' ? 'Ingredient Library' : 'Daily Staples'}
@@ -158,7 +168,21 @@ function QuickAddForm({
       {!sources.length ? (
         <div className="quick-add-empty" role="status">
           <strong>Your food library is empty</strong>
-          <span>Add an Ingredient Library item or active Daily Staple first.</span>
+          <span>Add an Ingredient Library item or active Daily Staple first, then come back to Quick Add.</span>
+          {(onOpenIngredientLibrary || onOpenDailyStaples) && (
+            <div className="quick-add-empty-actions">
+              {onOpenIngredientLibrary && (
+                <button type="button" className="secondary-action" onClick={onOpenIngredientLibrary}>
+                  Go to Ingredient Library
+                </button>
+              )}
+              {onOpenDailyStaples && (
+                <button type="button" className="secondary-action" onClick={onOpenDailyStaples}>
+                  Go to Daily Staples
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ) : !visibleSources.length ? (
         <div className="quick-add-empty" role="status">
@@ -234,7 +258,19 @@ function QuickAddForm({
           </select>
         </label>
       </div>
+      {selectedSource && (
+        <section className="quick-add-selected-summary" aria-label="Selected food summary">
+          <div>
+            <span>Selected food</span>
+            <strong>{selectedSource.item.name}</strong>
+          </div>
+          <p>{draft.quantity || '—'} {selectedUnit} · Add to {draft.meal}</p>
+        </section>
+      )}
       {error && <p className="quick-add-error" role="alert">{error}</p>}
+      {!selectedSource && sources.length > 0 && (
+        <p className="quick-add-action-hint">Select a food to confirm quantity and use Add More or Add &amp; Return.</p>
+      )}
       <div className="quick-add-actions">
         <button
           className="secondary-action"
@@ -253,6 +289,7 @@ function QuickAddForm({
           Add &amp; Return
         </button>
       </div>
+      <p className="quick-add-return-helper">Add More keeps this library open. Add &amp; Return takes you back to Today.</p>
     </form>
   )
 }

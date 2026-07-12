@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   readReactIngredientsStore,
   readReactTodayStore,
@@ -20,11 +20,25 @@ const emptyDraft = {
   protein: '0', calories: '0', carbs: '0', fat: '0', fibre: '0', cost: '0',
 }
 
-function IngredientLibrary() {
+type IngredientLibraryProps = {
+  createIntentToken?: number
+  onCreateIntentConsumed?: (token: number) => void
+}
+
+function IngredientLibrary({ createIntentToken, onCreateIntentConsumed }: IngredientLibraryProps) {
   const [store, setStore] = useState(() => readReactIngredientsStore())
   const [draft, setDraft] = useState(emptyDraft)
   const [editingId, setEditingId] = useState('')
   const [message, setMessage] = useState('')
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (createIntentToken === undefined) return
+    setEditingId('')
+    nameInputRef.current?.focus()
+    nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    onCreateIntentConsumed?.(createIntentToken)
+  }, [createIntentToken, onCreateIntentConsumed])
   const number = (value: string) => {
     const parsed = Number(value)
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
@@ -101,8 +115,9 @@ function IngredientLibrary() {
     <section className="about-card" aria-labelledby="ingredient-library-title">
       <p className="eyebrow">Reusable definitions</p>
       <h3 id="ingredient-library-title">Ingredient Library</h3>
+      <p className="ingredient-library-intro">Create a reusable food, then add it to Today whenever you need it.</p>
       <div className="quick-add-form form-grid">
-        <label><span>Name</span><input value={draft.name} onChange={(e) => update('name', e.target.value)} /></label>
+        <label><span>Name</span><input ref={nameInputRef} value={draft.name} onChange={(e) => update('name', e.target.value)} /></label>
         <label><span>Basis</span><select value={draft.basisType} onChange={(e) => update('basisType', e.target.value)}><option value="per_100">Per 100</option><option value="per_unit">Per unit</option></select></label>
         <label><span>Unit</span><select value={draft.unit} onChange={(e) => update('unit', e.target.value)}>{units.map((unit) => <option key={unit}>{unit}</option>)}</select></label>
         <label><span>Default quantity</span><input type="number" value={draft.quantity} onChange={(e) => update('quantity', e.target.value)} /></label>
@@ -110,7 +125,9 @@ function IngredientLibrary() {
         <label><span>Category</span><input value={draft.category} onChange={(e) => update('category', e.target.value)} /></label>
         {(['protein','calories','carbs','fat','fibre','cost'] as const).map((field) => <label key={field}><span>{field}</span><input type="number" min="0" value={draft[field]} onChange={(e) => update(field, e.target.value)} /></label>)}
       </div>
-      <button className="primary-action" type="button" onClick={save}>{editingId ? 'Update ingredient' : 'Save ingredient'}</button>
+      <button className="primary-action ingredient-library-save" type="button" onClick={save}>
+        {editingId ? 'Update ingredient' : '+ Create ingredient for Quick Add'}
+      </button>
       {message && <p role="status">{message}</p>}
       {store.ingredients.map((item) => <div className="placeholder-card" key={item.id}><strong>{item.name}</strong><p>{item.basisType} · {item.defaultQuantity} {item.defaultUnit} · {item.category || 'Uncategorised'}</p><button type="button" onClick={() => addToToday(item)}>Add to Today</button> <button type="button" onClick={() => edit(item)}>Edit</button></div>)}
     </section>

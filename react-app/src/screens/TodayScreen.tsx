@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import DailySummaryCard from '../components/DailySummaryCard'
 import MealCard from '../components/MealCard'
 import QuickAddSheet from '../components/QuickAddSheet'
@@ -206,7 +206,87 @@ const normalizeTodayStore = (store: ReactTodayStore): ReactTodayStore => {
   return { ...normalized, totals: calculateTodayTotals(normalized) }
 }
 
-function TodayScreen() {
+const parseLocalDateKey = (value: string): Date | null => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const date = new Date(year, month - 1, day)
+  return date.getFullYear() === year
+    && date.getMonth() === month - 1
+    && date.getDate() === day
+    ? date
+    : null
+}
+
+const toLocalDateKey = (date: Date): string => {
+  const year = String(date.getFullYear()).padStart(4, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const preferredHistoryDay = (current: HistoryDay, candidate: HistoryDay): HistoryDay => {
+  const currentSavedAt = Date.parse(current.savedAt)
+  const candidateSavedAt = Date.parse(candidate.savedAt)
+  const currentIsValid = Number.isFinite(currentSavedAt)
+  const candidateIsValid = Number.isFinite(candidateSavedAt)
+
+  if (candidateIsValid !== currentIsValid) return candidateIsValid ? candidate : current
+  if (candidateIsValid && currentIsValid && candidateSavedAt !== currentSavedAt) {
+    return candidateSavedAt > currentSavedAt ? candidate : current
+  }
+  return candidate.id > current.id ? candidate : current
+}
+
+const deriveCurrentWeekCosts = (
+  todayDateKey: string,
+  liveTodayCost: number,
+  savedDays: HistoryDay[],
+) => {
+  const localToday = parseLocalDateKey(todayDateKey) ?? new Date()
+  const canonicalTodayKey = toLocalDateKey(localToday)
+  const weekStart = new Date(localToday.getFullYear(), localToday.getMonth(), localToday.getDate())
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+  const weekStartKey = toLocalDateKey(weekStart)
+  const selectedByDate = new Map<string, HistoryDay>()
+
+  for (const day of [...savedDays]) {
+    if (!parseLocalDateKey(day.date)) continue
+    if (day.date < weekStartKey || day.date >= canonicalTodayKey) continue
+    const current = selectedByDate.get(day.date)
+    selectedByDate.set(day.date, current ? preferredHistoryDay(current, day) : day)
+  }
+
+  const pastHistoryCost = [...selectedByDate.values()].reduce((sum, day) => (
+    sum + (Number.isFinite(day.totals.cost) ? day.totals.cost : 0)
+  ), 0)
+  const safeTodayCost = Number.isFinite(liveTodayCost) ? liveTodayCost : 0
+  const weeklyCost = safeTodayCost + pastHistoryCost
+
+  return {
+    todayCost: safeTodayCost,
+    weeklyCost,
+    averageDailyCost: weeklyCost / (localToday.getDay() + 1),
+  }
+}
+
+type TodayScreenProps = {
+  intent?: { type: 'quick-add' | 'today-ingredients'; token: number } | null
+  onIntentConsumed?: (token: number) => void
+  onOpenDailyStaples?: () => void
+  onOpenIngredientLibrary?: () => void
+  onQuickAddVisibilityChange?: (visible: boolean) => void
+}
+
+function TodayScreen({
+  intent,
+  onIntentConsumed,
+  onOpenDailyStaples,
+  onOpenIngredientLibrary,
+  onQuickAddVisibilityChange,
+}: TodayScreenProps) {
   const [todayStore, setTodayStore] = useState<ReactTodayStore>(
     () => normalizeTodayStore(readReactTodayStore()),
   )
@@ -214,19 +294,27 @@ function TodayScreen() {
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddDraft>(() => blankDraft())
   const [quickAddError, setQuickAddError] = useState('')
   const [quickAddSources, setQuickAddSources] = useState<QuickAddSource[]>([])
-  const [toastMessage, setToastMessage] = useState('')
+  const [toastMessage, setToastMessage] = useState<ReactNode>(null)
+  const todayIngredientsRef = useRef<HTMLDivElement>(null)
   const totals = calculateTodayTotals(todayStore)
   const todayData = toDisplayTodayData(todayStore)
-  const proteinTrend = [...readReactHistoryStore().savedDays]
+  const historyDays = [...readReactHistoryStore().savedDays]
+  const proteinTrend = [...historyDays]
     .sort((left, right) => right.savedAt.localeCompare(left.savedAt))
     .slice(0, 7)
     .reverse()
     .map((day) => ({ id: day.id, date: day.date, protein: day.totals.protein }))
+  const currentWeekCosts = deriveCurrentWeekCosts(todayStore.date, totals.cost, historyDays)
   const macroGoals = readReactSettingsStore().macroGoals
 
   useEffect(() => {
     writeReactTodayStore(todayStore)
   }, [todayStore])
+
+  useEffect(() => {
+    onQuickAddVisibilityChange?.(isQuickAddOpen)
+    return () => onQuickAddVisibilityChange?.(false)
+  }, [isQuickAddOpen, onQuickAddVisibilityChange])
 
   const persistUpdate = (
     mealName: MealName,
@@ -250,6 +338,16 @@ function TodayScreen() {
     setToastMessage('')
   }
 
+  useEffect(() => {
+    if (!intent) return
+    if (intent.type === 'quick-add') openQuickAdd('breakfast')
+    if (intent.type === 'today-ingredients') {
+      todayIngredientsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      todayIngredientsRef.current?.focus({ preventScroll: true })
+    }
+    onIntentConsumed?.(intent.token)
+  }, [intent, onIntentConsumed])
+
   const addIngredient = (action: 'more' | 'return') => {
     const source = quickAddSources.find((candidate) => (
       sourceKey(candidate) === quickAddDraft.sourceKey
@@ -272,11 +370,19 @@ function TodayScreen() {
       return
     }
 
+    const entry = createFoodEntry(source, quantity)
+    const entryTotals = calculateEntryTotals(entry)
     persistUpdate(
       quickAddDraft.meal,
-      (entries) => [...entries, createFoodEntry(source, quantity)],
+      (entries) => [...entries, entry],
     )
-    setToastMessage(`Added ${source.item.name} to ${quickAddDraft.meal}.`)
+    setToastMessage(
+      <span className="success-toast-content">
+        <strong>✓ {entry.name} added</strong>
+        <span>to {quickAddDraft.meal}</span>
+        <small>{entryTotals.protein.toFixed(1)}g Protein · {entryTotals.calories.toFixed(0)} kcal · ₹{entryTotals.cost.toFixed(0)}</small>
+      </span>,
+    )
     setQuickAddError('')
     if (action === 'return') {
       setQuickAddOpen(false)
@@ -359,6 +465,9 @@ function TodayScreen() {
           proteinTrend={proteinTrend}
           proteinGoal={macroGoals.protein}
           caloriesGoal={macroGoals.calories}
+          todayCost={currentWeekCosts.todayCost}
+          weeklyCost={currentWeekCosts.weeklyCost}
+          averageDailyCost={currentWeekCosts.averageDailyCost}
         />
         <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
           <span aria-hidden="true">+</span>
@@ -389,11 +498,13 @@ function TodayScreen() {
             />
           ))}
         </div>
-        <TodayIngredients
-          todayStore={todayStore}
-          onQuantityCommit={updateQuantity}
-          onRemove={removeIngredient}
-        />
+        <div ref={todayIngredientsRef} tabIndex={-1} className="today-ingredients-target">
+          <TodayIngredients
+            todayStore={todayStore}
+            onQuantityCommit={updateQuantity}
+            onRemove={removeIngredient}
+          />
+        </div>
       </div>
       {isQuickAddOpen && (
         <QuickAddSheet
@@ -402,10 +513,18 @@ function TodayScreen() {
           error={quickAddError}
           onChange={setQuickAddDraft}
           onClose={() => setQuickAddOpen(false)}
+          onOpenDailyStaples={onOpenDailyStaples ? () => {
+            setQuickAddOpen(false)
+            onOpenDailyStaples()
+          } : undefined}
+          onOpenIngredientLibrary={onOpenIngredientLibrary ? () => {
+            setQuickAddOpen(false)
+            onOpenIngredientLibrary()
+          } : undefined}
           onSubmit={addIngredient}
         />
       )}
-      <SuccessToast message={toastMessage} onDismiss={() => setToastMessage('')} />
+      <SuccessToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
     </ScreenContainer>
   )
 }

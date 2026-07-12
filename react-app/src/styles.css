@@ -1,33 +1,66 @@
 :root {
   font-family: Inter, ui-rounded, "Segoe UI", system-ui, sans-serif;
-  color: #19322b;
-  background: #edf4f0;
+  color: #0f172a;
+  background: #f5f7fb;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --ink: #19322b;
-  --muted: #698078;
-  --line: #dce8e2;
-  --green: #2aa876;
-  --green-dark: #167552;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --green: #22c55e;
+  --green-dark: #168a42;
+  --cost: #35c759;
+  --blue: #2f80ff;
+  --protein: #3b82f6;
+  --orange: #ff9f0a;
+  --purple: #8b5cf6;
   --surface: #ffffff;
-  --soft-green: #e7f7ef;
-  --shadow: 0 10px 26px rgba(36, 80, 64, 0.08);
-  --page: #edf4f0;
-  --app-background: #f8fbf9;
+  --surface-elevated: #f9fbff;
+  --surface-strong: #eef3fb;
+  --soft-green: #eaf9ef;
+  --soft-cost: #e9f9ee;
+  --soft-blue: #eaf2ff;
+  --soft-orange: #fff4df;
+  --soft-purple: #f2edff;
+  --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  --page: #f5f7fb;
+  --app-background: #f9fbff;
+  --app-max-width: 430px;
+  --control-background: #ffffff;
+  --hero-text: #ffffff;
+  --radius-small: 10px;
+  --radius: 14px;
+  --radius-card: 18px;
+  --radius-panel: 22px;
+  --radius-hero: 24px;
+  --focus: #2f80ff;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --ink: #e5f1ec;
-  --muted: #a9bdb5;
-  --line: #355148;
-  --green: #55c998;
-  --green-dark: #7cdbb5;
-  --surface: #1d302a;
-  --soft-green: #233f35;
-  --shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
-  --page: #13221d;
-  --app-background: #172822;
+  --ink: #f8fafc;
+  --muted: #94a3b8;
+  --line: #2b3a50;
+  --green: #22c55e;
+  --green-dark: #52d77c;
+  --cost: #35c759;
+  --blue: #2f80ff;
+  --protein: #3b82f6;
+  --orange: #ff9f0a;
+  --purple: #8b5cf6;
+  --surface: #101b2b;
+  --surface-elevated: #162235;
+  --surface-strong: #1b2940;
+  --soft-green: #123423;
+  --soft-cost: #123a25;
+  --soft-blue: #142c52;
+  --soft-orange: #3d2b10;
+  --soft-purple: #2a2047;
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.32);
+  --page: #07111f;
+  --app-background: #0b1626;
+  --control-background: #162235;
+  --hero-text: #f8fafc;
 }
 
 * {
@@ -38,7 +71,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(#f5faf7 0 190px, transparent 190px), #edf4f0;
+  background: var(--page);
 }
 
 .theme-root {
@@ -52,12 +85,12 @@ button {
 }
 
 button:focus-visible {
-  outline: 3px solid rgba(42, 168, 118, 0.3);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
 .app-frame {
-  width: min(100%, 760px);
+  width: min(100%, var(--app-max-width));
   min-height: 100vh;
   margin: 0 auto;
   background: var(--app-background);
@@ -95,7 +128,7 @@ button:focus-visible {
   place-items: center;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--soft-green);
+  background: var(--surface);
   color: var(--ink);
   font-size: 22px;
   cursor: default;
@@ -121,7 +154,7 @@ button:focus-visible {
   height: 34px;
   place-items: center;
   border-radius: 10px;
-  background: var(--green);
+  background: var(--blue);
   color: var(--surface);
   font-size: 12px;
 }
@@ -195,8 +228,8 @@ button:focus-visible {
 }
 
 .hamburger-drawer nav button.active {
-  background: var(--soft-green);
-  color: var(--green-dark);
+  background: var(--soft-blue);
+  color: var(--blue);
   font-weight: 800;
 }
 
@@ -209,8 +242,8 @@ button:focus-visible {
   padding: 3px 6px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: var(--soft-green);
-  color: var(--green-dark);
+  background: var(--surface-elevated);
+  color: var(--muted);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -483,7 +516,7 @@ button:focus-visible {
   gap: 8px;
   border: 0;
   border-radius: 8px;
-  background: var(--green);
+  background: var(--blue);
   color: white;
   font-weight: 800;
   cursor: pointer;
@@ -498,10 +531,10 @@ button:focus-visible {
   justify-self: stretch;
   border: 0;
   border-radius: 8px;
-  background: var(--green);
+  background: var(--blue);
   color: white;
   font-weight: 800;
-  box-shadow: 0 8px 20px rgba(42, 168, 118, 0.2);
+  box-shadow: 0 8px 20px rgba(47, 128, 255, 0.22);
   cursor: pointer;
 }
 
@@ -564,47 +597,12 @@ button:focus-visible {
   gap: 12px;
 }
 
-.today-protein-hero,
 .today-dashboard-stat,
+.today-progress-panel,
 .today-trend-card {
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow);
-}
-
-.today-protein-hero {
-  display: grid;
-  gap: 14px;
-  padding: 22px;
-  background: var(--green-dark);
-  color: var(--surface);
-}
-
-.today-protein-hero > div {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.today-protein-hero .eyebrow {
-  color: inherit;
-}
-
-.today-protein-hero strong {
-  font-size: clamp(38px, 12vw, 56px);
-  line-height: 0.9;
-}
-
-.today-protein-hero strong span {
-  margin-left: 4px;
-  font-size: 18px;
-}
-
-.today-protein-hero > p {
-  margin: 0;
-  opacity: 0.82;
-  font-size: 13px;
 }
 
 .today-goal-progress {
@@ -630,15 +628,7 @@ button:focus-visible {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--green);
-}
-
-.today-protein-hero .today-goal-track {
-  background: var(--soft-green);
-}
-
-.today-protein-hero .today-goal-track > span {
-  background: var(--surface);
+  background: var(--protein);
 }
 
 .today-goal-progress small {
@@ -647,19 +637,10 @@ button:focus-visible {
   font-size: 11px;
 }
 
-.today-protein-hero .today-goal-progress small {
-  color: inherit;
-}
-
 .today-goal-progress.protein.over small,
 .today-goal-progress.protein.achieved small {
   color: var(--green-dark);
   font-weight: 800;
-}
-
-.today-protein-hero .today-goal-progress.protein.over small,
-.today-protein-hero .today-goal-progress.protein.achieved small {
-  color: inherit;
 }
 
 .today-goal-progress.calories.over .today-goal-track > span {
@@ -677,26 +658,28 @@ button:focus-visible {
   font-weight: 800;
 }
 
-.today-supporting-cards {
+.today-metric-cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .today-dashboard-stat {
   display: grid;
-  gap: 8px;
-  padding: 17px;
+  min-width: 0;
+  gap: 5px;
+  padding: 12px 10px;
   background: var(--surface);
 }
 
 .today-dashboard-stat.calories {
-  border-top: 5px solid var(--green);
-  background: var(--soft-green);
+  border-top: 5px solid var(--orange);
+  background: var(--soft-orange);
 }
 
 .today-dashboard-stat.cost {
-  border-top: 5px solid var(--green-dark);
+  border-top: 5px solid var(--cost);
+  background: var(--soft-cost);
 }
 
 .today-dashboard-stat > span {
@@ -706,12 +689,47 @@ button:focus-visible {
 }
 
 .today-dashboard-stat strong {
-  font-size: 23px;
+  font-size: clamp(16px, 4.8vw, 20px);
+  white-space: nowrap;
 }
 
 .today-dashboard-stat small {
   color: var(--muted);
   font-size: 11px;
+}
+
+.today-progress-panels {
+  display: grid;
+  gap: 8px;
+}
+
+.today-progress-panel {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  background: var(--surface);
+}
+
+.today-progress-panel.protein { border-left: 4px solid var(--protein); }
+.today-progress-panel.calories { border-left: 4px solid var(--orange); }
+.today-progress-panel.calories .today-goal-track > span { background: var(--orange); }
+
+.today-progress-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.today-progress-heading span {
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.today-progress-heading strong {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
 }
 
 .today-trend-card {
@@ -749,46 +767,54 @@ button:focus-visible {
   text-align: center;
 }
 
-.today-trend-bars {
+.today-trend-chart {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 7px;
-  min-height: 150px;
+  gap: 4px;
 }
 
-.today-trend-bars > div {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 6px;
-  min-width: 0;
+.today-trend-chart svg {
+  display: block;
+  width: 100%;
+  height: 112px;
+  overflow: hidden;
+}
+
+.today-trend-chart > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
   text-align: center;
 }
 
-.today-trend-value,
-.today-trend-date {
-  overflow: hidden;
-  color: var(--muted);
+.today-trend-baseline {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.today-trend-line {
+  fill: none;
+  stroke: var(--protein);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.today-trend-point circle {
+  fill: var(--surface);
+  stroke: var(--protein);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.today-trend-date,
+.today-trend-latest {
+  fill: var(--muted);
   font-size: 9px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 700;
 }
 
-.today-trend-track {
-  position: relative;
-  overflow: hidden;
-  min-height: 100px;
-  border-radius: 999px;
-  background: var(--soft-green);
-}
-
-.today-trend-track > span {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  border-radius: inherit;
-  background: var(--green);
-}
+.today-trend-latest { fill: var(--protein); }
 
 .daily-summary-heading,
 .progress-label,
@@ -899,7 +925,7 @@ button:focus-visible {
 .today-dashboard .ingredient-details dl > div {
   padding: 9px;
   border-radius: calc(var(--radius) - 4px);
-  background: var(--soft-green);
+  background: var(--surface-elevated);
 }
 
 .today-meal-card {
@@ -913,7 +939,7 @@ button:focus-visible {
 .today-meal-heading {
   padding: 15px;
   border-bottom: 1px solid var(--line);
-  background: #fbfdfc;
+  background: var(--control-background);
 }
 
 .today-meal-heading h3 {
@@ -940,8 +966,9 @@ button:focus-visible {
 .meal-add-button {
   min-width: 66px;
   padding: 0 12px;
-  background: var(--soft-green);
-  color: var(--green-dark);
+  border: 1px solid var(--blue);
+  background: transparent;
+  color: var(--blue);
 }
 
 .today-meal-body {
@@ -1006,7 +1033,7 @@ button:focus-visible {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fbf9;
+  background: var(--control-background);
 }
 
 .quantity-control input {
@@ -1028,7 +1055,7 @@ button:focus-visible {
   justify-self: end;
   padding: 8px 10px;
   border-radius: 8px;
-  background: #f3f8f5;
+  background: var(--surface-elevated);
   color: var(--ink);
   font-size: 13px;
 }
@@ -1044,7 +1071,7 @@ button:focus-visible {
   min-width: 0;
   padding: 8px 6px;
   border-radius: 8px;
-  background: #f3f8f5;
+  background: var(--surface-elevated);
   text-align: center;
 }
 
@@ -1074,13 +1101,574 @@ button:focus-visible {
 .quick-add-sheet {
   position: fixed;
   inset: 0;
-  width: min(100%, 760px);
+  width: min(100%, var(--app-max-width));
   max-height: none;
   margin: 0 auto;
-  padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
   overflow-y: auto;
   border-radius: 0;
   background: var(--app-background);
+}
+
+/* Option C component alignment */
+
+body {
+  background: var(--page);
+  font-size: 13px;
+}
+
+.app-frame {
+  max-width: var(--app-max-width);
+  box-shadow: 0 0 34px rgba(16, 27, 34, 0.1);
+}
+
+.app-main {
+  padding: 12px 12px calc(82px + env(safe-area-inset-bottom));
+}
+
+.mobile-header {
+  gap: 8px;
+  padding: 12px;
+}
+
+.mobile-menu-button {
+  background: var(--surface);
+}
+
+.mobile-brand {
+  font-size: 16px;
+}
+
+.mobile-brand-mark {
+  width: 30px;
+  height: 30px;
+  background: var(--blue);
+  font-size: 11px;
+}
+
+.mobile-screen-heading h1 {
+  font-size: 21px;
+}
+
+.mobile-screen-heading p,
+.mobile-date-row {
+  font-size: 12px;
+}
+
+.mobile-date-row {
+  justify-self: center;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-elevated);
+  font-weight: 700;
+}
+
+.about-card,
+.daily-summary,
+.meal-card,
+.placeholder-card,
+.analytics-card,
+.today-dashboard-stat,
+.today-progress-panel,
+.today-trend-card {
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+}
+
+.about-card,
+.placeholder-card {
+  padding: 14px;
+  background: var(--surface);
+}
+
+.primary-action,
+.secondary-action,
+.today-quick-add-button,
+.today-history-button,
+.placeholder-card button {
+  min-height: 44px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.today-dashboard {
+  gap: 10px;
+}
+
+.today-dashboard .daily-summary {
+  padding: 14px;
+}
+
+.today-dashboard-cards {
+  gap: 8px;
+}
+
+.today-metric-cards {
+  gap: 8px;
+}
+
+.today-dashboard-stat {
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.today-dashboard-stat.protein {
+  border-top: 4px solid var(--protein);
+  background: var(--soft-blue);
+}
+
+.today-dashboard-stat.calories {
+  border-top: 4px solid var(--orange);
+  background: var(--soft-orange);
+}
+
+.today-dashboard-stat.calories .today-goal-track > span {
+  background: var(--orange);
+}
+
+.today-dashboard-stat.cost {
+  border-top: 4px solid var(--cost);
+  background: var(--soft-cost);
+}
+
+.today-dashboard-stat.weekly-cost {
+  border-top: 4px solid var(--purple);
+  background: var(--soft-purple);
+}
+
+.today-dashboard-stat.average-cost {
+  border-top: 4px solid var(--blue);
+  background: var(--soft-blue);
+}
+
+.today-dashboard-stat.cost strong { color: var(--cost); }
+.today-dashboard-stat.weekly-cost strong { color: var(--purple); }
+.today-dashboard-stat.average-cost strong { color: var(--blue); }
+
+.today-dashboard-stat strong {
+  font-size: 19px;
+}
+
+.today-trend-card {
+  gap: 10px;
+  padding: 13px;
+  background: var(--surface);
+}
+
+.today-quick-add-button {
+  min-height: 48px;
+  background: var(--blue);
+  color: white;
+}
+
+[data-theme="dark"] .today-quick-add-button {
+  color: white;
+}
+
+.today-history-button {
+  min-height: 42px;
+}
+
+.today-section-heading h2 {
+  font-size: 18px;
+}
+
+.today-meals {
+  gap: 8px;
+}
+
+.today-dashboard .today-meal-heading,
+.meal-heading {
+  padding: 11px 12px;
+}
+
+.today-meal-heading h3,
+.meal-heading h3 {
+  font-size: 15px;
+}
+
+.today-dashboard .ingredient-row {
+  padding: 10px 12px;
+}
+
+.today-dashboard .ingredient-details dl {
+  gap: 6px;
+}
+
+.today-dashboard .ingredient-details dl > div {
+  padding: 6px;
+}
+
+.form-grid {
+  gap: 8px;
+}
+
+.form-grid label {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.form-grid input,
+.form-grid select,
+.quick-add-search input,
+.quick-add-quantity-control label {
+  min-height: 44px;
+  border-color: var(--line);
+  background: var(--control-background);
+  color: var(--ink);
+}
+
+.quick-add-sheet {
+  width: min(100%, var(--app-max-width));
+  padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
+  background: var(--app-background);
+}
+
+.quick-add-sheet .sheet-heading {
+  top: -10px;
+  padding: 10px 0 8px;
+  background: var(--app-background);
+}
+
+.sheet-heading h2 {
+  font-size: 21px;
+}
+
+.quick-add-form {
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.quick-add-search {
+  gap: 5px;
+  font-size: 11px;
+}
+
+.quick-add-search input {
+  padding: 0 12px;
+  border-radius: 14px;
+}
+
+.quick-add-categories {
+  gap: 6px;
+}
+
+.quick-add-categories button {
+  min-height: 44px;
+  padding: 7px 11px;
+  background: var(--surface);
+  font-size: 12px;
+}
+
+.quick-add-categories button.active {
+  border-color: var(--blue);
+  background: var(--soft-blue);
+  color: var(--blue);
+}
+
+.quick-add-library-section {
+  gap: 8px;
+}
+
+.quick-add-section-heading h3 {
+  font-size: 15px;
+}
+
+.quick-add-food-list {
+  gap: 7px;
+}
+
+.quick-add-food-card {
+  min-height: 56px;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 14px;
+}
+
+.quick-add-food-card.selected {
+  border-color: var(--blue);
+  background: var(--soft-blue);
+  box-shadow: inset 0 0 0 1px var(--blue);
+}
+
+.quick-add-food-copy {
+  gap: 2px;
+}
+
+.quick-add-food-copy > span {
+  font-size: 11px;
+}
+
+.quick-add-source-badge {
+  max-width: 96px;
+  padding: 4px 6px;
+  background: var(--soft-blue);
+  color: var(--blue);
+  font-size: 8px;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.quick-add-empty {
+  gap: 8px;
+  padding: 18px 12px;
+  background: var(--surface);
+}
+
+.quick-add-empty-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.quick-add-empty-actions button {
+  width: 100%;
+}
+
+.quick-add-form .form-grid {
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.quick-add-quantity {
+  gap: 6px;
+}
+
+.quick-add-quantity legend {
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+.quick-add-quantity-control {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 6px;
+}
+
+.quick-add-quantity-control > button {
+  min-height: 44px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 19px;
+}
+
+.quick-add-quantity-control input {
+  min-height: 42px;
+}
+
+.quick-add-action-hint {
+  margin: -2px 0 0;
+  padding: 9px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.ingredient-library-intro {
+  margin: 4px 0 10px;
+}
+
+.ingredient-library-save {
+  min-height: 48px;
+  margin: 12px 0;
+  background: var(--blue);
+  color: white;
+}
+
+.placeholder-card {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.placeholder-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.placeholder-card button {
+  margin-right: 6px;
+  padding: 0 12px;
+}
+
+/* Option C compact visual alignment */
+body {
+  font-size: 14px;
+  background: var(--page);
+}
+
+.app-main {
+  padding: 16px calc(16px + env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+
+.mobile-header {
+  gap: 10px;
+  padding: 14px;
+}
+
+.mobile-screen-heading h1 {
+  font-size: 23px;
+}
+
+.mobile-screen-heading p,
+.mobile-date-row {
+  font-size: 13px;
+}
+
+.bottom-nav {
+  width: min(100%, var(--app-max-width));
+}
+
+.today-dashboard {
+  gap: 12px;
+}
+
+.today-dashboard-cards {
+  gap: 9px;
+}
+
+.today-goal-progress {
+  gap: 6px;
+}
+
+.today-metric-cards {
+  gap: 9px;
+}
+
+.today-dashboard-stat {
+  gap: 5px;
+  padding: 12px;
+}
+
+.today-dashboard-stat strong {
+  font-size: 20px;
+}
+
+.today-trend-card {
+  gap: 12px;
+  padding: 14px;
+}
+
+.today-quick-add-button {
+  min-height: 50px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  box-shadow: var(--shadow);
+}
+
+.today-meals {
+  gap: 10px;
+}
+
+.today-dashboard .today-meal-heading {
+  padding: 12px 13px;
+}
+
+.today-meal-heading h3 {
+  font-size: 16px;
+}
+
+.today-dashboard .ingredient-row {
+  gap: 9px;
+  padding: 12px 13px;
+}
+
+.ingredient-details {
+  gap: 9px;
+}
+
+.today-dashboard .ingredient-details dl > div {
+  padding: 7px;
+}
+
+.form-grid {
+  gap: 9px;
+}
+
+.form-grid input,
+.form-grid select {
+  min-height: 44px;
+  padding: 9px 10px;
+  background: var(--control-background);
+  color: var(--ink);
+}
+
+.quick-add-sheet {
+  width: min(100%, var(--app-max-width));
+  padding: 12px 14px calc(18px + env(safe-area-inset-bottom));
+}
+
+.quick-add-sheet .sheet-heading {
+  top: -12px;
+  padding: 10px 0;
+}
+
+.quick-add-form {
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.quick-add-food-card {
+  min-height: 58px;
+  padding: 9px 10px;
+}
+
+.ingredient-library-intro {
+  margin: 6px 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ingredient-library-save {
+  width: 100%;
+  margin: 12px 0 8px;
+}
+
+.hamburger-drawer {
+  width: min(82vw, 300px);
+  padding: 14px;
+  animation: option-c-drawer-in 160ms ease-out;
+}
+
+.hamburger-drawer nav h2 {
+  margin: 16px 8px 5px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.hamburger-drawer nav button {
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.drawer-feedback {
+  bottom: -14px;
+  margin: 14px -14px -14px;
+  padding-inline: 14px;
+}
+
+@keyframes option-c-drawer-in {
+  from { transform: translateX(-18px); opacity: 0.75; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hamburger-drawer { animation: none; }
+}
+
+@media (min-width: 600px) {
+  .app-main {
+    padding: 20px 18px calc(102px + env(safe-area-inset-bottom));
+  }
 }
 
 .quick-add-sheet .sheet-heading {
@@ -1129,9 +1717,9 @@ button:focus-visible {
 }
 
 .quick-add-categories button.active {
-  border-color: var(--green);
-  background: var(--soft-green);
-  color: var(--green-dark);
+  border-color: var(--blue);
+  background: var(--blue);
+  color: white;
 }
 
 .quick-add-library-section {
@@ -1175,8 +1763,9 @@ button:focus-visible {
 }
 
 .quick-add-food-card.selected {
-  border-color: var(--green);
-  box-shadow: inset 0 0 0 1px var(--green);
+  border-color: var(--blue);
+  background: var(--soft-blue);
+  box-shadow: inset 0 0 0 1px var(--blue);
 }
 
 .quick-add-food-copy {
@@ -1189,12 +1778,24 @@ button:focus-visible {
   font-size: 12px;
 }
 
+.quick-add-food-copy small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.metric-protein { color: var(--protein); }
+.metric-carbs { color: var(--green-dark); }
+.metric-fat { color: var(--orange); }
+
 .quick-add-source-badge {
   flex: 0 0 auto;
   padding: 4px 7px;
   border-radius: 999px;
-  background: var(--soft-green);
-  color: var(--green-dark);
+  background: var(--soft-blue);
+  color: var(--blue);
   font-size: 9px;
   font-weight: 800;
 }
@@ -1211,6 +1812,34 @@ button:focus-visible {
 
 .quick-add-empty strong {
   color: var(--ink);
+}
+
+.quick-add-selected-summary {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--blue);
+  border-radius: var(--radius-card);
+  background: var(--soft-blue);
+}
+
+.quick-add-selected-summary div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quick-add-selected-summary span,
+.quick-add-selected-summary p,
+.quick-add-return-helper {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quick-add-selected-summary p,
+.quick-add-return-helper {
+  margin: 0;
 }
 
 .quick-add-form {
@@ -1249,8 +1878,8 @@ button:focus-visible {
   min-height: 48px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--soft-green);
-  color: var(--green-dark);
+  background: var(--soft-blue);
+  color: var(--blue);
   font-size: 22px;
   font-weight: 800;
 }
@@ -1289,10 +1918,43 @@ button:focus-visible {
 }
 
 .quick-add-actions {
-  position: sticky;
-  bottom: calc(-24px - env(safe-area-inset-bottom));
+  display: grid;
+  position: static;
+  grid-template-columns: 1fr;
+  gap: 8px;
   padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+  border: 0;
   background: var(--app-background);
+  box-shadow: none;
+}
+
+.quick-add-actions .primary-action {
+  background: var(--blue);
+}
+
+.quick-add-return-helper {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.sheet-back {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.sheet-heading > div {
+  flex: 1;
+}
+
+.sheet-heading p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 @media (min-width: 600px) {
@@ -1302,14 +1964,14 @@ button:focus-visible {
 }
 
 .quick-add-sheet {
-  width: min(100%, 760px);
-  max-height: calc(100vh - 40px);
+  width: min(100%, var(--app-max-width));
+  max-height: none;
   margin: 0 auto;
   overflow-y: auto;
   padding: 10px 18px max(24px, env(safe-area-inset-bottom));
-  border-radius: 8px 8px 0 0;
-  background: white;
-  box-shadow: 0 -16px 40px rgba(12, 40, 30, 0.25);
+  border-radius: 0;
+  background: var(--app-background);
+  box-shadow: var(--shadow);
 }
 
 .sheet-handle {
@@ -1327,7 +1989,8 @@ button:focus-visible {
 
 .sheet-close {
   width: 44px;
-  background: #eef4f1;
+  min-height: 44px;
+  background: var(--surface-elevated);
   color: var(--ink);
   font-size: 24px;
 }
@@ -1379,7 +2042,7 @@ button:focus-visible {
   padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfdfc;
+  background: var(--control-background);
   color: var(--ink);
 }
 
@@ -1387,14 +2050,16 @@ button:focus-visible {
   width: 100%;
 }
 
-.quick-add-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+.quick-add-library-section:first-of-type .quick-add-food-list {
+  grid-auto-columns: minmax(230px, 82%);
+  grid-auto-flow: column;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding-bottom: 4px;
 }
 
 .quick-add-actions button {
-  min-height: 44px;
+  min-height: 48px;
 }
 
 .quick-add-error {
@@ -1412,7 +2077,7 @@ button:focus-visible {
   margin: 0 auto;
   padding: 13px 16px;
   border-radius: 8px;
-  background: #143f31;
+  background: var(--green);
   color: white;
   box-shadow: 0 12px 30px rgba(14, 48, 36, 0.28);
   font-size: 13px;
@@ -1441,8 +2106,8 @@ button:focus-visible {
 }
 
 .day-chips button.selected {
-  border-color: var(--green);
-  background: var(--green);
+  border-color: var(--blue);
+  background: var(--protein);
   color: white;
 }
 
@@ -1519,7 +2184,7 @@ button:focus-visible {
   gap: 3px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: white;
+  background: var(--surface);
   color: var(--ink);
   box-shadow: 0 5px 14px rgba(36, 80, 64, 0.05);
   cursor: pointer;
@@ -1535,13 +2200,13 @@ button:focus-visible {
 }
 
 .week-day-chip.selected {
-  border-color: var(--green);
-  background: var(--green);
+  border-color: var(--blue);
+  background: var(--blue);
   color: white;
 }
 
 .week-day-chip.selected span {
-  color: #dbf7e9;
+  color: white;
 }
 
 .selected-day-panel {
@@ -1550,7 +2215,7 @@ button:focus-visible {
   padding: 17px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: white;
+  background: var(--surface);
   box-shadow: var(--shadow);
 }
 
@@ -1569,8 +2234,8 @@ button:focus-visible {
 .selected-day-heading > span {
   padding: 5px 9px;
   border-radius: 8px;
-  background: var(--soft-green);
-  color: var(--green-dark);
+  background: var(--soft-blue);
+  color: var(--blue);
   font-size: 11px;
   font-weight: 800;
 }
@@ -1583,7 +2248,7 @@ button:focus-visible {
 
 .selected-day-macros .macro-chip {
   border-color: var(--line);
-  background: #f3f8f5;
+  background: var(--surface-elevated);
 }
 
 .selected-day-macros .macro-chip span {
@@ -1594,7 +2259,7 @@ button:focus-visible {
   margin: 0;
   padding: 12px;
   border-radius: 8px;
-  background: #f7faf8;
+  background: var(--surface-elevated);
   color: var(--muted);
   font-size: 13px;
   text-align: center;
@@ -1617,7 +2282,7 @@ button:focus-visible {
 
 .secondary-action {
   border: 1px solid #b9dcca;
-  background: white;
+  background: var(--surface);
   color: var(--green-dark);
 }
 
@@ -1645,7 +2310,7 @@ button:focus-visible {
   margin: 0 auto;
   padding: 12px 20px max(24px, env(safe-area-inset-bottom));
   border-radius: 8px 8px 0 0;
-  background: white;
+  background: var(--surface);
   box-shadow: 0 -16px 40px rgba(12, 40, 30, 0.25);
 }
 
@@ -1667,7 +2332,7 @@ button:focus-visible {
   padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfdfc;
+  background: var(--control-background);
   color: var(--ink);
 }
 
@@ -1789,7 +2454,7 @@ button:focus-visible {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: white;
+  background: var(--surface);
   color: var(--ink);
   box-shadow: 0 5px 16px rgba(36, 80, 64, 0.05);
   text-align: left;
@@ -1797,8 +2462,8 @@ button:focus-visible {
 }
 
 .saved-day-card.selected {
-  border-color: var(--green);
-  box-shadow: 0 0 0 2px rgba(42, 168, 118, 0.12);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(47, 128, 255, 0.14);
 }
 
 .saved-day-heading strong,
@@ -1835,8 +2500,8 @@ button:focus-visible {
   flex: 0 0 auto;
   padding: 5px 8px;
   border-radius: 8px;
-  background: var(--soft-green);
-  color: var(--green-dark);
+  background: var(--soft-blue);
+  color: var(--blue);
   font-size: 10px;
   font-weight: 800;
 }
@@ -1866,7 +2531,7 @@ button:focus-visible {
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: white;
+  background: var(--surface);
   box-shadow: var(--shadow);
 }
 
@@ -1890,7 +2555,7 @@ button:focus-visible {
 
 .history-detail-macros .macro-chip {
   border-color: var(--line);
-  background: #f3f8f5;
+  background: var(--surface-elevated);
 }
 
 .history-detail-macros .macro-chip span {
@@ -1910,7 +2575,7 @@ button:focus-visible {
   padding: 30px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: white;
+  background: var(--surface);
   box-shadow: var(--shadow);
   text-align: center;
 }
@@ -1941,8 +2606,8 @@ button:focus-visible {
   margin-bottom: 16px;
   place-items: center;
   border-radius: 8px;
-  background: var(--soft-green);
-  color: var(--green);
+  background: var(--soft-blue);
+  color: var(--blue);
   font-size: 34px;
 }
 
@@ -2002,7 +2667,7 @@ button:focus-visible {
   left: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  width: min(100%, 760px);
+  width: min(100%, var(--app-max-width));
   min-height: 76px;
   margin: 0 auto;
   padding: 8px 10px max(8px, env(safe-area-inset-bottom));
@@ -2028,8 +2693,28 @@ button:focus-visible {
 }
 
 .nav-item.active {
-  background: var(--soft-green);
-  color: var(--green-dark);
+  background: var(--soft-blue);
+  color: var(--blue);
+}
+
+.success-toast-content {
+  display: grid;
+  gap: 3px;
+}
+
+.success-toast-content > span,
+.success-toast-content > small {
+  color: white;
+  font-size: 12px;
+}
+
+.today-ingredients-target:focus-visible,
+.drawer-focus-section:focus-visible,
+#ingredient-library:focus-visible,
+#daily-staples:focus-visible,
+.about-card[tabindex="-1"]:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
 }
 
 .nav-item:focus-visible {
@@ -2049,7 +2734,7 @@ button:focus-visible {
   }
 
   .app-main {
-    padding: 30px 32px calc(110px + env(safe-area-inset-bottom));
+    padding: 20px 16px calc(100px + env(safe-area-inset-bottom));
   }
 
   .macro-grid {
@@ -2119,11 +2804,6 @@ button:focus-visible {
 }
 
 /* Task 12 shared prototype polish */
-:root {
-  --radius: 14px;
-  --focus: #0b6f50;
-}
-
 body { overflow-x: hidden; }
 .app-frame { overflow-x: clip; }
 button:focus-visible { outline-color: var(--focus); }
@@ -2228,7 +2908,7 @@ button:focus-visible { outline-color: var(--focus); }
 .about-card h3 { margin: 0; }
 
 .about-card {
-  padding: 18px;
+  padding: 16px;
   border: 1px solid var(--line);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -2244,7 +2924,7 @@ button:focus-visible { outline-color: var(--focus); }
 .bottom-nav { min-height: 80px; }
 .nav-item { min-height: 60px; }
 .nav-item.active {
-  border-top: 3px solid var(--green-dark);
+  border-top: 3px solid var(--blue);
   font-weight: 900;
 }
 
@@ -2252,6 +2932,37 @@ button:focus-visible { outline-color: var(--focus); }
   display: grid;
   gap: 16px;
 }
+
+.analytics-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.analytics-highlight {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.analytics-highlight span,
+.analytics-highlight small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.analytics-highlight strong { font-size: 22px; }
+.analytics-highlight.protein { border-top: 4px solid var(--protein); }
+.analytics-highlight.protein strong { color: var(--protein); }
+.analytics-highlight.spend { border-top: 4px solid var(--purple); }
+.analytics-highlight.spend strong { color: var(--purple); }
+
+.analytics-history { border-top: 3px solid var(--protein); }
+.analytics-weekly { border-top: 3px solid var(--purple); }
 
 .analytics-card {
   display: grid;
@@ -2293,7 +3004,7 @@ button:focus-visible { outline-color: var(--focus); }
   gap: 4px;
   padding: 12px;
   border-radius: calc(var(--radius) - 4px);
-  background: var(--soft-green);
+  background: var(--surface-elevated);
 }
 
 .analytics-metric span,
@@ -2351,7 +3062,7 @@ button:focus-visible { outline-color: var(--focus); }
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--green);
+  background: var(--purple);
 }
 
 .analytics-history-strip {
@@ -2389,7 +3100,7 @@ button:focus-visible { outline-color: var(--focus); }
 .quick-add-sheet {
   position: fixed;
   inset: 0;
-  width: min(100%, 760px);
+  width: min(100%, var(--app-max-width));
   max-height: none;
   margin: 0 auto;
   padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
