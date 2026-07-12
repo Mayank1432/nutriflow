@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import DailySummaryCard from '../components/DailySummaryCard'
+import AddIngredientSheet, { type SaveAndAddResult } from '../components/AddIngredientSheet'
+import { buildIngredientDefinition, type IngredientDefinitionDraft } from '../components/IngredientDefinitionForm'
 import MealCard from '../components/MealCard'
 import QuickAddSheet from '../components/QuickAddSheet'
 import {
@@ -20,6 +22,7 @@ import {
   readReactSettingsStore,
   readReactTodayStore,
   writeReactHistoryStore,
+  writeReactIngredientsStore,
   writeReactTodayStore,
   type DailyTotals,
   type DailyStapleDefinition,
@@ -291,13 +294,18 @@ function TodayScreen({
     () => normalizeTodayStore(readReactTodayStore()),
   )
   const [isQuickAddOpen, setQuickAddOpen] = useState(false)
+  const [isAddIngredientOpen, setAddIngredientOpen] = useState(false)
+  const [selectedMealId, setSelectedMealId] = useState<MealId>('breakfast')
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddDraft>(() => blankDraft())
   const [quickAddError, setQuickAddError] = useState('')
   const [quickAddSources, setQuickAddSources] = useState<QuickAddSource[]>([])
   const [toastMessage, setToastMessage] = useState<ReactNode>(null)
   const todayIngredientsRef = useRef<HTMLDivElement>(null)
+  const saveAndAddSubmittingRef = useRef(false)
+  const skipNextTodayPersistenceRef = useRef(false)
   const totals = calculateTodayTotals(todayStore)
   const todayData = toDisplayTodayData(todayStore)
+  const selectedMeal = meals.find((meal) => meal.id === selectedMealId) ?? meals[0]
   const historyDays = [...readReactHistoryStore().savedDays]
   const proteinTrend = [...historyDays]
     .sort((left, right) => right.savedAt.localeCompare(left.savedAt))
@@ -308,13 +316,17 @@ function TodayScreen({
   const macroGoals = readReactSettingsStore().macroGoals
 
   useEffect(() => {
+    if (skipNextTodayPersistenceRef.current) {
+      skipNextTodayPersistenceRef.current = false
+      return
+    }
     writeReactTodayStore(todayStore)
   }, [todayStore])
 
   useEffect(() => {
-    onQuickAddVisibilityChange?.(isQuickAddOpen)
+    onQuickAddVisibilityChange?.(isQuickAddOpen || isAddIngredientOpen)
     return () => onQuickAddVisibilityChange?.(false)
-  }, [isQuickAddOpen, onQuickAddVisibilityChange])
+  }, [isAddIngredientOpen, isQuickAddOpen, onQuickAddVisibilityChange])
 
   const persistUpdate = (
     mealName: MealName,
@@ -340,13 +352,13 @@ function TodayScreen({
 
   useEffect(() => {
     if (!intent) return
-    if (intent.type === 'quick-add') openQuickAdd('breakfast')
+    if (intent.type === 'quick-add') openQuickAdd(selectedMealId)
     if (intent.type === 'today-ingredients') {
       todayIngredientsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       todayIngredientsRef.current?.focus({ preventScroll: true })
     }
     onIntentConsumed?.(intent.token)
-  }, [intent, onIntentConsumed])
+  }, [intent, onIntentConsumed, selectedMealId])
 
   const addIngredient = (action: 'more' | 'return') => {
     const source = quickAddSources.find((candidate) => (
@@ -370,6 +382,16 @@ function TodayScreen({
       return
     }
 
+    if (source.kind === 'ingredient') {
+      const currentIngredient = readReactIngredientsStore().ingredients.find((item) => (
+        item.id === source.item.id && !item.archived
+      ))
+      if (!currentIngredient) {
+        setQuickAddError('This ingredient is no longer available. Select another food.')
+        return
+      }
+    }
+
     const entry = createFoodEntry(source, quantity)
     const entryTotals = calculateEntryTotals(entry)
     persistUpdate(
@@ -387,6 +409,63 @@ function TodayScreen({
     if (action === 'return') {
       setQuickAddOpen(false)
       setQuickAddDraft(blankDraft())
+    }
+  }
+
+  const saveAndAddIngredient = (draft: IngredientDefinitionDraft): SaveAndAddResult => {
+    if (saveAndAddSubmittingRef.current) {
+      return { status: 'failure', message: 'Save & Add is already in progress.' }
+    }
+    saveAndAddSubmittingRef.current = true
+    const targetMealId = selectedMealId
+    const targetMeal = meals.find((meal) => meal.id === targetMealId) ?? meals[0]
+
+    try {
+      const timestamp = new Date().toISOString()
+      const result = buildIngredientDefinition(draft, {
+        timestamp,
+        createId: () => globalThis.crypto?.randomUUID?.() ?? `ingredient-${Date.now()}`,
+      })
+      if (!result.ok) return { status: 'failure', message: result.error }
+
+      const definition = result.definition
+      const entry = createFoodEntry({ kind: 'ingredient', item: definition }, definition.defaultQuantity)
+      const currentIngredients = readReactIngredientsStore()
+      const nextIngredients = {
+        ...currentIngredients,
+        updatedAt: timestamp,
+        ingredients: [...currentIngredients.ingredients, definition],
+      }
+      if (!writeReactIngredientsStore(nextIngredients)) {
+        return { status: 'failure', message: 'Ingredient could not be saved.' }
+      }
+
+      const nextToday = updateTodayStore(
+        todayStore,
+        targetMeal.name,
+        (entries) => [...entries, entry],
+      )
+      if (!writeReactTodayStore(nextToday)) {
+        return {
+          status: 'partial',
+          message: `${definition.name} was saved to Ingredient Library, but could not be added to ${targetMeal.name}.`,
+        }
+      }
+
+      skipNextTodayPersistenceRef.current = true
+      setTodayStore(nextToday)
+      setAddIngredientOpen(false)
+      const entryTotals = calculateEntryTotals(entry)
+      setToastMessage(
+        <span className="success-toast-content">
+          <strong>✓ {entry.name} created and added</strong>
+          <span>to {targetMeal.name}</span>
+          <small>{entryTotals.protein.toFixed(1)}g Protein · {entryTotals.calories.toFixed(0)} kcal · ₹{entryTotals.cost.toFixed(0)}</small>
+        </span>,
+      )
+      return { status: 'success', message: `${definition.name} saved and added.` }
+    } finally {
+      saveAndAddSubmittingRef.current = false
     }
   }
 
@@ -469,10 +548,6 @@ function TodayScreen({
           weeklyCost={currentWeekCosts.weeklyCost}
           averageDailyCost={currentWeekCosts.averageDailyCost}
         />
-        <button className="today-quick-add-button" type="button" onClick={() => openQuickAdd('breakfast')}>
-          <span aria-hidden="true">+</span>
-          Quick Add
-        </button>
         <button className="secondary-action today-history-button" type="button" onClick={saveTodayToHistory}>
           Save Today to History
         </button>
@@ -482,21 +557,36 @@ function TodayScreen({
             <p className="eyebrow">Your day</p>
             <h2>Meals</h2>
           </div>
-          <span>4 meal groups</span>
+          <span>Choose one meal</span>
+        </div>
+        <div className="meal-selector" role="tablist" aria-label="Today meals">
+          {meals.map((meal) => (
+            <button
+              key={meal.id}
+              type="button"
+              role="tab"
+              aria-selected={selectedMealId === meal.id}
+              className={selectedMealId === meal.id ? `selected ${meal.id}` : meal.id}
+              onClick={() => setSelectedMealId(meal.id)}
+            >
+              <span aria-hidden="true">{selectedMealId === meal.id ? '✓' : '•'}</span>
+              {meal.name}
+            </button>
+          ))}
         </div>
         <div className="today-meals">
-          {meals.map((meal) => (
-            <MealCard
-              key={meal.id}
-              mealId={meal.id}
-              mealName={meal.name}
-              todayData={todayData}
-              emptyMessage="Start building this meal with Quick Add."
-              onAdd={() => openQuickAdd(meal.id)}
-              onQuantityChange={(entryId, qty) => updateQuantity(meal.name, entryId, qty)}
-              onRemove={(entryId) => removeIngredient(meal.name, entryId)}
-            />
-          ))}
+          <MealCard
+            key={selectedMeal.id}
+            mealId={selectedMeal.id}
+            mealName={selectedMeal.name}
+            todayData={todayData}
+            variant="selected"
+            emptyMessage={`Create something new or choose an existing food for ${selectedMeal.name}.`}
+            onAddIngredient={() => setAddIngredientOpen(true)}
+            onQuickAdd={() => openQuickAdd(selectedMeal.id)}
+            onQuantityChange={(entryId, qty) => updateQuantity(selectedMeal.name, entryId, qty)}
+            onRemove={(entryId) => removeIngredient(selectedMeal.name, entryId)}
+          />
         </div>
         <div ref={todayIngredientsRef} tabIndex={-1} className="today-ingredients-target">
           <TodayIngredients
@@ -522,6 +612,13 @@ function TodayScreen({
             onOpenIngredientLibrary()
           } : undefined}
           onSubmit={addIngredient}
+        />
+      )}
+      {isAddIngredientOpen && (
+        <AddIngredientSheet
+          mealName={selectedMeal.name}
+          onClose={() => setAddIngredientOpen(false)}
+          onSaveAndAdd={saveAndAddIngredient}
         />
       )}
       <SuccessToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
