@@ -1,24 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  readReactDailyStaplesStore,
   readReactIngredientsStore,
   readReactTodayStore,
   writeReactIngredientsStore,
   writeReactTodayStore,
   type IngredientDefinition,
-  type MealName,
-  type NutritionBasisType,
-  type ServingUnit,
 } from '../storage'
 import { calculateTodayTotals } from '../screens/TodayScreen'
-
-const meals: MealName[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
-const units: ServingUnit[] = ['g', 'ml', 'piece', 'serving']
-
-const emptyDraft = {
-  name: '', basisType: 'per_100' as NutritionBasisType, unit: 'g' as ServingUnit,
-  quantity: '100', meal: 'Breakfast' as MealName, category: '',
-  protein: '0', calories: '0', carbs: '0', fat: '0', fibre: '0', cost: '0',
-}
+import IngredientDefinitionForm, {
+  buildIngredientDefinition,
+  createEmptyIngredientDraft,
+  ingredientDefinitionToDraft,
+} from './IngredientDefinitionForm'
 
 type IngredientLibraryProps = {
   createIntentToken?: number
@@ -27,9 +21,10 @@ type IngredientLibraryProps = {
 
 function IngredientLibrary({ createIntentToken, onCreateIntentConsumed }: IngredientLibraryProps) {
   const [store, setStore] = useState(() => readReactIngredientsStore())
-  const [draft, setDraft] = useState(emptyDraft)
+  const [draft, setDraft] = useState(() => createEmptyIngredientDraft())
   const [editingId, setEditingId] = useState('')
   const [message, setMessage] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<IngredientDefinition | null>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -39,36 +34,19 @@ function IngredientLibrary({ createIntentToken, onCreateIntentConsumed }: Ingred
     nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     onCreateIntentConsumed?.(createIntentToken)
   }, [createIntentToken, onCreateIntentConsumed])
-  const number = (value: string) => {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
-  }
-  const update = (key: keyof typeof draft, value: string) =>
-    setDraft((current) => ({ ...current, [key]: value }))
-
   const save = () => {
-    const quantity = number(draft.quantity)
-    const values = [draft.protein, draft.calories, draft.carbs, draft.fat, draft.fibre, draft.cost].map(number)
-    if (!draft.name.trim() || quantity === null || quantity <= 0 || values.some((value) => value === null)) {
-      setMessage('Enter a name, positive default quantity, and non-negative nutrition values.')
-      return
-    }
     const timestamp = new Date().toISOString()
     const previous = store.ingredients.find(({ id }) => id === editingId)
-    const definition: IngredientDefinition = {
-      id: previous?.id ?? globalThis.crypto?.randomUUID?.() ?? `ingredient-${Date.now()}`,
-      name: draft.name.trim(),
-      unit: draft.unit,
-      defaultQuantity: quantity,
-      defaultUnit: draft.unit,
-      defaultMeal: draft.meal,
-      category: draft.category.trim() || undefined,
-      basisType: draft.basisType,
-      nutrition: { protein: values[0]!, calories: values[1]!, carbs: values[2]!, fat: values[3]!, fibre: values[4]! },
-      cost: { amount: values[5]!, currency: 'INR' },
-      createdAt: previous?.createdAt ?? timestamp,
-      updatedAt: timestamp,
+    const result = buildIngredientDefinition(draft, {
+      previous,
+      timestamp,
+      createId: () => globalThis.crypto?.randomUUID?.() ?? `ingredient-${Date.now()}`,
+    })
+    if (!result.ok) {
+      setMessage(result.error)
+      return
     }
+    const definition = result.definition
     const next = {
       ...store,
       updatedAt: timestamp,
@@ -77,20 +55,50 @@ function IngredientLibrary({ createIntentToken, onCreateIntentConsumed }: Ingred
         : [...store.ingredients, definition],
     }
     if (writeReactIngredientsStore(next)) {
-      setStore(next); setDraft(emptyDraft); setEditingId(''); setMessage('Ingredient saved.')
+      setStore(next); setDraft(createEmptyIngredientDraft()); setEditingId(''); setMessage('Ingredient saved.')
     } else setMessage('Ingredient could not be saved.')
   }
 
   const edit = (item: IngredientDefinition) => {
     setEditingId(item.id)
-    setDraft({
-      name: item.name, basisType: item.basisType, unit: item.defaultUnit,
-      quantity: String(item.defaultQuantity), meal: item.defaultMeal ?? 'Breakfast',
-      category: item.category ?? '', protein: String(item.nutrition.protein),
-      calories: String(item.nutrition.calories), carbs: String(item.nutrition.carbs),
-      fat: String(item.nutrition.fat), fibre: String(item.nutrition.fibre),
-      cost: String(item.cost?.amount ?? 0),
-    })
+    setDraft(ingredientDefinitionToDraft(item))
+  }
+
+  const deleteIngredient = () => {
+    if (!deleteTarget) return
+    const latestStore = readReactIngredientsStore()
+    const currentTarget = latestStore.ingredients.find((item) => item.id === deleteTarget.id)
+    if (!currentTarget) {
+      setStore(latestStore)
+      setDeleteTarget(null)
+      setMessage('This ingredient is no longer in Ingredient Library.')
+      return
+    }
+    const isUsedByStaple = readReactDailyStaplesStore().staples.some((staple) => (
+      staple.ingredientId === currentTarget.id
+    ))
+    if (isUsedByStaple) {
+      setDeleteTarget(null)
+      setMessage(`Can't delete "${currentTarget.name}". This ingredient is currently used in Daily Staples. Remove it from Daily Staples first, then try again.`)
+      return
+    }
+    const next = {
+      ...latestStore,
+      updatedAt: new Date().toISOString(),
+      ingredients: latestStore.ingredients.filter((item) => item.id !== currentTarget.id),
+    }
+    if (!writeReactIngredientsStore(next)) {
+      setDeleteTarget(null)
+      setMessage('Ingredient could not be deleted.')
+      return
+    }
+    setStore(next)
+    if (editingId === currentTarget.id) {
+      setEditingId('')
+      setDraft(createEmptyIngredientDraft())
+    }
+    setDeleteTarget(null)
+    setMessage(`${currentTarget.name} deleted from Ingredient Library.`)
   }
 
   const addToToday = (item: IngredientDefinition) => {
@@ -116,20 +124,28 @@ function IngredientLibrary({ createIntentToken, onCreateIntentConsumed }: Ingred
       <p className="eyebrow">Reusable definitions</p>
       <h3 id="ingredient-library-title">Ingredient Library</h3>
       <p className="ingredient-library-intro">Create a reusable food, then add it to Today whenever you need it.</p>
-      <div className="quick-add-form form-grid">
-        <label><span>Name</span><input ref={nameInputRef} value={draft.name} onChange={(e) => update('name', e.target.value)} /></label>
-        <label><span>Basis</span><select value={draft.basisType} onChange={(e) => update('basisType', e.target.value)}><option value="per_100">Per 100</option><option value="per_unit">Per unit</option></select></label>
-        <label><span>Unit</span><select value={draft.unit} onChange={(e) => update('unit', e.target.value)}>{units.map((unit) => <option key={unit}>{unit}</option>)}</select></label>
-        <label><span>Default quantity</span><input type="number" value={draft.quantity} onChange={(e) => update('quantity', e.target.value)} /></label>
-        <label><span>Default meal</span><select value={draft.meal} onChange={(e) => update('meal', e.target.value)}>{meals.map((meal) => <option key={meal}>{meal}</option>)}</select></label>
-        <label><span>Category</span><input value={draft.category} onChange={(e) => update('category', e.target.value)} /></label>
-        {(['protein','calories','carbs','fat','fibre','cost'] as const).map((field) => <label key={field}><span>{field}</span><input type="number" min="0" value={draft[field]} onChange={(e) => update(field, e.target.value)} /></label>)}
-      </div>
+      <IngredientDefinitionForm draft={draft} onChange={setDraft} nameInputRef={nameInputRef} />
       <button className="primary-action ingredient-library-save" type="button" onClick={save}>
         {editingId ? 'Update ingredient' : '+ Create ingredient for Quick Add'}
       </button>
       {message && <p role="status">{message}</p>}
-      {store.ingredients.map((item) => <div className="placeholder-card" key={item.id}><strong>{item.name}</strong><p>{item.basisType} · {item.defaultQuantity} {item.defaultUnit} · {item.category || 'Uncategorised'}</p><button type="button" onClick={() => addToToday(item)}>Add to Today</button> <button type="button" onClick={() => edit(item)}>Edit</button></div>)}
+      {store.ingredients.map((item) => <div className="placeholder-card ingredient-library-item" key={item.id}><strong>{item.name}</strong><p>{item.basisType} · {item.defaultQuantity} {item.defaultUnit} · {item.category || 'Uncategorised'}</p><div><button type="button" onClick={() => addToToday(item)}>Add to Today</button> <button type="button" onClick={() => edit(item)}>Edit</button> <button className="compact-delete-button" type="button" onClick={() => setDeleteTarget(item)}>Delete</button></div></div>)}
+      {deleteTarget && (
+        <div className="confirm-dialog-backdrop" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setDeleteTarget(null)
+        }}>
+          <section className="ingredient-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-ingredient-title">
+            <p className="eyebrow">Ingredient Library</p>
+            <h2 id="delete-ingredient-title">Delete “{deleteTarget.name}”?</h2>
+            <p>This removes it from Ingredient Library and future Quick Add availability.</p>
+            <p>Existing Today, Weekly, and History entries will remain unchanged.</p>
+            <div className="confirm-actions">
+              <button className="secondary-action" type="button" onClick={() => setDeleteTarget(null)}>Cancel</button>
+              <button className="danger-action" type="button" onClick={deleteIngredient}>Delete</button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   )
 }

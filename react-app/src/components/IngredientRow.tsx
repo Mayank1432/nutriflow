@@ -8,6 +8,7 @@ type IngredientRowProps = {
   onRemove?: () => void
   mode?: 'editable' | 'readonly'
   readOnly?: boolean
+  compact?: boolean
 }
 
 function IngredientRow({
@@ -16,6 +17,7 @@ function IngredientRow({
   onRemove,
   mode,
   readOnly = false,
+  compact = false,
 }: IngredientRowProps) {
   const isReadOnly = mode === 'readonly' || readOnly
   const totals = calcIngr(ingredient)
@@ -46,6 +48,62 @@ function IngredientRow({
 
     onQuantityCommit?.(quantity)
     setQuantityDraft(String(quantity))
+  }
+
+  if (compact) {
+    return (
+      <div className="ingredient-row compact">
+        <div className="compact-ingredient-primary">
+          <strong title={ingredient.name || 'Unnamed food'}>{ingredient.name || 'Unnamed food'}</strong>
+          <span className="compact-protein">{totals.p.toFixed(1)}g Protein</span>
+        </div>
+        <div className="compact-ingredient-controls">
+          {isReadOnly ? (
+            <strong className="quantity-readonly">
+              {String(ingredient.qty ?? 0)} {ingredient.unit || 'g'}
+            </strong>
+          ) : (
+            <label className="compact-quantity-label">
+              <span className="sr-only">{ingredient.name || 'Ingredient'} quantity</span>
+              <span className="quantity-control compact-quantity-control">
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={quantityDraft}
+                  onChange={(event) => setQuantityDraft(event.target.value)}
+                  onBlur={commitQuantity}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') event.currentTarget.blur()
+                    if (event.key === 'Escape') {
+                      setQuantityDraft(persistedQuantity)
+                      event.currentTarget.blur()
+                    }
+                  }}
+                  aria-label={`${ingredient.name || 'Ingredient'} quantity`}
+                />
+                <span>{ingredient.unit || 'g'}</span>
+              </span>
+            </label>
+          )}
+          <strong className="compact-cost">₹{totals.c.toFixed(0)}</strong>
+        </div>
+        <div className="compact-ingredient-secondary">
+          <span>{totals.k.toFixed(0)} kcal · {totals.carb.toFixed(1)}C · {totals.fat.toFixed(1)}F · {totals.fibre.toFixed(1)} Fibre</span>
+          {!isReadOnly && (
+            <button
+              className="compact-remove-button"
+              type="button"
+              onClick={onRemove}
+              aria-label={`Remove ${ingredient.name || 'Ingredient'}`}
+              title={`Remove ${ingredient.name || 'Ingredient'}`}
+            >
+              <span aria-hidden="true">🗑</span>
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
