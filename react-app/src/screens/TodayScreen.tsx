@@ -302,6 +302,7 @@ function TodayScreen({
   const [toastMessage, setToastMessage] = useState<ReactNode>(null)
   const todayIngredientsRef = useRef<HTMLDivElement>(null)
   const saveAndAddSubmittingRef = useRef(false)
+  const saveCostSubmittingRef = useRef(false)
   const skipNextTodayPersistenceRef = useRef(false)
   const totals = calculateTodayTotals(todayStore)
   const todayData = toDisplayTodayData(todayStore)
@@ -409,6 +410,52 @@ function TodayScreen({
     if (action === 'return') {
       setQuickAddOpen(false)
       setQuickAddDraft(blankDraft())
+    }
+  }
+
+  const saveQuickAddCost = (ingredientId: string, amount: number) => {
+    if (saveCostSubmittingRef.current) {
+      return { ok: false, message: 'Cost save is already in progress.' }
+    }
+    if (!Number.isFinite(amount) || amount < 0) {
+      return { ok: false, message: 'Price must be a finite, non-negative number.' }
+    }
+    saveCostSubmittingRef.current = true
+    try {
+      const latestStore = readReactIngredientsStore()
+      const latestDefinition = latestStore.ingredients.find((item) => (
+        item.id === ingredientId && !item.archived
+      ))
+      if (!latestDefinition) {
+        return { ok: false, message: 'This ingredient is no longer available.' }
+      }
+      const timestamp = new Date().toISOString()
+      const updatedDefinition = {
+        ...latestDefinition,
+        cost: {
+          amount,
+          currency: latestDefinition.cost?.currency ?? 'INR',
+        },
+        updatedAt: timestamp,
+      }
+      const nextStore = {
+        ...latestStore,
+        updatedAt: timestamp,
+        ingredients: latestStore.ingredients.map((item) => (
+          item.id === ingredientId ? updatedDefinition : item
+        )),
+      }
+      if (!writeReactIngredientsStore(nextStore)) {
+        return { ok: false, message: 'Cost could not be saved.' }
+      }
+      setQuickAddSources((current) => current.map((source) => (
+        source.kind === 'ingredient' && source.item.id === ingredientId
+          ? { kind: 'ingredient', item: updatedDefinition }
+          : source
+      )))
+      return { ok: true, message: 'Cost updated.' }
+    } finally {
+      saveCostSubmittingRef.current = false
     }
   }
 
@@ -612,6 +659,7 @@ function TodayScreen({
             onOpenIngredientLibrary()
           } : undefined}
           onSubmit={addIngredient}
+          onSaveCost={saveQuickAddCost}
         />
       )}
       {isAddIngredientOpen && (
