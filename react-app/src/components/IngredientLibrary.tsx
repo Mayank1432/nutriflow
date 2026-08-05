@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   readReactDailyStaplesStore,
   readReactIngredientsStore,
@@ -13,6 +14,7 @@ import IngredientDefinitionForm, {
   createEmptyIngredientDraft,
   ingredientDefinitionToDraft,
 } from './IngredientDefinitionForm'
+import { formatContextualPrice, formatPriceBasis } from '../utils/priceDisplay'
 
 type IngredientLibraryProps = {
   createIntentToken?: number
@@ -23,45 +25,81 @@ function IngredientLibrary({ createIntentToken, onCreateIntentConsumed }: Ingred
   const [store, setStore] = useState(() => readReactIngredientsStore())
   const [draft, setDraft] = useState(() => createEmptyIngredientDraft())
   const [editingId, setEditingId] = useState('')
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState<ReactNode>('')
+  const [saveError, setSaveError] = useState('')
+  const [staleEdit, setStaleEdit] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<IngredientDefinition | null>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const saveErrorRef = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    if (saveError) saveErrorRef.current?.focus()
+  }, [saveError])
 
   useEffect(() => {
     if (createIntentToken === undefined) return
     setEditingId('')
+    setSaveError('')
+    setStaleEdit(false)
     nameInputRef.current?.focus()
     nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     onCreateIntentConsumed?.(createIntentToken)
   }, [createIntentToken, onCreateIntentConsumed])
   const save = () => {
     const timestamp = new Date().toISOString()
-    const previous = store.ingredients.find(({ id }) => id === editingId)
+    const latestStore = readReactIngredientsStore()
+    const previous = editingId
+      ? latestStore.ingredients.find(({ id }) => id === editingId)
+      : undefined
+    if (editingId && !previous) {
+      setStaleEdit(true)
+      setSaveError('This ingredient no longer exists and could not be updated.')
+      return
+    }
     const result = buildIngredientDefinition(draft, {
       previous,
       timestamp,
       createId: () => globalThis.crypto?.randomUUID?.() ?? `ingredient-${Date.now()}`,
     })
     if (!result.ok) {
-      setMessage(result.error)
+      setSaveError(result.error)
       return
     }
     const definition = result.definition
     const next = {
-      ...store,
+      ...latestStore,
       updatedAt: timestamp,
       ingredients: previous
-        ? store.ingredients.map((item) => item.id === previous.id ? definition : item)
-        : [...store.ingredients, definition],
+        ? latestStore.ingredients.map((item) => item.id === previous.id ? definition : item)
+        : [...latestStore.ingredients, definition],
     }
     if (writeReactIngredientsStore(next)) {
-      setStore(next); setDraft(createEmptyIngredientDraft()); setEditingId(''); setMessage('Ingredient saved.')
-    } else setMessage('Ingredient could not be saved.')
+      const wasEditing = Boolean(editingId)
+      setStore(next)
+      setDraft(createEmptyIngredientDraft())
+      setEditingId('')
+      setSaveError('')
+      setStaleEdit(false)
+      setMessage(wasEditing ? <span className="ingredient-save-success"><strong>{definition.name} updated</strong><span>Price: {formatContextualPrice(definition.cost, definition.basisType, definition.defaultUnit)}</span></span> : 'Ingredient saved.')
+    } else {
+      setSaveError('The ingredient could not be saved. Try again.')
+    }
   }
 
   const edit = (item: IngredientDefinition) => {
     setEditingId(item.id)
     setDraft(ingredientDefinitionToDraft(item))
+    setSaveError('')
+    setStaleEdit(false)
+    setMessage('')
+  }
+
+  const cancelEdit = () => {
+    setEditingId('')
+    setDraft(createEmptyIngredientDraft())
+    setSaveError('')
+    setStaleEdit(false)
+    setMessage('')
   }
 
   const deleteIngredient = () => {
@@ -124,12 +162,19 @@ function IngredientLibrary({ createIntentToken, onCreateIntentConsumed }: Ingred
       <p className="eyebrow">Reusable definitions</p>
       <h3 id="ingredient-library-title">Ingredient Library</h3>
       <p className="ingredient-library-intro">Create a reusable food, then add it to Today whenever you need it.</p>
+      <h4 className="ingredient-form-heading">{editingId ? 'Edit Ingredient' : 'Create Ingredient'}</h4>
       <IngredientDefinitionForm draft={draft} onChange={setDraft} nameInputRef={nameInputRef} />
-      <button className="primary-action ingredient-library-save" type="button" onClick={save}>
-        {editingId ? 'Update ingredient' : '+ Create ingredient for Quick Add'}
-      </button>
+      <div className="ingredient-form-actions">
+        {editingId && <button className="secondary-action" type="button" onClick={cancelEdit}>Cancel</button>}
+        <button className="primary-action ingredient-library-save" type="button" disabled={staleEdit} onClick={save}>{editingId ? 'Save Changes' : 'Create Ingredient'}</button>
+      </div>
+      {saveError && <p ref={saveErrorRef} className="ingredient-save-error" role="alert" tabIndex={-1}>{saveError}</p>}
       {message && <p role="status">{message}</p>}
-      {store.ingredients.map((item) => <div className="placeholder-card ingredient-library-item" key={item.id}><strong>{item.name}</strong><p>{item.basisType} · {item.defaultQuantity} {item.defaultUnit} · {item.category || 'Uncategorised'}</p><div><button type="button" onClick={() => addToToday(item)}>Add to Today</button> <button type="button" onClick={() => edit(item)}>Edit</button> <button className="compact-delete-button" type="button" onClick={() => setDeleteTarget(item)}>Delete</button></div></div>)}
+      {store.ingredients.map((item) => {
+        const basis = formatPriceBasis(item.basisType, item.defaultUnit)
+        const contextualPrice = formatContextualPrice(item.cost, item.basisType, item.defaultUnit)
+        return <div className="placeholder-card ingredient-library-item" key={item.id}><div className="ingredient-library-heading"><strong>{item.name}</strong><button className="ingredient-library-edit" type="button" onClick={() => edit(item)}>Edit</button></div><p>{item.defaultQuantity} {item.defaultUnit} · {basis ?? 'Price basis unavailable'} · {item.category || 'Uncategorised'}</p><p className={`ingredient-library-price${!item.cost ? ' missing' : basis ? '' : ' unsupported'}`}>{contextualPrice}</p><div className="ingredient-library-actions"><button type="button" onClick={() => addToToday(item)}>Add to Today</button><button className="compact-delete-button" type="button" onClick={() => setDeleteTarget(item)}>Delete</button></div></div>
+      })}
       {deleteTarget && (
         <div className="confirm-dialog-backdrop" onMouseDown={(event) => {
           if (event.target === event.currentTarget) setDeleteTarget(null)
