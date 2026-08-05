@@ -13,6 +13,7 @@ type MealCardProps = {
   onQuickAdd?: () => void
   onQuantityChange?: (ingredientId: string, qty: number) => void
   onRemove?: (ingredientId: string) => void
+  onMove?: (ingredientId: string, trigger: HTMLButtonElement) => void
   mode?: 'editable' | 'readonly'
   readOnly?: boolean
   variant?: 'default' | 'selected'
@@ -28,6 +29,7 @@ function MealCard({
   onQuickAdd,
   onQuantityChange,
   onRemove,
+  onMove,
   mode,
   readOnly = false,
   variant = 'default',
@@ -71,6 +73,7 @@ function MealCard({
               compact={isSelectedVariant}
               onQuantityCommit={(qty) => onQuantityChange?.(ingredient.id as string, qty)}
               onRemove={() => onRemove?.(ingredient.id as string)}
+              onMove={(trigger) => onMove?.(ingredient.id as string, trigger)}
             />
           ))
         )}

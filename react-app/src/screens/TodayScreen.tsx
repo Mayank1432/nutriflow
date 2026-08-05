@@ -11,6 +11,7 @@ import {
 } from '../components/QuickAddForm'
 import ScreenContainer from '../components/ScreenContainer'
 import SuccessToast from '../components/SuccessToast'
+import MoveFoodEntrySheet from '../components/MoveFoodEntrySheet'
 import PrototypeNotice from '../components/PrototypeNotice'
 import TodayIngredients from '../components/TodayIngredients'
 import { ActiveDailyStaples } from '../components/DailyStaples'
@@ -38,6 +39,8 @@ const meals: Array<{ id: MealId; name: MealName }> = [
   { id: 'dinner', name: 'Dinner' },
   { id: 'snacks', name: 'Snacks' },
 ]
+
+type MoveTarget = { sourceMealId: MealId; entryId: string; displayName: string }
 
 const blankDraft = (mealId: MealId = 'breakfast'): QuickAddDraft => ({
   sourceKey: '',
@@ -300,7 +303,13 @@ function TodayScreen({
   const [quickAddError, setQuickAddError] = useState('')
   const [quickAddSources, setQuickAddSources] = useState<QuickAddSource[]>([])
   const [toastMessage, setToastMessage] = useState<ReactNode>(null)
+  const [moveTarget, setMoveTarget] = useState<MoveTarget | null>(null)
+  const [moveSubmitting, setMoveSubmitting] = useState(false)
   const todayIngredientsRef = useRef<HTMLDivElement>(null)
+  const todayStoreRef = useRef(todayStore)
+  const moveSubmittingRef = useRef(false)
+  const moveOriginRef = useRef<HTMLButtonElement | null>(null)
+  const mealTabRefs = useRef<Partial<Record<MealId, HTMLButtonElement | null>>>({})
   const saveAndAddSubmittingRef = useRef(false)
   const saveCostSubmittingRef = useRef(false)
   const skipNextTodayPersistenceRef = useRef(false)
@@ -324,16 +333,73 @@ function TodayScreen({
     writeReactTodayStore(todayStore)
   }, [todayStore])
 
+  useEffect(() => { todayStoreRef.current = todayStore }, [todayStore])
+
   useEffect(() => {
-    onQuickAddVisibilityChange?.(isQuickAddOpen || isAddIngredientOpen)
+    onQuickAddVisibilityChange?.(isQuickAddOpen || isAddIngredientOpen || Boolean(moveTarget))
     return () => onQuickAddVisibilityChange?.(false)
-  }, [isAddIngredientOpen, isQuickAddOpen, onQuickAddVisibilityChange])
+  }, [isAddIngredientOpen, isQuickAddOpen, moveTarget, onQuickAddVisibilityChange])
 
   const persistUpdate = (
     mealName: MealName,
     updateEntries: (entries: FoodEntry[]) => FoodEntry[],
   ) => {
-    setTodayStore((current) => updateTodayStore(current, mealName, updateEntries))
+    setTodayStore((current) => {
+      const next = updateTodayStore(current, mealName, updateEntries)
+      todayStoreRef.current = next
+      return next
+    })
+  }
+
+  const closeMoveSheet = (restoreFocus = true) => {
+    setMoveTarget(null)
+    if (restoreFocus) window.requestAnimationFrame(() => moveOriginRef.current?.focus())
+  }
+
+  const moveFoodEntry = (destinationMealId: MealId) => {
+    if (!moveTarget || moveSubmittingRef.current) return { ok: false }
+    moveSubmittingRef.current = true
+    setMoveSubmitting(true)
+    try {
+      const sourceMeal = meals.find((meal) => meal.id === moveTarget.sourceMealId)
+      const destinationMeal = meals.find((meal) => meal.id === destinationMealId)
+      if (!sourceMeal || !destinationMeal) return { ok: false, message: 'This food could not be moved safely.', definitive: true }
+      if (sourceMeal.id === destinationMeal.id) { closeMoveSheet(); return { ok: true } }
+
+      const current = todayStoreRef.current
+      const matches = meals.flatMap((meal) => current.meals[meal.name].entries.map((entry, index) => ({ meal, entry, index }))).filter(({ entry }) => entry.id === moveTarget.entryId)
+      if (matches.length === 0) return { ok: false, message: `This food is no longer available in ${sourceMeal.name}.`, definitive: true }
+      if (matches.length > 1) return { ok: false, message: 'This food could not be moved safely.', definitive: true }
+      const match = matches[0]
+      if (match.meal.id !== sourceMeal.id) return { ok: false, message: `This food is no longer available in ${sourceMeal.name}.`, definitive: true }
+
+      const timestamp = new Date().toISOString()
+      const sourceEntries = current.meals[sourceMeal.name].entries
+      const nextBase: ReactTodayStore = {
+        ...current,
+        updatedAt: timestamp,
+        meals: {
+          ...current.meals,
+          [sourceMeal.name]: { ...current.meals[sourceMeal.name], entries: sourceEntries.filter((_, index) => index !== match.index) },
+          [destinationMeal.name]: { ...current.meals[destinationMeal.name], entries: [...current.meals[destinationMeal.name].entries, match.entry] },
+        },
+      }
+      const nextToday = { ...nextBase, totals: calculateTodayTotals(nextBase) }
+      if (!writeReactTodayStore(nextToday)) return { ok: false, message: 'The move could not be saved. Try again.' }
+
+      skipNextTodayPersistenceRef.current = true
+      todayStoreRef.current = nextToday
+      setTodayStore(nextToday)
+      setSelectedMealId(destinationMealId)
+      setMoveTarget(null)
+      const entryTotals = calculateEntryTotals(match.entry)
+      setToastMessage(<span className="success-toast-content"><strong>{match.entry.name} moved to {destinationMeal.name}</strong><small>{match.entry.quantity} {match.entry.unit} · {entryTotals.protein.toFixed(1)}g Protein · {entryTotals.calories.toFixed(0)} kcal · ₹{entryTotals.cost.toFixed(0)}</small></span>)
+      window.requestAnimationFrame(() => mealTabRefs.current[destinationMealId]?.focus())
+      return { ok: true }
+    } finally {
+      moveSubmittingRef.current = false
+      setMoveSubmitting(false)
+    }
   }
 
   const openQuickAdd = (mealId: MealId) => {
@@ -500,6 +566,7 @@ function TodayScreen({
       }
 
       skipNextTodayPersistenceRef.current = true
+      todayStoreRef.current = nextToday
       setTodayStore(nextToday)
       setAddIngredientOpen(false)
       const entryTotals = calculateEntryTotals(entry)
@@ -612,6 +679,7 @@ function TodayScreen({
               key={meal.id}
               type="button"
               role="tab"
+              ref={(node) => { mealTabRefs.current[meal.id] = node }}
               aria-selected={selectedMealId === meal.id}
               className={selectedMealId === meal.id ? `selected ${meal.id}` : meal.id}
               onClick={() => setSelectedMealId(meal.id)}
@@ -633,6 +701,7 @@ function TodayScreen({
             onQuickAdd={() => openQuickAdd(selectedMeal.id)}
             onQuantityChange={(entryId, qty) => updateQuantity(selectedMeal.name, entryId, qty)}
             onRemove={(entryId) => removeIngredient(selectedMeal.name, entryId)}
+            onMove={(entryId, trigger) => { moveOriginRef.current = trigger; setMoveTarget({ sourceMealId: selectedMeal.id, entryId, displayName: trigger.getAttribute('aria-label')?.replace('More actions for ', '') || 'Food' }) }}
           />
         </div>
         <div ref={todayIngredientsRef} tabIndex={-1} className="today-ingredients-target">
@@ -669,6 +738,11 @@ function TodayScreen({
           onSaveAndAdd={saveAndAddIngredient}
         />
       )}
+      {moveTarget && (() => {
+        const sourceMeal = meals.find((meal) => meal.id === moveTarget.sourceMealId)!
+        const entry = todayStore.meals[sourceMeal.name].entries.find((item) => item.id === moveTarget.entryId)
+        return <MoveFoodEntrySheet foodName={entry?.name ?? moveTarget.displayName} quantity={entry?.quantity ?? 0} unit={entry?.unit ?? ''} sourceMealName={sourceMeal.name} destinations={meals.filter((meal) => meal.id !== sourceMeal.id)} submitting={moveSubmitting} onCancel={() => closeMoveSheet(true)} onMove={moveFoodEntry} />
+      })()}
       <SuccessToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
     </ScreenContainer>
   )
