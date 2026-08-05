@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { calcIngr } from '../domain/nutrition'
 import type { Ingredient } from '../domain/types'
 
@@ -9,6 +9,7 @@ type IngredientRowProps = {
   mode?: 'editable' | 'readonly'
   readOnly?: boolean
   compact?: boolean
+  onMove?: (trigger: HTMLButtonElement) => void
 }
 
 function IngredientRow({
@@ -18,11 +19,28 @@ function IngredientRow({
   mode,
   readOnly = false,
   compact = false,
+  onMove,
 }: IngredientRowProps) {
   const isReadOnly = mode === 'readonly' || readOnly
   const totals = calcIngr(ingredient)
   const persistedQuantity = String(ingredient.qty ?? 0)
   const [quantityDraft, setQuantityDraft] = useState(persistedQuantity)
+  const [isActionsOpen, setActionsOpen] = useState(false)
+  const moreButtonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isActionsOpen) return
+    menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+    const close = (returnFocus: boolean) => { setActionsOpen(false); if (returnFocus) moreButtonRef.current?.focus() }
+    const onPointerDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node) && !moreButtonRef.current?.contains(event.target as Node)) close(false)
+    }
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); close(true) } }
+    window.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('keydown', onKeyDown)
+    return () => { window.removeEventListener('pointerdown', onPointerDown); window.removeEventListener('keydown', onKeyDown) }
+  }, [isActionsOpen])
 
   useEffect(() => {
     setQuantityDraft(persistedQuantity)
@@ -90,17 +108,7 @@ function IngredientRow({
         </div>
         <div className="compact-ingredient-secondary">
           <span>{totals.k.toFixed(0)} kcal · {totals.carb.toFixed(1)}C · {totals.fat.toFixed(1)}F · {totals.fibre.toFixed(1)} Fibre</span>
-          {!isReadOnly && (
-            <button
-              className="compact-remove-button"
-              type="button"
-              onClick={onRemove}
-              aria-label={`Remove ${ingredient.name || 'Ingredient'}`}
-              title={`Remove ${ingredient.name || 'Ingredient'}`}
-            >
-              <span aria-hidden="true">🗑</span>
-            </button>
-          )}
+          {!isReadOnly && <div className="compact-row-actions"><button ref={moreButtonRef} className="compact-more-button" type="button" aria-label={`More actions for ${ingredient.name || 'Ingredient'}`} aria-haspopup="menu" aria-expanded={isActionsOpen} aria-controls={`actions-${ingredient.id}`} onClick={() => setActionsOpen((open) => !open)}>⋮</button>{isActionsOpen && <div ref={menuRef} className="compact-actions-menu" id={`actions-${ingredient.id}`} role="menu"><button type="button" role="menuitem" className="move-action" aria-label={`Move ${ingredient.name || 'Ingredient'}`} onClick={() => { setActionsOpen(false); if (moreButtonRef.current) onMove?.(moreButtonRef.current) }}>Move to another meal</button><button type="button" role="menuitem" className="remove-action" aria-label={`Remove ${ingredient.name || 'Ingredient'}`} onClick={() => { setActionsOpen(false); onRemove?.() }}>Remove</button></div>}</div>}
         </div>
       </div>
     )
