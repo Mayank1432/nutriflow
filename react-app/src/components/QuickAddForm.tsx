@@ -5,6 +5,7 @@ import type {
   IngredientDefinition,
   MealName,
 } from '../storage'
+import { formatContextualPrice, formatPriceBasis } from '../utils/priceDisplay'
 
 export type QuickAddSource =
   | { kind: 'ingredient'; item: IngredientDefinition }
@@ -162,6 +163,8 @@ function QuickAddForm({
   const sourceCard = (source: QuickAddSource) => {
     const key = sourceKey(source)
     const selected = draft.sourceKey === key
+    const priceUnit = source.kind === 'ingredient' ? source.item.defaultUnit : source.item.unit
+    const priceBasis = formatPriceBasis(source.item.basisType, priceUnit)
     return (
       <button
         className={`quick-add-food-card${selected ? ' selected' : ''}`}
@@ -177,7 +180,7 @@ function QuickAddForm({
             <b>{source.item.nutrition.protein.toFixed(1)}g Protein</b>
           </span>
           <span>{source.item.defaultQuantity} {source.kind === 'ingredient' ? source.item.defaultUnit : source.item.unit} · <span className="quick-add-source-badge">{source.kind === 'ingredient' ? 'Ingredient Library' : 'Daily Staples'}</span></span>
-          <small>{source.item.nutrition.calories.toFixed(0)} kcal · {source.item.cost ? `₹${source.item.cost.amount.toFixed(2).replace(/\.00$/, '')}` : 'No cost'}</small>
+          <small>{source.item.nutrition.calories.toFixed(0)} kcal · <span className={`quick-add-contextual-price${!source.item.cost ? ' missing' : priceBasis ? '' : ' unsupported'}`}>{formatContextualPrice(source.item.cost, source.item.basisType, priceUnit)}</span></small>
           <small className="quick-add-macro-line"><span className="metric-protein">{source.item.nutrition.protein.toFixed(1)}g Protein</span> · <span className="metric-carbs">{source.item.nutrition.carbs.toFixed(1)}g Carbs</span> · <span className="metric-fat">{source.item.nutrition.fat.toFixed(1)}g Fat</span> · <span>{source.item.nutrition.fibre.toFixed(1)}g Fibre</span></small>
         </span>
         <span className="quick-add-selected-mark" aria-hidden="true">{selected ? '✓' : '›'}</span>
@@ -274,9 +277,9 @@ function QuickAddForm({
           )}
           {selectedSource.kind === 'ingredient' && isEditingCost && (
             <div className="quick-add-cost-editor">
-              <p>Current cost: ₹{(selectedSource.item.cost?.amount ?? 0).toFixed(2).replace(/\.00$/, '')} {selectedSource.item.basisType === 'per_100' ? `per 100 ${selectedSource.item.defaultUnit}` : `per ${selectedSource.item.defaultUnit}`}</p>
+              <p>Current cost: {formatContextualPrice(selectedSource.item.cost, selectedSource.item.basisType, selectedSource.item.defaultUnit)}</p>
               <label><span>Price</span><span className="quick-add-price-input"><b aria-hidden="true">₹</b><input type="number" min="0" step="any" value={costDraft} onChange={(event) => setCostDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); saveCost() } else if (event.key === 'Escape') { event.preventDefault(); setEditingCost(false); setCostMessage('') } }} /></span></label>
-              <p>Basis: {selectedSource.item.basisType === 'per_100' ? `100 ${selectedSource.item.defaultUnit}` : selectedSource.item.defaultUnit}</p>
+              <p>Basis: {formatPriceBasis(selectedSource.item.basisType, selectedSource.item.defaultUnit) ?? 'Price basis unavailable'}</p>
               <div><button type="button" className="secondary-action" onClick={() => { setEditingCost(false); setCostMessage('') }}>Cancel</button><button type="button" className="primary-action" onClick={saveCost}>Save cost</button></div>
             </div>
           )}
