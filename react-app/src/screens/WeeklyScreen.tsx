@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 import ClearDayConfirm from '../components/ClearDayConfirm'
 import CopyDaySheet from '../components/CopyDaySheet'
 import DaySelector from '../components/DaySelector'
@@ -174,35 +174,53 @@ function WeeklyScreen() {
   const [isCopyOpen, setCopyOpen] = useState(false)
   const [isClearOpen, setClearOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [copyError, setCopyError] = useState('')
+  const [clearError, setClearError] = useState('')
+  const [copySubmitting, setCopySubmitting] = useState(false)
+  const [clearSubmitting, setClearSubmitting] = useState(false)
+  const copySubmittingRef = useRef(false)
+  const clearSubmittingRef = useRef(false)
+  const copyOriginRef = useRef<HTMLButtonElement | null>(null)
+  const clearTriggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLElement | null>(null)
   const weekData = toDisplayWeek(weeklyStore)
   const selectedDayData = weekData.days[selectedDay]
   const summary = calcWeeklySummary(weekData)
 
-  useEffect(() => {
-    writeReactWeeklyStore(weeklyStore)
-  }, [weeklyStore])
-
-  const openCopy = () => {
+  const openCopy = (trigger?: HTMLButtonElement) => {
+    if (trigger) copyOriginRef.current = trigger
     setCopyTargetDay(nextCopyTarget(selectedDay))
     setCopyOpen(true)
     setToastMessage('')
+    setCopyError('')
   }
 
   const copyDay = () => {
-    setWeeklyStore((current) => copyReactWeeklyDay(current, selectedDay, copyTargetDay))
-    setToastMessage(`Copied ${WEEK_DAY_LABELS[selectedDay]} to ${WEEK_DAY_LABELS[copyTargetDay]}.`)
-    setSelectedDay(copyTargetDay)
-    setCopyOpen(false)
+    if (copySubmittingRef.current) return
+    copySubmittingRef.current = true; setCopySubmitting(true)
+    try {
+      const nextWeekly = copyReactWeeklyDay(weeklyStore, selectedDay, copyTargetDay)
+      if (!writeReactWeeklyStore(nextWeekly)) { setCopyError('The day could not be copied. Try again.'); return }
+      const sourceName = WEEK_DAY_LABELS[selectedDay]; const targetName = WEEK_DAY_LABELS[copyTargetDay]
+      setWeeklyStore(nextWeekly); setSelectedDay(copyTargetDay); setCopyOpen(false); setCopyError(''); setToastMessage(`${sourceName} copied to ${targetName}.`)
+      window.requestAnimationFrame(() => document.getElementById(`weekly-tab-${copyTargetDay}`)?.focus())
+    } finally { copySubmittingRef.current = false; setCopySubmitting(false) }
   }
 
   const clearDay = () => {
-    setWeeklyStore((current) => clearReactWeeklyDay(current, selectedDay))
-    setToastMessage(`Cleared ${WEEK_DAY_LABELS[selectedDay]}.`)
-    setClearOpen(false)
+    if (clearSubmittingRef.current) return
+    clearSubmittingRef.current = true; setClearSubmitting(true)
+    try {
+      const nextWeekly = clearReactWeeklyDay(weeklyStore, selectedDay)
+      if (!writeReactWeeklyStore(nextWeekly)) { setClearError('The day could not be cleared. Try again.'); return }
+      const dayName = WEEK_DAY_LABELS[selectedDay]
+      setWeeklyStore(nextWeekly); setClearOpen(false); setClearError(''); setToastMessage(`${dayName} cleared.`)
+      window.requestAnimationFrame(() => panelRef.current?.focus())
+    } finally { clearSubmittingRef.current = false; setClearSubmitting(false) }
   }
 
   return (
-    <ScreenContainer title="Weekly Planner" subtitle="Plan your meals for the week before you start.">
+    <ScreenContainer title="Weekly Planner" subtitle="Plan meals across your week.">
       <PrototypeNotice>React Weekly data is stored locally on this device.</PrototypeNotice>
       <WeeklySummaryCard summary={summary} />
       <DaySelector
@@ -210,21 +228,23 @@ function WeeklyScreen() {
         selectedDay={selectedDay as DomainWeekDayId}
         onSelect={(dayId) => setSelectedDay(dayId as WeekDayId)}
       />
-      <SelectedDayPanel day={selectedDayData} dayId={selectedDay as DomainWeekDayId} />
+      <div ref={(node) => { panelRef.current = node?.querySelector<HTMLElement>('[role="tabpanel"]') ?? null }}><SelectedDayPanel day={selectedDayData} dayId={selectedDay as DomainWeekDayId} /></div>
       <div className="planner-actions">
-        <button className="secondary-action" type="button" onClick={openCopy}>
+        <button className="secondary-action" type="button" aria-label={`Copy ${WEEK_DAY_LABELS[selectedDay]}`} onClick={(event) => openCopy(event.currentTarget)}>
           Copy Day
         </button>
         <button
+          ref={clearTriggerRef}
           className="danger-action"
           type="button"
+          aria-label={`Clear ${WEEK_DAY_LABELS[selectedDay]}`}
           disabled={!isPlannedDay(selectedDayData)}
-          onClick={() => setClearOpen(true)}
+          onClick={() => { setClearError(''); setClearOpen(true) }}
         >
           Clear Day
         </button>
       </div>
-      <div className="weekly-meals">
+      {isPlannedDay(selectedDayData) && <div className="weekly-meals">
         {meals.map((meal) => (
           <MealCard
             key={meal.id}
@@ -232,24 +252,28 @@ function WeeklyScreen() {
             mealName={meal.name}
             todayData={selectedDayData}
             readOnly
-            emptyMessage="No ingredients planned for this meal."
+            variant="weekly"
           />
         ))}
-      </div>
+      </div>}
       {isCopyOpen && (
         <CopyDaySheet
           sourceDay={selectedDay as DomainWeekDayId}
           targetDay={copyTargetDay as DomainWeekDayId}
           onTargetChange={(dayId) => setCopyTargetDay(dayId as WeekDayId)}
-          onClose={() => setCopyOpen(false)}
+          onClose={() => { setCopyOpen(false); setCopyError(''); window.requestAnimationFrame(() => copyOriginRef.current?.focus()) }}
           onCopy={copyDay}
+          submitting={copySubmitting}
+          error={copyError}
         />
       )}
       {isClearOpen && (
         <ClearDayConfirm
           dayName={WEEK_DAY_LABELS[selectedDay]}
-          onCancel={() => setClearOpen(false)}
+          onCancel={() => { setClearOpen(false); setClearError(''); window.requestAnimationFrame(() => clearTriggerRef.current?.focus()) }}
           onConfirm={clearDay}
+          submitting={clearSubmitting}
+          error={clearError}
         />
       )}
       <SuccessToast message={toastMessage} />

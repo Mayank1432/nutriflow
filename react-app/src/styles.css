@@ -2715,31 +2715,33 @@ body {
 
 .weekly-summary-card {
   display: grid;
-  gap: 17px;
-  padding: 20px;
-  border-radius: 8px;
-  background: #193f33;
-  color: white;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--purple);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--ink);
   box-shadow: var(--shadow);
 }
 
-.weekly-summary-card h3 {
+.weekly-summary-card h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 19px;
 }
 
 .weekly-summary-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
 .weekly-summary-grid > div {
   min-width: 0;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.07);
+  padding: 10px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-elevated);
 }
 
 .weekly-summary-grid span,
@@ -2748,24 +2750,31 @@ body {
 }
 
 .weekly-summary-grid span {
-  color: #bcd8cd;
+  color: var(--muted);
   font-size: 11px;
 }
 
 .weekly-summary-grid strong {
   margin-top: 4px;
-  font-size: 14px;
+  color: var(--ink);
+  font-size: 15px;
 }
+
+.weekly-summary-stat.protein strong { color: var(--protein); }
+.weekly-summary-stat.calories strong { color: var(--orange); }
+.weekly-summary-stat.cost strong { color: var(--cost); }
 
 .week-day-selector {
   display: grid;
-  grid-auto-columns: minmax(66px, 1fr);
+  grid-auto-columns: 68px;
   grid-auto-flow: column;
   gap: 8px;
   overflow-x: auto;
-  padding: 2px 1px 7px;
-  scrollbar-width: thin;
+  padding: 2px 1px 6px;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
 }
+.week-day-selector::-webkit-scrollbar { display: none; }
 
 .week-day-chip {
   display: grid;
@@ -2774,8 +2783,8 @@ body {
   align-content: center;
   gap: 3px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
+  border-radius: var(--radius-small);
+  background: var(--surface-elevated);
   color: var(--ink);
   box-shadow: 0 5px 14px rgba(36, 80, 64, 0.05);
   cursor: pointer;
@@ -2799,13 +2808,14 @@ body {
 .week-day-chip.selected span {
   color: white;
 }
+.week-day-chip:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 .selected-day-panel {
   display: grid;
-  gap: 15px;
-  padding: 17px;
+  gap: 12px;
+  padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: var(--surface);
   box-shadow: var(--shadow);
 }
@@ -2817,7 +2827,7 @@ body {
   gap: 12px;
 }
 
-.selected-day-heading h3 {
+.selected-day-heading h2 {
   margin: 0;
   font-size: 20px;
 }
@@ -2831,30 +2841,42 @@ body {
   font-weight: 800;
 }
 
-.selected-day-macros {
+.selected-day-primary {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
-.selected-day-macros .macro-chip {
-  border-color: var(--line);
+.selected-day-primary > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
   background: var(--surface-elevated);
 }
-
-.selected-day-macros .macro-chip span {
+.selected-day-primary strong { font-size: 16px; }
+.selected-day-primary > div:nth-child(1) strong { color: var(--protein); }
+.selected-day-primary > div:nth-child(2) strong { color: var(--orange); }
+.selected-day-primary > div:nth-child(3) strong { color: var(--cost); }
+.selected-day-primary span,
+.selected-day-secondary {
   color: var(--muted);
+  font-size: 11px;
 }
+.selected-day-secondary { margin: 0; line-height: 1.5; }
 
-.selected-day-empty {
-  margin: 0;
-  padding: 12px;
-  border-radius: 8px;
+.weekly-day-empty {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--radius-small);
   background: var(--surface-elevated);
-  color: var(--muted);
   font-size: 13px;
-  text-align: center;
 }
+.weekly-day-empty span { color: var(--muted); }
+.weekly-day-empty button { width: fit-content; margin-top: 6px; color: var(--blue); border-color: var(--line); }
 
 .planner-actions {
   display: grid;
@@ -2893,14 +2915,23 @@ body {
   gap: 12px;
 }
 
+.weekly-meal-card { border-radius: var(--radius-card); }
+.weekly-meal-card .today-meal-heading { padding: 13px 14px 10px; }
+.weekly-meal-card .today-meal-heading p { text-transform: capitalize; }
+.weekly-meal-card .today-meal-body { padding: 0 14px 12px; }
+.weekly-meal-card .compact-ingredient-row { padding: 10px 0; }
+.weekly-meal-card .compact-ingredient-name { max-width: 70%; overflow-wrap: break-word; }
+.weekly-meal-empty { margin: 0; padding: 12px; border-radius: var(--radius-small); background: var(--surface-elevated); color: var(--muted); font-size: 12px; }
+
 .planner-action-sheet,
 .clear-day-confirm {
   display: grid;
-  width: min(100%, 520px);
-  gap: 18px;
+  width: min(calc(100% - 24px), var(--app-max-width));
+  gap: 14px;
   margin: 0 auto;
-  padding: 12px 20px max(24px, env(safe-area-inset-bottom));
-  border-radius: 8px 8px 0 0;
+  padding: 16px 18px max(24px, env(safe-area-inset-bottom));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
   background: var(--surface);
   box-shadow: 0 -16px 40px rgba(12, 40, 30, 0.25);
 }
@@ -2909,11 +2940,12 @@ body {
 .clear-day-confirm h2 {
   margin: 0;
 }
+.planner-action-sheet .sheet-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
 
 .copy-day-field {
   display: grid;
   gap: 7px;
-  color: #4d655c;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 800;
 }
@@ -2943,6 +2975,20 @@ body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.planner-warning { margin: 0; color: var(--muted); font-size: 12px; }
+.planner-inline-error { margin: 0; padding: 10px 12px; border: 1px solid #d77460; border-radius: var(--radius-small); color: #c84f3a; font-size: 13px; }
+[data-theme="dark"] .planner-inline-error { color: #ff9b87; }
+
+@media (max-width: 360px) {
+  .weekly-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .selected-day-primary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .planner-actions,
+  .planner-action-sheet .confirm-actions,
+  .clear-day-confirm .confirm-actions { grid-template-columns: minmax(0, 1fr); }
+  .planner-action-sheet,
+  .clear-day-confirm { width: calc(100% - 16px); padding-inline: 14px; }
 }
 
 .history-prototype-notice {
