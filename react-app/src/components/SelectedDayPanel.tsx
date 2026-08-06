@@ -1,9 +1,7 @@
 import { calcAll } from '../domain/nutrition'
 import { isPlannedDay, WEEK_DAY_LABELS } from '../domain/weeklyMock'
 import type { TodayData, WeekDayId } from '../domain/types'
-import MacroChip from './MacroChip'
 import StatusBadge from './StatusBadge'
-import EmptyState from './EmptyState'
 
 type SelectedDayPanelProps = {
   day: TodayData
@@ -15,25 +13,15 @@ function SelectedDayPanel({ day, dayId }: SelectedDayPanelProps) {
   const planned = isPlannedDay(day)
 
   return (
-    <section className="selected-day-panel" aria-labelledby="selected-day-title">
+    <section id={`weekly-panel-${dayId}`} className={`selected-day-panel${planned ? ' planned' : ' empty'}`} role="tabpanel" aria-labelledby={`weekly-tab-${dayId}`} tabIndex={0}>
       <div className="selected-day-heading">
         <div>
           <p className="eyebrow">Selected day</p>
-          <h3 id="selected-day-title">{WEEK_DAY_LABELS[dayId]}</h3>
+          <h2>{WEEK_DAY_LABELS[dayId]}</h2>
         </div>
         <StatusBadge variant={planned ? 'success' : 'muted'}>{planned ? 'Planned' : 'Empty'}</StatusBadge>
       </div>
-      <div className="selected-day-macros">
-        <MacroChip label="Protein" value={`${totals.p.toFixed(1)} g`} />
-        <MacroChip label="kcal" value={`${totals.k.toFixed(0)} kcal`} />
-        <MacroChip label="Carbs" value={`${totals.carb.toFixed(1)} g`} />
-        <MacroChip label="Fat" value={`${totals.fat.toFixed(1)} g`} />
-        <MacroChip label="Fibre" value={`${totals.fibre.toFixed(1)} g`} />
-        <MacroChip label="Cost" value={`₹${totals.c.toFixed(0)}`} />
-      </div>
-      {!planned && (
-        <EmptyState title="No meals planned yet" description="Copy another day or plan meals later." />
-      )}
+      {planned ? <><div className="selected-day-primary"><div><strong>{totals.p.toFixed(0)}g</strong><span>Protein</span></div><div><strong>{totals.k.toFixed(0)}</strong><span>Calories</span></div><div><strong>₹{totals.c.toFixed(0)}</strong><span>Cost</span></div></div><p className="selected-day-secondary">Carbs {totals.carb.toFixed(0)}g · Fat {totals.fat.toFixed(0)}g · Fibre {totals.fibre.toFixed(0)}g</p></> : <div className="weekly-day-empty"><strong>No meals planned for {WEEK_DAY_LABELS[dayId]}.</strong><span>Copy another day to start this plan.</span></div>}
     </section>
   )
 }

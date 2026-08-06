@@ -16,7 +16,7 @@ type MealCardProps = {
   onMove?: (ingredientId: string, trigger: HTMLButtonElement) => void
   mode?: 'editable' | 'readonly'
   readOnly?: boolean
-  variant?: 'default' | 'selected'
+  variant?: 'default' | 'selected' | 'weekly'
 }
 
 function MealCard({
@@ -36,13 +36,14 @@ function MealCard({
 }: MealCardProps) {
   const isReadOnly = mode === 'readonly' || readOnly
   const isSelectedVariant = variant === 'selected'
+  const isWeeklyVariant = variant === 'weekly'
   const totals = calcMealToday(todayData, mealId)
   const ingredients = (todayData.meals?.[mealId]?.dishes ?? []).flatMap(
     (dish) => dish.ingredients ?? [],
   ) as Ingredient[]
 
   return (
-    <section className={`today-meal-card${isSelectedVariant ? ' selected-meal-card' : ''}`} aria-labelledby={`${mealId}-meal-title`}>
+    <section className={`today-meal-card${isSelectedVariant ? ' selected-meal-card' : ''}${isWeeklyVariant ? ' weekly-meal-card' : ''}`} aria-labelledby={`${mealId}-meal-title`}>
       <div className="today-meal-heading">
         <div>
           <h3 id={`${mealId}-meal-title`}>{mealName}</h3>
@@ -63,14 +64,14 @@ function MealCard({
               <strong>No foods added to {mealName} yet.</strong>
               <span>{emptyMessage}</span>
             </div>
-          ) : <EmptyState title="No foods yet" description={emptyMessage} icon="+" />
+          ) : isWeeklyVariant ? <p className="weekly-meal-empty">No foods planned for {mealName}.</p> : <EmptyState title="No foods yet" description={emptyMessage} icon="+" />
         ) : (
           ingredients.filter((ingredient) => typeof ingredient.id === 'string').map((ingredient) => (
             <IngredientRow
               key={ingredient.id}
               ingredient={ingredient}
               mode={isReadOnly ? 'readonly' : 'editable'}
-              compact={isSelectedVariant}
+              compact={isSelectedVariant || isWeeklyVariant}
               onQuantityCommit={(qty) => onQuantityChange?.(ingredient.id as string, qty)}
               onRemove={() => onRemove?.(ingredient.id as string)}
               onMove={(trigger) => onMove?.(ingredient.id as string, trigger)}
