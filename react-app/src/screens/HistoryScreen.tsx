@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import EmptyHistoryState from '../components/EmptyHistoryState'
 import HistorySummaryCard from '../components/HistorySummaryCard'
 import SavedDayList from '../components/SavedDayList'
@@ -121,28 +121,52 @@ function HistoryScreen() {
         .map(toMockSavedDay),
     }
   })
-  const [selectedHistoryId, setSelectedHistoryId] = useState(
-    () => historyData.savedDays[0]?.id ?? '',
-  )
+  const [historyView, setHistoryView] = useState<'list' | 'detail'>('list')
+  const [selectedHistoryId, setSelectedHistoryId] = useState('')
+  const listScrollYRef = useRef(0)
+  const originDayIdRef = useRef('')
+  const detailHeadingRef = useRef<HTMLHeadingElement>(null)
   const selectedDay = historyData.savedDays.find((day) => day.id === selectedHistoryId)
   const summary = calcHistorySummary(historyData)
 
+  useEffect(() => {
+    if (historyView === 'detail' && !selectedDay) {
+      setSelectedHistoryId('')
+      setHistoryView('list')
+    }
+  }, [historyView, selectedDay])
+
+  const openSavedDay = (dayId: string) => {
+    listScrollYRef.current = window.scrollY
+    originDayIdRef.current = dayId
+    setSelectedHistoryId(dayId)
+    setHistoryView('detail')
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+      detailHeadingRef.current?.focus({ preventScroll: true })
+    })
+  }
+
+  const returnToHistory = () => {
+    setHistoryView('list')
+    setSelectedHistoryId('')
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      document.getElementById(`saved-day-card-${originDayIdRef.current}`)?.focus({ preventScroll: true })
+      window.scrollTo({ top: listScrollYRef.current, behavior: 'auto' })
+    }))
+  }
+
   return (
-    <ScreenContainer title="History" subtitle="Review your saved days and track your consistency.">
+    <ScreenContainer title="History" subtitle="Review your saved days and nutrition snapshots.">
       <PrototypeNotice>React History shows read-only saved snapshots from this device.</PrototypeNotice>
-      {historyData.savedDays.length === 0 || !selectedDay ? (
+      {historyData.savedDays.length === 0 ? (
         <EmptyHistoryState />
+      ) : historyView === 'detail' && selectedDay ? (
+        <SelectedHistoryDetail day={selectedDay} headingRef={detailHeadingRef} onBack={returnToHistory} />
       ) : (
         <>
           <HistorySummaryCard summary={summary} />
-          <div className="history-layout">
-            <SavedDayList
-              days={historyData.savedDays}
-              selectedId={selectedHistoryId}
-              onSelect={setSelectedHistoryId}
-            />
-            <SelectedHistoryDetail day={selectedDay} />
-          </div>
+          <SavedDayList days={historyData.savedDays} onSelect={openSavedDay} />
         </>
       )}
     </ScreenContainer>

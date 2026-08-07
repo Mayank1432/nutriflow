@@ -1,7 +1,7 @@
 import EmptyState from './EmptyState'
 
 function EmptyHistoryState() {
-  return <EmptyState icon="◌" title="No saved days yet" description="Your saved daily logs will appear here." />
+  return <div className="empty-history-state"><EmptyState icon="◷" title="No saved days yet" description="Saved days will appear here when they are added to History." /></div>
 }
 
 export default EmptyHistoryState
