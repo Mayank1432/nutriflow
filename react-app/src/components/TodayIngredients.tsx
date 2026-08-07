@@ -1,7 +1,6 @@
 import type { Ingredient } from '../domain/types'
 import type { FoodEntry, MealName, ReactTodayStore } from '../storage'
 import IngredientRow from './IngredientRow'
-import EmptyState from './EmptyState'
 
 const mealNames: readonly MealName[] = [
   'Breakfast',
@@ -44,47 +43,47 @@ const toDisplayIngredient = (entry: FoodEntry): Ingredient => {
 
 type TodayIngredientsProps = {
   todayStore: ReactTodayStore
-  onQuantityCommit: (mealName: MealName, entryId: string, quantity: number) => void
-  onRemove: (mealName: MealName, entryId: string) => void
 }
 
-function TodayIngredients({
-  todayStore,
-  onQuantityCommit,
-  onRemove,
-}: TodayIngredientsProps) {
-  const rows = mealNames.flatMap((mealName) => (
-    todayStore.meals[mealName].entries.map((entry) => ({ mealName, entry }))
+function TodayIngredients({ todayStore }: TodayIngredientsProps) {
+  const populatedMeals = mealNames.filter((mealName) => (
+    todayStore.meals[mealName].entries.length > 0
   ))
 
   return (
-    <section className="today-meal-card" aria-labelledby="today-ingredients-title">
+    <section className="today-meal-card today-ingredients-card" aria-labelledby="today-ingredients-title">
       <div className="today-meal-heading">
         <div>
           <h3 id="today-ingredients-title">Today Ingredients</h3>
-          <p>Derived from Breakfast, Lunch, Dinner, and Snacks.</p>
+          <p>Read-only summary of foods added today.</p>
         </div>
       </div>
-      <div className="today-meal-body">
-        {rows.length === 0 ? (
-          <EmptyState
-            title="Your day is ready to fill"
-            description="Foods you add to meals will appear here in one easy-to-scan list."
-            icon="＋"
-          />
-        ) : rows.map(({ mealName, entry }) => (
-          <div key={entry.id}>
-            <p className="eyebrow">{mealName}</p>
-            <IngredientRow
-              ingredient={toDisplayIngredient(entry)}
-              onQuantityCommit={(quantity) => onQuantityCommit(
-                mealName,
-                entry.id,
-                quantity,
-              )}
-              onRemove={() => onRemove(mealName, entry.id)}
-            />
-          </div>
+      <div className="today-meal-body today-ingredients-body">
+        {populatedMeals.length === 0 ? (
+          <p className="today-ingredients-empty">No ingredients added today.</p>
+        ) : populatedMeals.map((mealName) => (
+          <section
+            className="today-ingredients-meal"
+            aria-labelledby={`today-ingredients-${mealName.toLowerCase()}`}
+            key={mealName}
+          >
+            <h4
+              className="today-ingredients-meal-heading"
+              id={`today-ingredients-${mealName.toLowerCase()}`}
+            >
+              {mealName}
+            </h4>
+            <div className="today-ingredients-list">
+              {todayStore.meals[mealName].entries.map((entry) => (
+                <IngredientRow
+                  key={entry.id}
+                  ingredient={toDisplayIngredient(entry)}
+                  readOnly
+                  compact
+                />
+              ))}
+            </div>
+          </section>
         ))}
       </div>
     </section>

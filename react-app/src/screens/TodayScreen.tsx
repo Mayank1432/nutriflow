@@ -782,11 +782,7 @@ function TodayScreen({
           />
         </div>
         <div ref={todayIngredientsRef} tabIndex={-1} className="today-ingredients-target">
-          <TodayIngredients
-            todayStore={todayStore}
-            onQuantityCommit={updateQuantity}
-            onRemove={removeIngredient}
-          />
+          <TodayIngredients todayStore={todayStore} />
         </div>
       </div>
       {isQuickAddOpen && (
