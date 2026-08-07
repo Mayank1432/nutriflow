@@ -4,20 +4,19 @@ import type { MockSavedDay } from '../domain/types'
 import StatusBadge from './StatusBadge'
 
 type SavedDayCardProps = {
-  active: boolean
   day: MockSavedDay
   onSelect: () => void
 }
 
-function SavedDayCard({ active, day, onSelect }: SavedDayCardProps) {
+function SavedDayCard({ day, onSelect }: SavedDayCardProps) {
   const totals = calcAll(savedDayToToday(day))
   const mealCount = countTrackedMeals(day)
 
   return (
     <button
-      className={`saved-day-card${active ? ' selected' : ''}`}
+      id={`saved-day-card-${day.id}`}
+      className="saved-day-card"
       type="button"
-      aria-pressed={active}
       onClick={onSelect}
     >
       <div className="saved-day-heading">
@@ -29,8 +28,8 @@ function SavedDayCard({ active, day, onSelect }: SavedDayCardProps) {
           {day.statusBadge}
         </StatusBadge>
       </div>
-      <p>{totals.p.toFixed(0)}g protein · {totals.k.toFixed(0)} kcal · ₹{totals.c.toFixed(0)}</p>
-      <small>{totals.fibre.toFixed(1)}g fibre · {mealCount} {mealCount === 1 ? 'meal' : 'meals'}</small>
+      <div className="saved-day-metrics"><span className="history-protein">{totals.p.toFixed(0)}g protein</span><span className="history-calories">{totals.k.toFixed(0)} kcal</span></div>
+      <div className="saved-day-footer"><small><span className="history-cost">₹{totals.c.toFixed(0)}</span> · {mealCount} {mealCount === 1 ? 'meal' : 'meals'}</small><span className="saved-day-chevron" aria-hidden="true">›</span></div>
     </button>
   )
 }

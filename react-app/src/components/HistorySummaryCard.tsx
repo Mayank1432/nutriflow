@@ -5,19 +5,19 @@ type HistorySummaryCardProps = {
 }
 
 function HistorySummaryCard({ summary }: HistorySummaryCardProps) {
+  const finite = (value: number) => Number.isFinite(value) ? value : 0
   const stats = [
     ['Saved days', String(summary.savedDays)],
-    ['Avg protein/day', `${summary.averageProtein.toFixed(1)} g`],
-    ['Avg calories/day', `${summary.averageCalories.toFixed(0)} kcal`],
-    ['Avg cost/day', `₹${summary.averageCost.toFixed(0)}`],
+    ['Average protein per day', `${finite(summary.averageProtein).toFixed(1)} g`],
+    ['Average calories per day', `${finite(summary.averageCalories).toFixed(0)} kcal`],
+    ['Average cost per day', `₹${finite(summary.averageCost).toFixed(0)}`],
     ['High-protein days', String(summary.highProteinDays)],
   ]
 
   return (
     <section className="history-summary-card" aria-labelledby="history-summary-title">
       <div>
-        <p className="eyebrow">Saved history summary</p>
-        <h3 id="history-summary-title">Your recent consistency</h3>
+        <h2 id="history-summary-title">Your recent consistency</h2>
       </div>
       <div className="history-summary-grid">
         {stats.map(([label, value]) => (
