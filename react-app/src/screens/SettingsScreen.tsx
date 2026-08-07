@@ -12,22 +12,31 @@ type SettingsScreenProps = {
 }
 
 const goalNames = ['protein', 'calories', 'carbs', 'fat', 'fibre', 'cost'] as const
-const labels = { protein: 'Protein', calories: 'Calories', carbs: 'Carbs', fat: 'Fat', fibre: 'Fibre', cost: 'Cost' }
+type GoalName = typeof goalNames[number]
+const labels: Record<GoalName, string> = { protein: 'Protein', calories: 'Calories', carbs: 'Carbs', fat: 'Fat', fibre: 'Fibre', cost: 'Cost' }
+const units: Record<GoalName, string> = { protein: 'g', calories: 'kcal', carbs: 'g', fat: 'g', fibre: 'g', cost: '₹' }
+type Feedback = { type: 'success' | 'error'; text: string } | null
 
 function SettingsScreen({ onBack, settings, onToggleTheme, onSaveMacroGoals, focusSection, onFocusConsumed }: SettingsScreenProps) {
-  const [enabled, setEnabled] = useState(() => Object.fromEntries(goalNames.map((name) => [name, settings.macroGoals[name].enabled])) as Record<typeof goalNames[number], boolean>)
-  const [values, setValues] = useState(() => Object.fromEntries(goalNames.map((name) => [name, settings.macroGoals[name].value === null ? '' : String(settings.macroGoals[name].value)])) as Record<typeof goalNames[number], string>)
-  const [message, setMessage] = useState('')
+  const [enabled, setEnabled] = useState(() => Object.fromEntries(goalNames.map((name) => [name, settings.macroGoals[name].enabled])) as Record<GoalName, boolean>)
+  const [values, setValues] = useState(() => Object.fromEntries(goalNames.map((name) => [name, settings.macroGoals[name].value === null ? '' : String(settings.macroGoals[name].value)])) as Record<GoalName, string>)
+  const [feedback, setFeedback] = useState<Feedback>(null)
   const themeRef = useRef<HTMLElement>(null)
   const macroGoalsRef = useRef<HTMLElement>(null)
+  const goalInputRefs = useRef<Partial<Record<GoalName, HTMLInputElement | null>>>({})
 
   useEffect(() => {
     if (!focusSection) return
     const target = focusSection.type === 'theme' ? themeRef.current : macroGoalsRef.current
-    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    target?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
     target?.focus({ preventScroll: true })
     onFocusConsumed?.(focusSection.token)
   }, [focusSection, onFocusConsumed])
+
+  const requestTheme = (mode: 'light' | 'dark') => {
+    if (mode !== settings.theme.mode) onToggleTheme()
+  }
 
   const save = () => {
     const goals = {} as MacroGoals
@@ -38,31 +47,67 @@ function SettingsScreen({ onBack, settings, onToggleTheme, onSaveMacroGoals, foc
       }
       const value = Number(values[name])
       if (values[name].trim() === '' || !Number.isFinite(value) || value <= 0) {
-        setMessage(`${labels[name]} requires a positive number.`)
+        setFeedback({ type: 'error', text: `${labels[name]} requires a positive number.` })
+        window.requestAnimationFrame(() => goalInputRefs.current[name]?.focus())
         return
       }
       goals[name] = { enabled: true, value }
     }
-    setMessage(onSaveMacroGoals(goals) ? 'Macro Goals saved.' : 'Macro Goals could not be saved.')
+    setFeedback(onSaveMacroGoals(goals)
+      ? { type: 'success', text: 'Macro Goals saved.' }
+      : { type: 'error', text: 'Macro Goals could not be saved. Try again.' })
   }
 
-  return <ScreenContainer title="Settings" subtitle="Manage app preferences and goals.">
-    <button className="secondary-action" type="button" onClick={onBack}>← Back to More</button>
-    <section ref={themeRef} tabIndex={-1} className="about-card"><h3>Theme</h3><p><strong>{settings.theme.mode === 'dark' ? 'Dark' : 'Light'}</strong></p>
-      <button className="secondary-action" type="button" onClick={onToggleTheme}>Use {settings.theme.mode === 'light' ? 'Dark' : 'Light'} theme</button>
-    </section>
-    <section ref={macroGoalsRef} tabIndex={-1} className="about-card" aria-labelledby="macro-goals-title"><h3 id="macro-goals-title">Macro Goals</h3>
-      <div className="quick-add-form form-grid">
-        {goalNames.map((name) => <div key={name}>
-          <label><input type="checkbox" checked={enabled[name]} onChange={(event) => setEnabled((current) => ({ ...current, [name]: event.target.checked }))} /> <span>{labels[name]}</span></label>
-          <label><span>Goal value</span><input type="number" min="0.01" step="any" disabled={!enabled[name]} value={values[name]} onChange={(event) => setValues((current) => ({ ...current, [name]: event.target.value }))} /></label>
-        </div>)}
-      </div>
-      <button className="primary-action" type="button" onClick={save}>Save Macro Goals</button>
-      {message && <p role="status">{message}</p>}
-    </section>
-    <section className="about-card"><h3>Account</h3><p>Accounts, login, and cloud sync are not available yet.</p></section>
-    <section className="about-card"><h3>Data</h3><p>Export, import, backup, and restore controls are coming later.</p></section>
-  </ScreenContainer>
+  return <div className="settings-screen">
+    <ScreenContainer title="Settings" subtitle="Personalise NutriFlow and manage your local preferences.">
+      <button className="secondary-action settings-back-action" type="button" onClick={onBack}>← Back to More</button>
+
+      <section className="settings-section" aria-labelledby="personalisation-title">
+        <h2 id="personalisation-title" className="settings-section-label">Personalisation</h2>
+        <section ref={themeRef} tabIndex={-1} className="settings-card" aria-labelledby="theme-title">
+          <div className="settings-card-header"><div><h3 id="theme-title">Theme</h3><p>Choose how NutriFlow looks on this device.</p></div></div>
+          <fieldset className="settings-theme-fieldset">
+            <legend>Colour theme</legend>
+            <div className="settings-theme-options">
+              {(['light', 'dark'] as const).map((mode) => <label key={mode} className="settings-theme-option">
+                <input type="radio" name="theme-mode" value={mode} checked={settings.theme.mode === mode} onChange={() => requestTheme(mode)} />
+                <span>{mode === 'light' ? 'Light' : 'Dark'}</span>
+                <span className="settings-theme-check" aria-hidden="true">{settings.theme.mode === mode ? '✓' : ''}</span>
+              </label>)}
+            </div>
+          </fieldset>
+        </section>
+      </section>
+
+      <section className="settings-section" aria-labelledby="nutrition-title">
+        <h2 id="nutrition-title" className="settings-section-label">Nutrition</h2>
+        <section ref={macroGoalsRef} tabIndex={-1} className="settings-card" aria-labelledby="macro-goals-title">
+          <div className="settings-card-header"><div><h3 id="macro-goals-title">Macro Goals</h3><p>Enable the goals you want to track each day.</p></div></div>
+          <div className="macro-goal-list">
+            {goalNames.map((name) => <div className={`macro-goal-row${enabled[name] ? ' enabled' : ''}`} key={name}>
+              <label className="macro-goal-toggle"><input type="checkbox" checked={enabled[name]} onChange={(event) => setEnabled((current) => ({ ...current, [name]: event.target.checked }))} /><span>{labels[name]}</span></label>
+              <div className="macro-goal-value">
+                <label className="sr-only" htmlFor={`${name}-goal`}>{labels[name]} goal</label>
+                <span className="macro-goal-input-wrap"><input ref={(node) => { goalInputRefs.current[name] = node }} id={`${name}-goal`} type="number" min="0.01" step="any" disabled={!enabled[name]} value={values[name]} onChange={(event) => setValues((current) => ({ ...current, [name]: event.target.value }))} /><span>{units[name]}</span></span>
+              </div>
+            </div>)}
+          </div>
+          <button className="primary-action settings-save-action" type="button" onClick={save}>Save Macro Goals</button>
+          {feedback && <p className={`settings-feedback ${feedback.type}`} role={feedback.type === 'success' ? 'status' : 'alert'} aria-live={feedback.type === 'success' ? 'polite' : undefined}>{feedback.text}</p>}
+        </section>
+      </section>
+
+      <section className="settings-section" aria-labelledby="account-title">
+        <h2 id="account-title" className="settings-section-label">Account</h2>
+        <section className="settings-card settings-placeholder-card" aria-labelledby="account-placeholder-title"><div className="settings-card-header"><div><h3 id="account-placeholder-title">Account</h3><p>Account features are not available in this prototype.</p></div><span className="settings-placeholder-status">Not available</span></div></section>
+      </section>
+
+      <section className="settings-section" aria-labelledby="data-title">
+        <h2 id="data-title" className="settings-section-label">Data</h2>
+        <section className="settings-card settings-placeholder-card" aria-labelledby="backup-title"><div className="settings-card-header"><div><p className="settings-placeholder-detail">Your NutriFlow data is stored locally on this device.</p><h3 id="backup-title">Backup &amp; Restore</h3><p>Backup and restore are not available in this prototype.</p></div><span className="settings-placeholder-status">Coming later</span></div></section>
+      </section>
+    </ScreenContainer>
+  </div>
 }
+
 export default SettingsScreen
