@@ -1,4 +1,5 @@
 import ScreenContainer from '../components/ScreenContainer'
+import { getCanonicalValidHistoryDays } from '../domain/historyIntegrity'
 import {
   readReactHistoryStore,
   readReactSettingsStore,
@@ -132,8 +133,7 @@ function AnalyticsScreen() {
     (totals, day) => addTotals(totals, mealTotals(day.meals)),
     emptyTotals(),
   )
-  const historyDays = [...historyStore.savedDays]
-    .sort((left, right) => right.savedAt.localeCompare(left.savedAt))
+  const historyDays = getCanonicalValidHistoryDays(historyStore.savedDays)
   const recentHistory = historyDays.slice(0, 7)
   const historyTotal = recentHistory.reduce(
     (totals, day) => addTotals(totals, mealTotals(day.meals)),

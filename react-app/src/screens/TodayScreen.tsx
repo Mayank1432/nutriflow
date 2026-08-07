@@ -17,6 +17,19 @@ import TodayIngredients from '../components/TodayIngredients'
 import { ActiveDailyStaples } from '../components/DailyStaples'
 import type { Ingredient, MacroTotals, MealId, TodayData } from '../domain/types'
 import {
+  calculateFoodEntryTotals,
+  calculateTodayTotals,
+  createFreshTodayStore,
+  getCanonicalValidHistoryDays,
+  getLocalDateKey,
+  parseStrictLocalDateKey,
+  planTodayRollover,
+  resolveLatestTodayForOperation,
+  upsertTodayIntoHistory,
+} from '../domain/historyIntegrity'
+
+export { calculateTodayTotals } from '../domain/historyIntegrity'
+import {
   readReactHistoryStore,
   readReactIngredientsStore,
   readReactDailyStaplesStore,
@@ -25,10 +38,8 @@ import {
   writeReactHistoryStore,
   writeReactIngredientsStore,
   writeReactTodayStore,
-  type DailyTotals,
   type DailyStapleDefinition,
   type FoodEntry,
-  type HistoryDay,
   type MealName,
   type ReactTodayStore,
 } from '../storage'
@@ -53,44 +64,7 @@ const safeNumber = (value: string | number | undefined): number => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-const calculateEntryTotals = (entry: FoodEntry): DailyTotals => {
-  const factor = entry.basisType === 'per_100'
-    ? entry.quantity / 100
-    : entry.quantity
-
-  return {
-    protein: entry.nutritionSnapshot.protein * factor,
-    calories: entry.nutritionSnapshot.calories * factor,
-    carbs: entry.nutritionSnapshot.carbs * factor,
-    fat: entry.nutritionSnapshot.fat * factor,
-    fibre: entry.nutritionSnapshot.fibre * factor,
-    cost: (entry.costSnapshot?.amount ?? 0) * factor,
-  }
-}
-
-export const calculateTodayTotals = (store: ReactTodayStore): DailyTotals =>
-  meals.reduce<DailyTotals>((dayTotals, meal) => (
-    store.meals[meal.name].entries.reduce<DailyTotals>((totals, entry) => {
-      const entryTotals = calculateEntryTotals(entry)
-      return {
-        protein: totals.protein + entryTotals.protein,
-        calories: totals.calories + entryTotals.calories,
-        carbs: totals.carbs + entryTotals.carbs,
-        fat: totals.fat + entryTotals.fat,
-        fibre: totals.fibre + entryTotals.fibre,
-        cost: totals.cost + entryTotals.cost,
-      }
-    }, dayTotals)
-  ), {
-    protein: 0,
-    calories: 0,
-    carbs: 0,
-    fat: 0,
-    fibre: 0,
-    cost: 0,
-  })
-
-const toMacroTotals = (totals: DailyTotals): MacroTotals => ({
+const toMacroTotals = (totals: ReturnType<typeof calculateTodayTotals>): MacroTotals => ({
   p: totals.protein,
   k: totals.calories,
   carb: totals.carbs,
@@ -212,60 +186,19 @@ const normalizeTodayStore = (store: ReactTodayStore): ReactTodayStore => {
   return { ...normalized, totals: calculateTodayTotals(normalized) }
 }
 
-const parseLocalDateKey = (value: string): Date | null => {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-  if (!match) return null
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-  const date = new Date(year, month - 1, day)
-  return date.getFullYear() === year
-    && date.getMonth() === month - 1
-    && date.getDate() === day
-    ? date
-    : null
-}
-
-const toLocalDateKey = (date: Date): string => {
-  const year = String(date.getFullYear()).padStart(4, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const preferredHistoryDay = (current: HistoryDay, candidate: HistoryDay): HistoryDay => {
-  const currentSavedAt = Date.parse(current.savedAt)
-  const candidateSavedAt = Date.parse(candidate.savedAt)
-  const currentIsValid = Number.isFinite(currentSavedAt)
-  const candidateIsValid = Number.isFinite(candidateSavedAt)
-
-  if (candidateIsValid !== currentIsValid) return candidateIsValid ? candidate : current
-  if (candidateIsValid && currentIsValid && candidateSavedAt !== currentSavedAt) {
-    return candidateSavedAt > currentSavedAt ? candidate : current
-  }
-  return candidate.id > current.id ? candidate : current
-}
-
 const deriveCurrentWeekCosts = (
   todayDateKey: string,
   liveTodayCost: number,
-  savedDays: HistoryDay[],
+  savedDays: ReturnType<typeof getCanonicalValidHistoryDays>,
 ) => {
-  const localToday = parseLocalDateKey(todayDateKey) ?? new Date()
-  const canonicalTodayKey = toLocalDateKey(localToday)
+  const localToday = parseStrictLocalDateKey(todayDateKey) ?? new Date()
+  const canonicalTodayKey = getLocalDateKey(localToday)
   const weekStart = new Date(localToday.getFullYear(), localToday.getMonth(), localToday.getDate())
   weekStart.setDate(weekStart.getDate() - weekStart.getDay())
-  const weekStartKey = toLocalDateKey(weekStart)
-  const selectedByDate = new Map<string, HistoryDay>()
-
-  for (const day of [...savedDays]) {
-    if (!parseLocalDateKey(day.date)) continue
-    if (day.date < weekStartKey || day.date >= canonicalTodayKey) continue
-    const current = selectedByDate.get(day.date)
-    selectedByDate.set(day.date, current ? preferredHistoryDay(current, day) : day)
-  }
-
-  const pastHistoryCost = [...selectedByDate.values()].reduce((sum, day) => (
+  const weekStartKey = getLocalDateKey(weekStart)
+  const pastHistoryCost = savedDays.filter((day) => (
+    day.date >= weekStartKey && day.date < canonicalTodayKey
+  )).reduce((sum, day) => (
     sum + (Number.isFinite(day.totals.cost) ? day.totals.cost : 0)
   ), 0)
   const safeTodayCost = Number.isFinite(liveTodayCost) ? liveTodayCost : 0
@@ -286,6 +219,10 @@ type TodayScreenProps = {
   onQuickAddVisibilityChange?: (visible: boolean) => void
 }
 
+type RolloverRunResult = {
+  outcome: 'current' | 'rolled' | 'reset' | 'blocked' | 'busy'
+}
+
 function TodayScreen({
   intent,
   onIntentConsumed,
@@ -293,9 +230,8 @@ function TodayScreen({
   onOpenIngredientLibrary,
   onQuickAddVisibilityChange,
 }: TodayScreenProps) {
-  const [todayStore, setTodayStore] = useState<ReactTodayStore>(
-    () => normalizeTodayStore(readReactTodayStore()),
-  )
+  const [todayStore, setTodayStore] = useState<ReactTodayStore | null>(null)
+  const [todayInitialized, setTodayInitialized] = useState(false)
   const [isQuickAddOpen, setQuickAddOpen] = useState(false)
   const [isAddIngredientOpen, setAddIngredientOpen] = useState(false)
   const [selectedMealId, setSelectedMealId] = useState<MealId>('breakfast')
@@ -306,34 +242,150 @@ function TodayScreen({
   const [moveTarget, setMoveTarget] = useState<MoveTarget | null>(null)
   const [moveSubmitting, setMoveSubmitting] = useState(false)
   const todayIngredientsRef = useRef<HTMLDivElement>(null)
-  const todayStoreRef = useRef(todayStore)
+  const todayStoreRef = useRef<ReactTodayStore | null>(null)
+  const initializationStartedRef = useRef(false)
+  const rolloverSubmittingRef = useRef(false)
+  const manualHistorySubmittingRef = useRef(false)
+  const rolloverWarningRef = useRef('')
+  const rolloverRunnerRef = useRef<() => RolloverRunResult>(() => ({ outcome: 'busy' }))
   const moveSubmittingRef = useRef(false)
   const moveOriginRef = useRef<HTMLButtonElement | null>(null)
   const mealTabRefs = useRef<Partial<Record<MealId, HTMLButtonElement | null>>>({})
   const saveAndAddSubmittingRef = useRef(false)
   const saveCostSubmittingRef = useRef(false)
   const skipNextTodayPersistenceRef = useRef(false)
-  const totals = calculateTodayTotals(todayStore)
-  const todayData = toDisplayTodayData(todayStore)
-  const selectedMeal = meals.find((meal) => meal.id === selectedMealId) ?? meals[0]
-  const historyDays = [...readReactHistoryStore().savedDays]
-  const proteinTrend = [...historyDays]
-    .sort((left, right) => right.savedAt.localeCompare(left.savedAt))
-    .slice(0, 7)
-    .reverse()
-    .map((day) => ({ id: day.id, date: day.date, protein: day.totals.protein }))
-  const currentWeekCosts = deriveCurrentWeekCosts(todayStore.date, totals.cost, historyDays)
-  const macroGoals = readReactSettingsStore().macroGoals
+
+  const adoptTodayStore = (nextToday: ReactTodayStore, skipPersistence = false) => {
+    const stateChanged = todayStoreRef.current !== nextToday
+    todayStoreRef.current = nextToday
+
+    if (!stateChanged) {
+      if (!skipPersistence) skipNextTodayPersistenceRef.current = false
+      return
+    }
+
+    skipNextTodayPersistenceRef.current = skipPersistence
+    setTodayStore(nextToday)
+  }
+
+  const showRolloverWarning = (key: string, message: string) => {
+    if (rolloverWarningRef.current === key) return
+    rolloverWarningRef.current = key
+    setToastMessage(message)
+  }
+
+  const runRollover = (): RolloverRunResult => {
+    if (rolloverSubmittingRef.current) return { outcome: 'busy' }
+    rolloverSubmittingRef.current = true
+    try {
+      const persistedToday = normalizeTodayStore(readReactTodayStore())
+      const inTabToday = todayStoreRef.current ?? persistedToday
+      const authoritativeToday = resolveLatestTodayForOperation(persistedToday, inTabToday)
+      const currentDateKey = getLocalDateKey()
+      const plan = planTodayRollover(authoritativeToday, currentDateKey)
+
+      if (plan.outcome === 'no_action_current') {
+        if (todayStoreRef.current !== authoritativeToday) adoptTodayStore(authoritativeToday)
+        return { outcome: 'current' }
+      }
+
+      if (plan.outcome === 'invalid_today_date') {
+        adoptTodayStore(authoritativeToday)
+        showRolloverWarning(
+          `invalid:${authoritativeToday.date}:${authoritativeToday.updatedAt}`,
+          'Today’s saved date could not be verified. Your data was not changed.',
+        )
+        return { outcome: 'blocked' }
+      }
+
+      if (plan.outcome === 'future_today_date') {
+        adoptTodayStore(authoritativeToday)
+        showRolloverWarning(
+          `future:${authoritativeToday.date}:${authoritativeToday.updatedAt}`,
+          'Today’s saved date is ahead of the device date. Your data was not changed.',
+        )
+        return { outcome: 'blocked' }
+      }
+
+      const operationTimestamp = new Date().toISOString()
+      if (plan.outcome === 'reset_empty') {
+        const freshToday = createFreshTodayStore(currentDateKey, operationTimestamp)
+        if (!writeReactTodayStore(freshToday)) {
+          adoptTodayStore(authoritativeToday)
+          return { outcome: 'blocked' }
+        }
+        rolloverWarningRef.current = ''
+        adoptTodayStore(freshToday, true)
+        return { outcome: 'reset' }
+      }
+
+      const latestHistory = readReactHistoryStore()
+      const upsert = upsertTodayIntoHistory(latestHistory, authoritativeToday, {
+        savedAt: operationTimestamp,
+        createId: () => globalThis.crypto?.randomUUID?.() ?? `history-${Date.now()}`,
+      })
+      if (!upsert.ok || !writeReactHistoryStore(upsert.store)) {
+        adoptTodayStore(authoritativeToday)
+        setToastMessage('Previous day could not be saved. Today was not reset.')
+        return { outcome: 'blocked' }
+      }
+
+      const freshToday = createFreshTodayStore(currentDateKey, operationTimestamp)
+      if (!writeReactTodayStore(freshToday)) {
+        adoptTodayStore(authoritativeToday)
+        setToastMessage('Previous day was saved, but Today could not be reset. Your entries are still available.')
+        return { outcome: 'blocked' }
+      }
+
+      rolloverWarningRef.current = ''
+      adoptTodayStore(freshToday, true)
+      setToastMessage('Previous day saved to History.')
+      return { outcome: 'rolled' }
+    } finally {
+      rolloverSubmittingRef.current = false
+    }
+  }
+
+  rolloverRunnerRef.current = runRollover
 
   useEffect(() => {
+    if (!todayInitialized || !todayStore) return
     if (skipNextTodayPersistenceRef.current) {
       skipNextTodayPersistenceRef.current = false
       return
     }
     writeReactTodayStore(todayStore)
-  }, [todayStore])
+  }, [todayInitialized, todayStore])
 
-  useEffect(() => { todayStoreRef.current = todayStore }, [todayStore])
+  useEffect(() => {
+    if (initializationStartedRef.current) return
+    initializationStartedRef.current = true
+    rolloverRunnerRef.current()
+    setTodayInitialized(true)
+  }, [])
+
+  useEffect(() => {
+    if (!todayInitialized) return
+    const onVisible = () => { if (document.visibilityState === 'visible') rolloverRunnerRef.current() }
+    const onFocus = () => { rolloverRunnerRef.current() }
+    let midnightTimeout = 0
+    const scheduleMidnightCheck = () => {
+      const now = new Date()
+      const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+      midnightTimeout = window.setTimeout(() => {
+        rolloverRunnerRef.current()
+        scheduleMidnightCheck()
+      }, Math.max(1_000, nextMidnight.getTime() - now.getTime() + 1_000))
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+    scheduleMidnightCheck()
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
+      window.clearTimeout(midnightTimeout)
+    }
+  }, [todayInitialized])
 
   useEffect(() => {
     onQuickAddVisibilityChange?.(isQuickAddOpen || isAddIngredientOpen || Boolean(moveTarget))
@@ -344,11 +396,12 @@ function TodayScreen({
     mealName: MealName,
     updateEntries: (entries: FoodEntry[]) => FoodEntry[],
   ) => {
-    setTodayStore((current) => {
-      const next = updateTodayStore(current, mealName, updateEntries)
-      todayStoreRef.current = next
-      return next
-    })
+    const current = todayStoreRef.current
+    if (!current) return
+    const next = updateTodayStore(current, mealName, updateEntries)
+    rolloverWarningRef.current = ''
+    todayStoreRef.current = next
+    setTodayStore(next)
   }
 
   const closeMoveSheet = (restoreFocus = true) => {
@@ -367,6 +420,7 @@ function TodayScreen({
       if (sourceMeal.id === destinationMeal.id) { closeMoveSheet(); return { ok: true } }
 
       const current = todayStoreRef.current
+      if (!current) return { ok: false, message: 'Today data is still loading.' }
       const matches = meals.flatMap((meal) => current.meals[meal.name].entries.map((entry, index) => ({ meal, entry, index }))).filter(({ entry }) => entry.id === moveTarget.entryId)
       if (matches.length === 0) return { ok: false, message: `This food is no longer available in ${sourceMeal.name}.`, definitive: true }
       if (matches.length > 1) return { ok: false, message: 'This food could not be moved safely.', definitive: true }
@@ -388,11 +442,12 @@ function TodayScreen({
       if (!writeReactTodayStore(nextToday)) return { ok: false, message: 'The move could not be saved. Try again.' }
 
       skipNextTodayPersistenceRef.current = true
+      rolloverWarningRef.current = ''
       todayStoreRef.current = nextToday
       setTodayStore(nextToday)
       setSelectedMealId(destinationMealId)
       setMoveTarget(null)
-      const entryTotals = calculateEntryTotals(match.entry)
+      const entryTotals = calculateFoodEntryTotals(match.entry)
       setToastMessage(<span className="success-toast-content"><strong>{match.entry.name} moved to {destinationMeal.name}</strong><small>{match.entry.quantity} {match.entry.unit} · {entryTotals.protein.toFixed(1)}g Protein · {entryTotals.calories.toFixed(0)} kcal · ₹{entryTotals.cost.toFixed(0)}</small></span>)
       window.requestAnimationFrame(() => mealTabRefs.current[destinationMealId]?.focus())
       return { ok: true }
@@ -460,7 +515,7 @@ function TodayScreen({
     }
 
     const entry = createFoodEntry(source, quantity)
-    const entryTotals = calculateEntryTotals(entry)
+    const entryTotals = calculateFoodEntryTotals(entry)
     persistUpdate(
       quickAddDraft.meal,
       (entries) => [...entries, entry],
@@ -553,8 +608,10 @@ function TodayScreen({
         return { status: 'failure', message: 'Ingredient could not be saved.' }
       }
 
+      const currentToday = todayStoreRef.current
+      if (!currentToday) return { status: 'failure', message: 'Today data is still loading.' }
       const nextToday = updateTodayStore(
-        todayStore,
+        currentToday,
         targetMeal.name,
         (entries) => [...entries, entry],
       )
@@ -566,10 +623,11 @@ function TodayScreen({
       }
 
       skipNextTodayPersistenceRef.current = true
+      rolloverWarningRef.current = ''
       todayStoreRef.current = nextToday
       setTodayStore(nextToday)
       setAddIngredientOpen(false)
-      const entryTotals = calculateEntryTotals(entry)
+      const entryTotals = calculateFoodEntryTotals(entry)
       setToastMessage(
         <span className="success-toast-content">
           <strong>✓ {entry.name} created and added</strong>
@@ -620,29 +678,48 @@ function TodayScreen({
   }
 
   const saveTodayToHistory = () => {
-    const savedAt = new Date().toISOString()
-    const historyDay: HistoryDay = {
-      id: globalThis.crypto?.randomUUID?.() ?? `history-${Date.now()}`,
-      date: todayStore.date,
-      savedAt,
-      meals: structuredClone(todayStore.meals),
-      totals: structuredClone(calculateTodayTotals(todayStore)),
-    }
-    const currentHistory = readReactHistoryStore()
-    const nextHistory = {
-      ...currentHistory,
-      updatedAt: savedAt,
-      savedDays: [...currentHistory.savedDays, historyDay]
-        .sort((a, b) => b.savedAt.localeCompare(a.savedAt)),
-      deletedDays: currentHistory.deletedDays ?? [],
-    }
+    if (manualHistorySubmittingRef.current) return
+    manualHistorySubmittingRef.current = true
+    try {
+      const rolloverResult = rolloverRunnerRef.current()
+      if (rolloverResult.outcome !== 'current') return
 
-    setToastMessage(
-      writeReactHistoryStore(nextHistory)
+      const persistedToday = normalizeTodayStore(readReactTodayStore())
+      const inTabToday = todayStoreRef.current ?? persistedToday
+      const authoritativeToday = resolveLatestTodayForOperation(persistedToday, inTabToday)
+      if (planTodayRollover(authoritativeToday, getLocalDateKey()).outcome !== 'no_action_current') return
+
+      const savedAt = new Date().toISOString()
+      const upsert = upsertTodayIntoHistory(readReactHistoryStore(), authoritativeToday, {
+        savedAt,
+        createId: () => globalThis.crypto?.randomUUID?.() ?? `history-${Date.now()}`,
+      })
+      if (!upsert.ok || !writeReactHistoryStore(upsert.store)) {
+        setToastMessage('Could not save Today to History.')
+        return
+      }
+      setToastMessage(upsert.outcome === 'created'
         ? 'Today saved to History.'
-        : 'Could not save Today to History.',
-    )
+        : 'Today’s History record was updated.')
+    } finally {
+      manualHistorySubmittingRef.current = false
+    }
   }
+
+  if (!todayInitialized || !todayStore) {
+    return <ScreenContainer title="Today" subtitle="Track your meals and hit your protein goal."><p>Checking Today data…</p></ScreenContainer>
+  }
+
+  const totals = calculateTodayTotals(todayStore)
+  const todayData = toDisplayTodayData(todayStore)
+  const selectedMeal = meals.find((meal) => meal.id === selectedMealId) ?? meals[0]
+  const historyDays = getCanonicalValidHistoryDays(readReactHistoryStore().savedDays)
+  const proteinTrend = [...historyDays]
+    .slice(0, 7)
+    .reverse()
+    .map((day) => ({ id: day.id, date: day.date, protein: day.totals.protein }))
+  const currentWeekCosts = deriveCurrentWeekCosts(todayStore.date, totals.cost, historyDays)
+  const macroGoals = readReactSettingsStore().macroGoals
 
   return (
     <ScreenContainer
