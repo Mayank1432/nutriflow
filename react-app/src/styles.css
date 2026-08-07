@@ -1131,6 +1131,56 @@ button:focus-visible {
   white-space: nowrap;
 }
 
+.today-ingredients-body {
+  gap: 0;
+}
+
+.today-ingredients-meal + .today-ingredients-meal {
+  border-top: 1px solid var(--line);
+}
+
+.today-ingredients-meal-heading {
+  margin: 0;
+  padding: 10px 14px 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.today-ingredients-list {
+  display: grid;
+}
+
+.today-ingredients-list .ingredient-row + .ingredient-row {
+  border-top: 1px solid var(--line);
+}
+
+.today-ingredients-card .compact-ingredient-primary > strong,
+.today-ingredients-card .compact-ingredient-secondary > span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+.today-ingredients-empty {
+  margin: 0;
+  padding: 20px 14px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (max-width: 360px) {
+  .today-ingredients-card .compact-ingredient-primary,
+  .today-ingredients-card .compact-ingredient-controls,
+  .today-ingredients-card .compact-ingredient-secondary {
+    flex-wrap: wrap;
+  }
+}
+
 .compact-more-button {
   display: grid;
   flex: 0 0 44px;
