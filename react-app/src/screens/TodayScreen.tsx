@@ -16,6 +16,7 @@ import PrototypeNotice from '../components/PrototypeNotice'
 import TodayIngredients from '../components/TodayIngredients'
 import { ActiveDailyStaples } from '../components/DailyStaples'
 import type { Ingredient, MacroTotals, MealId, TodayData } from '../domain/types'
+import { buildProteinTrendPoints } from '../domain/analyticsCharts'
 import {
   calculateFoodEntryTotals,
   calculateTodayTotals,
@@ -713,11 +714,10 @@ function TodayScreen({
   const totals = calculateTodayTotals(todayStore)
   const todayData = toDisplayTodayData(todayStore)
   const selectedMeal = meals.find((meal) => meal.id === selectedMealId) ?? meals[0]
-  const historyDays = getCanonicalValidHistoryDays(readReactHistoryStore().savedDays)
-  const proteinTrend = [...historyDays]
-    .slice(0, 7)
-    .reverse()
-    .map((day) => ({ id: day.id, date: day.date, protein: day.totals.protein }))
+  const previewNow = new Date()
+  const rawHistoryDays = readReactHistoryStore().savedDays
+  const historyDays = getCanonicalValidHistoryDays(rawHistoryDays)
+  const proteinTrend = buildProteinTrendPoints(rawHistoryDays, previewNow)
   const currentWeekCosts = deriveCurrentWeekCosts(todayStore.date, totals.cost, historyDays)
   const macroGoals = readReactSettingsStore().macroGoals
 
