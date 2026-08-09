@@ -1,11 +1,7 @@
 import type { MacroTotals } from '../domain/types'
+import type { ProteinTrendPoint } from '../domain/analyticsCharts'
+import { buildTodayProteinPreviewPlot } from '../domain/todayProteinPreview'
 import type { MacroGoal } from '../storage'
-
-export type ProteinTrendPoint = {
-  id: string
-  date: string
-  protein: number
-}
 
 type DailySummaryCardProps = {
   totals: MacroTotals
@@ -38,6 +34,7 @@ const trendChart = {
   right: 18,
   top: 16,
   bottom: 24,
+  baselineGap: 2,
 } as const
 
 const formatProtein = (value: number): string => Number(value.toFixed(1)).toString()
@@ -108,30 +105,13 @@ function DailySummaryCard({
   weeklyCost,
   averageDailyCost,
 }: DailySummaryCardProps) {
-  const trendPoints = proteinTrend.filter((point) => Number.isFinite(point.protein))
-  const usableWidth = trendChart.width - trendChart.left - trendChart.right
-  const chartBottom = trendChart.height - trendChart.bottom
-  const usableHeight = chartBottom - trendChart.top
-  const minProtein = trendPoints.length
-    ? Math.min(...trendPoints.map((point) => point.protein))
-    : 0
-  const maxProtein = trendPoints.length
-    ? Math.max(...trendPoints.map((point) => point.protein))
-    : 0
-  const plottedPoints = trendPoints.map((point, index) => {
-    const x = trendPoints.length === 1
-      ? trendChart.left + usableWidth / 2
-      : trendChart.left + (index * usableWidth) / (trendPoints.length - 1)
-    const y = maxProtein === minProtein
-      ? trendChart.top + usableHeight / 2
-      : chartBottom - ((point.protein - minProtein) / (maxProtein - minProtein)) * usableHeight
-    return { ...point, x, y }
-  })
+  const plot = buildTodayProteinPreviewPlot(proteinTrend, trendChart)
+  const plottedPoints = plot.points
   const trendPath = plottedPoints.length > 1
     ? plottedPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
     : ''
   const latestPoint = plottedPoints.at(-1)
-  const chartLabel = `7-Day Protein Trend. ${plottedPoints.length} saved ${plottedPoints.length === 1 ? 'day' : 'days'}.${latestPoint ? ` Latest value: ${formatProtein(latestPoint.protein)} grams.` : ''}`
+  const chartLabel = `7-Day Protein Trend. ${plottedPoints.length} saved ${plottedPoints.length === 1 ? 'day' : 'days'}.${latestPoint ? ` Latest value: ${formatProtein(latestPoint.proteinGrams)} grams.` : ''}`
 
   return (
     <section className="today-dashboard-cards" aria-labelledby="daily-summary-title">
@@ -188,12 +168,12 @@ function DailySummaryCard({
               role="img"
               aria-label={chartLabel}
             >
-              <line className="today-trend-baseline" x1={trendChart.left} x2={trendChart.width - trendChart.right} y1={chartBottom} y2={chartBottom} />
+              <line className="today-trend-baseline" x1={trendChart.left} x2={trendChart.width - trendChart.right} y1={plot.baselineY} y2={plot.baselineY} />
               {trendPath && <path className="today-trend-line" d={trendPath} />}
               {plottedPoints.map((point, index) => (
                 <g key={point.id} className="today-trend-point">
                   <circle cx={point.x} cy={point.y} r="3.5">
-                    <title>{point.date}: {formatProtein(point.protein)} grams protein</title>
+                    <title>{point.dateLabel}: {formatProtein(point.proteinGrams)} grams protein</title>
                   </circle>
                   {(index === 0 || index === plottedPoints.length - 1) && (
                     <text
@@ -202,7 +182,7 @@ function DailySummaryCard({
                       y={trendChart.height - 5}
                       textAnchor={index === 0 ? 'start' : 'end'}
                     >
-                      {point.date.slice(5)}
+                      {point.shortDateLabel}
                     </text>
                   )}
                 </g>
@@ -214,7 +194,7 @@ function DailySummaryCard({
                   y={Math.max(trendChart.top + 8, latestPoint.y - 8)}
                   textAnchor={latestPoint.x > trendChart.width / 2 ? 'end' : 'start'}
                 >
-                  {formatProtein(latestPoint.protein)}g
+                  {formatProtein(latestPoint.proteinGrams)}g
                 </text>
               )}
             </svg>
