@@ -4,7 +4,7 @@ import { useOpenDrawer } from '../components/DrawerContext'
 import AnalyticsIcon from '../components/analytics/AnalyticsIcon'
 import AnalyticsRangeControl from '../components/analytics/AnalyticsRangeControl'
 import { AnalyticsChartShell, AnalyticsGoals, AnalyticsSummaryGrid, AnalyticsTotalsSection } from '../components/analytics/AnalyticsSections'
-import { buildLocalDateRange, buildProteinTrendPoints, getValidProteinGoal, summarizeHistoryRange, summarizeProteinTrend, type AnalyticsRangeDays } from '../domain/analyticsCharts'
+import { buildCaloriesTrendPoints, buildLocalDateRange, buildProteinTrendPoints, getValidCaloriesGoal, getValidProteinGoal, summarizeCaloriesTrend, summarizeHistoryRange, summarizeProteinTrend, type AnalyticsRangeDays } from '../domain/analyticsCharts'
 import { calculateMealsTotals, parseStrictLocalDateKey } from '../domain/historyIntegrity'
 import { readReactHistoryStore, readReactSettingsStore, readReactTodayStore, readReactWeeklyStore, type DailyTotals } from '../storage'
 
@@ -20,11 +20,13 @@ export default function AnalyticsScreen() {
   const savedDays = readReactHistoryStore().savedDays
   const summary = summarizeHistoryRange(savedDays, rangeDays, now)
   const proteinTrend = summarizeProteinTrend(buildProteinTrendPoints(savedDays, now))
+  const caloriesTrend = summarizeCaloriesTrend(buildCaloriesTrendPoints(savedDays, now))
   const proteinGoal = getValidProteinGoal(settings.macroGoals.protein)
-  const proteinTickLabels = buildLocalDateRange(7, now).map((key) => parseStrictLocalDateKey(key)!.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }))
+  const caloriesGoal = getValidCaloriesGoal(settings.macroGoals.calories)
+  const trendTickLabels = buildLocalDateRange(7, now).map((key) => parseStrictLocalDateKey(key)!.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }))
   const today = calculateMealsTotals(todayStore.meals)
   const weekly = weeklyStore.days.reduce((totals, day) => add(totals, calculateMealsTotals(day.meals)), zero())
   const plannedDays = weeklyStore.days.filter((day) => Object.values(day.meals).some((meal) => meal.entries.length)).length
   const rangeLabel = `${displayDate(summary.range.startDateKey)} – ${displayDate(summary.range.endDateKey)}`
-  return <ScreenContainer title="Analytics" subtitle="Understand your nutrition and spending over time."><div className="analytics-shell"><button className="analytics-back" type="button" onClick={openDrawer}><AnalyticsIcon name="back" />Back to More</button><AnalyticsRangeControl value={rangeDays} onChange={setRangeDays} /><div className="analytics-range-context" aria-live="polite" aria-atomic="true"><span><AnalyticsIcon name="calendar" />{rangeLabel}</span><strong>{summary.trackedDays} saved History {summary.trackedDays === 1 ? 'day' : 'days'} in this range.</strong></div><AnalyticsSummaryGrid summary={summary} /><AnalyticsChartShell rangeDays={rangeDays} trend={proteinTrend} goal={proteinGoal} tickLabels={proteinTickLabels} /><AnalyticsTotalsSection kind="live" totals={today} /><AnalyticsGoals goals={settings.macroGoals} totals={today} /><AnalyticsTotalsSection kind="planned" totals={weekly} plannedDays={plannedDays} /></div></ScreenContainer>
+  return <ScreenContainer title="Analytics" subtitle="Understand your nutrition and spending over time."><div className="analytics-shell"><button className="analytics-back" type="button" onClick={openDrawer}><AnalyticsIcon name="back" />Back to More</button><AnalyticsRangeControl value={rangeDays} onChange={setRangeDays} /><div className="analytics-range-context" aria-live="polite" aria-atomic="true"><span><AnalyticsIcon name="calendar" />{rangeLabel}</span><strong>{summary.trackedDays} saved History {summary.trackedDays === 1 ? 'day' : 'days'} in this range.</strong></div><AnalyticsSummaryGrid summary={summary} /><AnalyticsChartShell rangeDays={rangeDays} trend={proteinTrend} proteinGoal={proteinGoal} caloriesTrend={caloriesTrend} caloriesGoal={caloriesGoal} tickLabels={trendTickLabels} rangeStart={displayDate(summary.range.startDateKey)} rangeEnd={displayDate(summary.range.endDateKey)} /><AnalyticsTotalsSection kind="live" totals={today} /><AnalyticsGoals goals={settings.macroGoals} totals={today} /><AnalyticsTotalsSection kind="planned" totals={weekly} plannedDays={plannedDays} /></div></ScreenContainer>
 }
