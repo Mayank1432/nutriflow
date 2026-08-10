@@ -26,6 +26,7 @@
   --page: #f5f7fb;
   --app-background: #f9fbff;
   --app-max-width: 430px;
+  --app-frame-max-width: 430px;
   --control-background: #ffffff;
   --hero-text: #ffffff;
   --radius-small: 10px;
@@ -90,7 +91,7 @@ button:focus-visible {
 }
 
 .app-frame {
-  width: min(100%, var(--app-max-width));
+  width: min(100%, var(--app-frame-max-width));
   min-height: 100vh;
   margin: 0 auto;
   background: var(--app-background);
@@ -1481,7 +1482,7 @@ body {
 }
 
 .app-frame {
-  max-width: var(--app-max-width);
+  max-width: var(--app-frame-max-width);
   box-shadow: 0 0 34px rgba(16, 27, 34, 0.1);
 }
 
@@ -2051,7 +2052,7 @@ body {
 }
 
 .bottom-nav {
-  width: min(100%, var(--app-max-width));
+  width: min(100%, var(--app-frame-max-width));
 }
 
 .today-dashboard {
@@ -3469,7 +3470,7 @@ body {
   left: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  width: min(100%, var(--app-max-width));
+  width: min(100%, var(--app-frame-max-width));
   min-height: 76px;
   margin: 0 auto;
   padding: 8px 10px max(8px, env(safe-area-inset-bottom));
@@ -4094,14 +4095,6 @@ button:focus-visible { outline-color: var(--focus); }
 .analytics-shell { display: grid; gap: 16px; min-width: 0; }
 .analytics-icon { width: 20px; height: 20px; flex: 0 0 auto; }
 .analytics-back { display: inline-flex; width: fit-content; min-height: 44px; align-items: center; gap: 8px; padding: 8px 2px; border: 0; background: transparent; color: var(--blue); font-weight: 850; cursor: pointer; }
-.analytics-range { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 0; margin: 0; padding: 3px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-strong); }
-.analytics-range label { min-width: 0; }
-.analytics-range input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.analytics-range span { display: flex; min-height: 44px; align-items: center; justify-content: center; gap: 6px; border-radius: calc(var(--radius) - 4px); color: var(--muted); font-weight: 850; cursor: pointer; }
-.analytics-range b { visibility: hidden; }
-.analytics-range input:checked + span { background: var(--blue); color: white; }
-.analytics-range input:checked + span b { visibility: visible; }
-.analytics-range input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
 .analytics-range-context { display: grid; gap: 4px; color: var(--muted); font-size: 12px; }
 .analytics-range-context span { display: flex; align-items: center; gap: 7px; }
 .analytics-range-context strong { color: var(--ink); font-weight: 750; }
@@ -4163,7 +4156,7 @@ button:focus-visible { outline-color: var(--focus); }
 @media (prefers-reduced-motion: reduce) { .analytics-shell * { transition: none !important; } }
 @media (max-width: 340px) { .analytics-summary-card { padding: 10px; } .analytics-primary-metrics div { padding: 8px; } }
 @media (min-width: 760px) { .analytics-summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .analytics-chart-shell { min-height: 240px; } }
-@media (min-width: 900px) { :root { --app-max-width: 960px; } .analytics-shell { gap: 20px; } }
+@media (min-width: 900px) { .analytics-shell { gap: 20px; } }
 
 @media (min-width: 600px) {
   .ingredient-details dl {
@@ -4187,4 +4180,15 @@ button:focus-visible { outline-color: var(--focus); }
   overflow-y: auto;
   border-radius: 0;
   background: var(--app-background);
+}
+
+@media (min-width: 600px) {
+  :root {
+    --app-frame-max-width: 1280px;
+  }
+
+  .app-frame,
+  .bottom-nav {
+    width: min(calc(100% - 32px), var(--app-frame-max-width));
+  }
 }
