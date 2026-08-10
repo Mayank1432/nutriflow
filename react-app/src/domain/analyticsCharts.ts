@@ -9,6 +9,12 @@ export type CaloriesTrendPoint = { id: string; date: string; dayIndex: number; d
 export type CaloriesTrendSummary = { points: CaloriesTrendPoint[]; trackedDays: number; status: AnalyticsHistoryStatus; averageCalories: number | null; minimumCalories: number | null; maximumCalories: number | null; latestPoint: CaloriesTrendPoint | null }
 export type SpendTrendPoint = { id: string; date: string; dayIndex: number; dateLabel: string; shortDateLabel: string; spendAmount: number }
 export type SpendTrendSummary = { points: SpendTrendPoint[]; trackedDays: number; status: AnalyticsHistoryStatus; averageSpend: number | null; minimumSpend: number | null; maximumSpend: number | null; latestPoint: SpendTrendPoint | null }
+export type MacroMetric = 'protein' | 'carbs' | 'fat' | 'fibre'
+export type MacroTrendDay = { id: string; date: string; dayIndex: number; dateLabel: string; shortDateLabel: string; proteinGrams: number | null; carbsGrams: number | null; fatGrams: number | null; fibreGrams: number | null }
+export type MacroMetricSummary = { trackedDays: number; status: AnalyticsHistoryStatus; average: number | null; minimum: number | null; maximum: number | null; latestValue: number | null; latestDate: string | null }
+export type MacroTrendsSummary = { days: MacroTrendDay[]; status: AnalyticsHistoryStatus; protein: MacroMetricSummary; carbs: MacroMetricSummary; fat: MacroMetricSummary; fibre: MacroMetricSummary }
+export type MacroSplitDatum = { metric: MacroMetric; label: string; grams: number; percentage: number | null }
+export type MacroSplitSummary = { status: 'empty' | 'zero' | 'available'; completeDays: number; totalGrams: number; data: MacroSplitDatum[] }
 export type ContinuousMetricDomainOptions = { values: readonly number[]; referenceValues?: readonly number[]; minimumSpan: number; paddingRatio: number; roundingStep: number; floorAtZero: boolean }
 export type HistoricalSummary = {
   range: { days: 7; startDateKey: string; endDateKey: string }
@@ -97,6 +103,38 @@ export const summarizeSpendTrend = (points: readonly SpendTrendPoint[]): SpendTr
 }
 
 export const getValidCostGoal = (goal: { enabled: boolean; value: number | null }): number | null => goal.enabled && goal.value !== null && Number.isFinite(goal.value) && goal.value > 0 ? goal.value : null
+
+const validMacro = (value: number): number | null => Number.isFinite(value) && value >= 0 ? value : null
+
+export const buildMacroTrendDays = (savedDays: readonly HistoryDay[], endDate = new Date()): MacroTrendDay[] => {
+  const range = buildLocalDateRange(endDate)
+  const indexByDate = new Map(range.map((date, index) => [date, index]))
+  return selectHistoryRange(savedDays, endDate).map((point) => {
+    const parsed = parseStrictLocalDateKey(point.date)!
+    return { id: point.id, date: point.date, dayIndex: indexByDate.get(point.date)!, dateLabel: parsed.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }), shortDateLabel: parsed.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), proteinGrams: validMacro(point.totals.protein), carbsGrams: validMacro(point.totals.carbs), fatGrams: validMacro(point.totals.fat), fibreGrams: validMacro(point.totals.fibre) }
+  })
+}
+
+const summarizeMacroMetric = (days: readonly MacroTrendDay[], key: 'proteinGrams' | 'carbsGrams' | 'fatGrams' | 'fibreGrams'): MacroMetricSummary => {
+  const observations = days.flatMap((day) => day[key] === null ? [] : [{ value: day[key], date: day.dateLabel, dayIndex: day.dayIndex }]).sort((a, b) => a.dayIndex - b.dayIndex)
+  const values = observations.map((item) => item.value)
+  return { trackedDays: values.length, status: values.length === 0 ? 'empty' : values.length === 1 ? 'insufficient' : 'available', average: values.length ? values.reduce((a, b) => a + b, 0) / values.length : null, minimum: values.length ? Math.min(...values) : null, maximum: values.length ? Math.max(...values) : null, latestValue: observations.at(-1)?.value ?? null, latestDate: observations.at(-1)?.date ?? null }
+}
+
+export const summarizeMacroTrends = (days: readonly MacroTrendDay[]): MacroTrendsSummary => {
+  const copy = [...days].sort((a, b) => a.dayIndex - b.dayIndex)
+  const protein = summarizeMacroMetric(copy, 'proteinGrams'); const carbs = summarizeMacroMetric(copy, 'carbsGrams'); const fat = summarizeMacroMetric(copy, 'fatGrams'); const fibre = summarizeMacroMetric(copy, 'fibreGrams')
+  const series = [protein, carbs, fat, fibre]
+  return { days: copy, status: series.some((item) => item.status === 'available') ? 'available' : series.some((item) => item.status === 'insufficient') ? 'insufficient' : 'empty', protein, carbs, fat, fibre }
+}
+
+export const summarizeMacroSplit = (days: readonly MacroTrendDay[]): MacroSplitSummary => {
+  const complete = days.filter((day) => day.proteinGrams !== null && day.carbsGrams !== null && day.fatGrams !== null && day.fibreGrams !== null)
+  const totals = { protein: complete.reduce((sum, day) => sum + day.proteinGrams!, 0), carbs: complete.reduce((sum, day) => sum + day.carbsGrams!, 0), fat: complete.reduce((sum, day) => sum + day.fatGrams!, 0), fibre: complete.reduce((sum, day) => sum + day.fibreGrams!, 0) }
+  const totalGrams = totals.protein + totals.carbs + totals.fat + totals.fibre
+  const data: MacroSplitDatum[] = ([['protein', 'Protein'], ['carbs', 'Carbs'], ['fat', 'Fat'], ['fibre', 'Fibre']] as const).map(([metric, label]) => ({ metric, label, grams: totals[metric], percentage: totalGrams > 0 ? totals[metric] / totalGrams * 100 : null }))
+  return { status: complete.length === 0 ? 'empty' : totalGrams === 0 ? 'zero' : 'available', completeDays: complete.length, totalGrams, data }
+}
 
 export const buildContinuousMetricDomain = ({ values, referenceValues = [], minimumSpan, paddingRatio, roundingStep, floorAtZero }: ContinuousMetricDomainOptions): [number, number] => {
   const finiteValues = [...values, ...referenceValues].filter(Number.isFinite)

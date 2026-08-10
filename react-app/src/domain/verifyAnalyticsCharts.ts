@@ -1,6 +1,6 @@
 import { CURRENT_REACT_SCHEMA_VERSION } from '../storage/storageKeys'
 import type { FoodEntry, HistoryDay, MealsByName } from '../storage/storageTypes'
-import { buildCaloriesTrendPoints, buildContinuousMetricDomain, buildLocalDateRange, buildProteinTrendPoints, buildSpendTrendPoints, countPointsMeetingCurrentGoal, getValidCaloriesGoal, getValidCostGoal, getValidProteinGoal, selectHistoryRange, summarizeCaloriesTrend, summarizeHistoryRange, summarizeProteinTrend, summarizeSpendTrend } from './analyticsCharts'
+import { buildCaloriesTrendPoints, buildContinuousMetricDomain, buildLocalDateRange, buildMacroTrendDays, buildProteinTrendPoints, buildSpendTrendPoints, countPointsMeetingCurrentGoal, getValidCaloriesGoal, getValidCostGoal, getValidProteinGoal, selectHistoryRange, summarizeCaloriesTrend, summarizeHistoryRange, summarizeMacroSplit, summarizeMacroTrends, summarizeProteinTrend, summarizeSpendTrend } from './analyticsCharts'
 
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message) }
 const emptyMeals = (): MealsByName => ({ Breakfast: { name: 'Breakfast', entries: [] }, Lunch: { name: 'Lunch', entries: [] }, Dinner: { name: 'Dinner', entries: [] }, Snacks: { name: 'Snacks', entries: [] } })
@@ -219,5 +219,70 @@ const flatZeroSpendDomain = spendDomain([0, 0]); assert(flatZeroSpendDomain[0] =
 assert(spendDomain([200, 250], [600])[1] >= 600 && spendDomain([200, 250], [50])[0] <= 50, 'Cost goals above and below actual Spend extend domain')
 const invalidCostGoal = getValidCostGoal({ enabled: true, value: Infinity })
 assert(JSON.stringify(spendDomain([200, 250], invalidCostGoal === null ? [] : [invalidCostGoal])) === JSON.stringify(spendDomain([200, 250])), 'invalid Cost goal does not change Spend domain')
+
+const macroDay = (id: string, date: string, savedAt: string, values: { protein: number; carbs: number; fat: number; fibre: number }, quantity = 1, basisType: 'per_100' | 'per_unit' = 'per_unit'): HistoryDay => {
+  const result = day(id, date, savedAt)
+  const entry = result.meals.Breakfast.entries[0]
+  entry.quantity = quantity; entry.basisType = basisType; entry.nutritionSnapshot = { ...values, calories: 100 }
+  result.totals = { protein: 999, calories: 999, carbs: 999, fat: 999, fibre: 999, cost: 999 }
+  return result
+}
+const macroSource = [
+  macroDay('outside-macro', '2025-12-26', '2025-12-26T08:00:00Z', { protein: 1, carbs: 2, fat: 3, fibre: 4 }),
+  macroDay('macro-start', '2025-12-27', '2025-12-27T08:00:00Z', { protein: 10, carbs: 20, fat: 5, fibre: 4 }),
+  macroDay('macro-middle', '2025-12-30', '2025-12-30T08:00:00Z', { protein: 20, carbs: 40, fat: 10, fibre: 8 }),
+  macroDay('macro-old', '2026-01-01', '2026-01-01T08:00:00Z', { protein: 30, carbs: 60, fat: 15, fibre: 12 }),
+  macroDay('macro-new', '2026-01-01', '2026-01-01T09:00:00Z', { protein: 40, carbs: 80, fat: 20, fibre: 16 }),
+  macroDay('macro-end', '2026-01-02', '2026-01-02T08:00:00Z', { protein: 50, carbs: 100, fat: 25, fibre: 20 }),
+  macroDay('macro-future', '2026-01-03', '2026-01-03T08:00:00Z', { protein: 60, carbs: 120, fat: 30, fibre: 24 }),
+  macroDay('macro-bad', 'bad-date', '2026-01-02T08:00:00Z', { protein: 70, carbs: 140, fat: 35, fibre: 28 }),
+]
+const macroSourceBefore = structuredClone(macroSource)
+const macroDays = buildMacroTrendDays(macroSource, end)
+assert(macroDays.map((item) => item.date).join(',') === '2025-12-27,2025-12-30,2026-01-01,2026-01-02' && macroDays.map((item) => item.dayIndex).join(',') === '0,3,5,6', 'Macro days are canonical chronological seven-day rows with calendar gaps')
+assert(macroDays[2].id === 'macro-new' && macroDays[2].proteinGrams === 40 && !macroDays.some((item) => ['outside-macro', 'macro-future', 'macro-bad'].includes(item.id)), 'Macro days use canonical survivor snapshot authority and range filtering')
+assert(JSON.stringify(macroSource) === JSON.stringify(macroSourceBefore), 'Macro day construction does not mutate History')
+const macroPerUnit = buildMacroTrendDays([macroDay('macro-unit', '2026-01-02', '2026-01-02T09:00:00Z', { protein: 10, carbs: 20, fat: 4, fibre: 2 }, 2)], end)[0]
+const macroPer100 = buildMacroTrendDays([macroDay('macro-100', '2026-01-02', '2026-01-02T09:00:00Z', { protein: 10, carbs: 20, fat: 4, fibre: 2 }, 50, 'per_100')], end)[0]
+assert(macroPerUnit.proteinGrams === 20 && macroPerUnit.carbsGrams === 40 && macroPer100.proteinGrams === 5 && macroPer100.fibreGrams === 1, 'Macro days respect shared per-unit and per-100 snapshot scaling')
+const macroEmptyDay = day('macro-zero', '2026-01-02', '2026-01-02T10:00:00Z', false)
+const zeroMacro = buildMacroTrendDays([macroEmptyDay], end)[0]
+assert([zeroMacro.proteinGrams, zeroMacro.carbsGrams, zeroMacro.fatGrams, zeroMacro.fibreGrams].every((value) => value === 0), 'saved-empty macro day contains four valid zeros')
+for (const metric of ['protein', 'carbs', 'fat', 'fibre'] as const) for (const invalid of [-1, NaN, Infinity, -Infinity]) {
+  const invalidDay = macroDay(`invalid-${metric}-${String(invalid)}`, '2026-01-02', '2026-01-02T11:00:00Z', { protein: 10, carbs: 20, fat: 5, fibre: 4 })
+  invalidDay.meals.Breakfast.entries[0].nutritionSnapshot[metric] = invalid
+  const prepared = buildMacroTrendDays([invalidDay], end)[0]
+  const key = `${metric}Grams` as const
+  assert(prepared[key] === null, `${metric} invalid value becomes null rather than zero`)
+  assert((['proteinGrams', 'carbsGrams', 'fatGrams', 'fibreGrams'] as const).filter((item) => item !== key).every((item) => prepared[item] !== null), `${metric} invalidity preserves other macro values`)
+}
+const macroEmpty = summarizeMacroTrends([])
+const macroOne = summarizeMacroTrends([macroDays[0]])
+const macroAvailable = summarizeMacroTrends(macroDays)
+const macroZeroAvailable = summarizeMacroTrends(buildMacroTrendDays([day('macro-zero-one', '2026-01-01', '2026-01-01T08:00:00Z', false), macroEmptyDay], end))
+assert(macroEmpty.status === 'empty' && macroEmpty.protein.status === 'empty', 'Macro Trends empty when no valid observations exist')
+assert(macroOne.status === 'insufficient' && macroOne.protein.status === 'insufficient', 'Macro Trends insufficient when no series has two observations')
+assert(macroAvailable.status === 'available' && macroAvailable.protein.status === 'available' && macroAvailable.protein.trackedDays === 4 && macroAvailable.protein.average === 30 && macroAvailable.protein.minimum === 10 && macroAvailable.protein.maximum === 50 && macroAvailable.protein.latestValue === 50 && macroAvailable.protein.latestDate === macroDays.at(-1)!.dateLabel, 'Macro per-series summary and overall availability are derived from valid values')
+assert(macroZeroAvailable.status === 'available' && macroZeroAvailable.protein.average === 0, 'two saved-zero macro observations produce available flat-zero series')
+const partialDays = structuredClone(macroDays.slice(0, 2)); partialDays[1].fatGrams = null
+const partialSummary = summarizeMacroTrends(partialDays)
+assert(partialSummary.status === 'available' && partialSummary.fat.status === 'insufficient' && partialSummary.protein.status === 'available', 'partial invalidity affects only its metric summary')
+assert(JSON.stringify(macroAvailable.days.map((item) => ({ date: item.date, protein: item.proteinGrams }))) === JSON.stringify(buildProteinTrendPoints(macroSource, end).map((item) => ({ date: item.date, protein: item.proteinGrams }))), 'Macro Protein observations match standalone Protein trend authority')
+const macroDomainValues = macroDays.flatMap((item) => [item.proteinGrams, item.carbsGrams, item.fatGrams, item.fibreGrams]).filter((value): value is number => value !== null)
+const macroDomainValuesBefore = [...macroDomainValues]
+const macroDomain = buildContinuousMetricDomain({ values: macroDomainValues, referenceValues: [], minimumSpan: 50, paddingRatio: .1, roundingStep: 10, floorAtZero: true })
+assert(Number.isFinite(macroDomain[0]) && Number.isFinite(macroDomain[1]) && macroDomain[0] >= 0 && macroDomain[0] < macroDomain[1] && macroDomainValues.every((value) => value >= macroDomain[0] && value <= macroDomain[1]), 'shared Macro domain is finite ordered non-negative and contains all values')
+assert(JSON.stringify(macroDomainValues) === JSON.stringify(macroDomainValuesBefore), 'shared Macro domain does not mutate inputs')
+const zeroMacroDomain = buildContinuousMetricDomain({ values: [0, 0], referenceValues: [], minimumSpan: 50, paddingRatio: .1, roundingStep: 10, floorAtZero: true }); assert(zeroMacroDomain[0] === 0 && zeroMacroDomain[1] === 50, 'flat-zero Macro domain remains visible')
+const splitInputBefore = structuredClone(macroDays)
+const macroSplit = summarizeMacroSplit(macroDays)
+assert(macroSplit.status === 'available' && macroSplit.completeDays === 4 && macroSplit.totalGrams === 468, 'Macro Split aggregates complete saved days and exact total grams')
+assert(Math.abs(macroSplit.data.reduce((sum, item) => sum + item.percentage!, 0) - 100) < 1e-9 && macroSplit.data.every((item) => Number.isFinite(item.percentage)), 'available Macro Split percentages are finite and sum approximately 100')
+assert(JSON.stringify(macroDays) === JSON.stringify(splitInputBefore), 'Macro Split does not mutate input')
+assert(summarizeMacroSplit(partialDays).completeDays === 1, 'partial-invalid day is excluded entirely from Macro Split')
+const singleSplit = summarizeMacroSplit([macroDays[0]]); assert(singleSplit.status === 'available' && singleSplit.completeDays === 1, 'one complete positive day makes Macro Split available')
+const zeroSplit = summarizeMacroSplit([zeroMacro]); assert(zeroSplit.status === 'zero' && zeroSplit.totalGrams === 0 && zeroSplit.data.every((item) => item.percentage === null), 'all-zero complete data produces zero state without invalid percentages')
+assert(summarizeMacroSplit(partialDays.map((item) => ({ ...item, fatGrams: null }))).status === 'empty', 'no complete macro days produces empty split')
+const proteinOnlySplit = summarizeMacroSplit([{ ...zeroMacro, proteinGrams: 10 }]); assert(proteinOnlySplit.status === 'available' && proteinOnlySplit.data.find((item) => item.metric === 'protein')?.percentage === 100 && proteinOnlySplit.data.filter((item) => item.metric !== 'protein').every((item) => item.percentage === 0), 'one non-zero macro produces 100 percent with finite zero-percent peers')
 assert(CURRENT_REACT_SCHEMA_VERSION === 1, 'schema remains current')
 console.log('Analytics charts verification passed.')

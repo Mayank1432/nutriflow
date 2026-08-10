@@ -2,7 +2,7 @@ import ScreenContainer from '../components/ScreenContainer'
 import { useOpenDrawer } from '../components/DrawerContext'
 import AnalyticsIcon from '../components/analytics/AnalyticsIcon'
 import { AnalyticsChartShell, AnalyticsGoals, AnalyticsSummaryGrid, AnalyticsTotalsSection } from '../components/analytics/AnalyticsSections'
-import { buildCaloriesTrendPoints, buildLocalDateRange, buildProteinTrendPoints, buildSpendTrendPoints, getValidCaloriesGoal, getValidCostGoal, getValidProteinGoal, summarizeCaloriesTrend, summarizeHistoryRange, summarizeProteinTrend, summarizeSpendTrend } from '../domain/analyticsCharts'
+import { buildCaloriesTrendPoints, buildLocalDateRange, buildMacroTrendDays, buildProteinTrendPoints, buildSpendTrendPoints, getValidCaloriesGoal, getValidCostGoal, getValidProteinGoal, summarizeCaloriesTrend, summarizeHistoryRange, summarizeMacroSplit, summarizeMacroTrends, summarizeProteinTrend, summarizeSpendTrend } from '../domain/analyticsCharts'
 import { calculateMealsTotals, parseStrictLocalDateKey } from '../domain/historyIntegrity'
 import { readReactHistoryStore, readReactSettingsStore, readReactTodayStore, readReactWeeklyStore, type DailyTotals } from '../storage'
 
@@ -19,6 +19,9 @@ export default function AnalyticsScreen() {
   const proteinTrend = summarizeProteinTrend(buildProteinTrendPoints(savedDays, now))
   const caloriesTrend = summarizeCaloriesTrend(buildCaloriesTrendPoints(savedDays, now))
   const spendTrend = summarizeSpendTrend(buildSpendTrendPoints(savedDays, now))
+  const macroTrendDays = buildMacroTrendDays(savedDays, now)
+  const macroTrends = summarizeMacroTrends(macroTrendDays)
+  const macroSplit = summarizeMacroSplit(macroTrendDays)
   const proteinGoal = getValidProteinGoal(settings.macroGoals.protein)
   const caloriesGoal = getValidCaloriesGoal(settings.macroGoals.calories)
   const costGoal = getValidCostGoal(settings.macroGoals.cost)
@@ -27,5 +30,5 @@ export default function AnalyticsScreen() {
   const weekly = weeklyStore.days.reduce((totals, day) => add(totals, calculateMealsTotals(day.meals)), zero())
   const plannedDays = weeklyStore.days.filter((day) => Object.values(day.meals).some((meal) => meal.entries.length)).length
   const rangeLabel = `${displayDate(summary.range.startDateKey)} – ${displayDate(summary.range.endDateKey)}`
-  return <ScreenContainer title="Analytics" subtitle="Understand your nutrition and spending over time."><div className="analytics-shell"><button className="analytics-back" type="button" onClick={openDrawer}><AnalyticsIcon name="back" />Back to More</button><div className="analytics-range-context" aria-live="polite" aria-atomic="true"><span><AnalyticsIcon name="calendar" />{rangeLabel}</span><strong>{summary.trackedDays} saved History {summary.trackedDays === 1 ? 'day' : 'days'} in this range.</strong></div><AnalyticsSummaryGrid summary={summary} /><AnalyticsChartShell trend={proteinTrend} proteinGoal={proteinGoal} caloriesTrend={caloriesTrend} caloriesGoal={caloriesGoal} spendTrend={spendTrend} costGoal={costGoal} tickLabels={trendTickLabels} rangeStart={displayDate(summary.range.startDateKey)} rangeEnd={displayDate(summary.range.endDateKey)} /><AnalyticsTotalsSection kind="live" totals={today} /><AnalyticsGoals goals={settings.macroGoals} totals={today} /><AnalyticsTotalsSection kind="planned" totals={weekly} plannedDays={plannedDays} /></div></ScreenContainer>
+  return <ScreenContainer title="Analytics" subtitle="Understand your nutrition and spending over time."><div className="analytics-shell"><button className="analytics-back" type="button" onClick={openDrawer}><AnalyticsIcon name="back" />Back to More</button><div className="analytics-range-context" aria-live="polite" aria-atomic="true"><span><AnalyticsIcon name="calendar" />{rangeLabel}</span><strong>{summary.trackedDays} saved History {summary.trackedDays === 1 ? 'day' : 'days'} in this range.</strong></div><AnalyticsSummaryGrid summary={summary} /><AnalyticsChartShell trend={proteinTrend} proteinGoal={proteinGoal} caloriesTrend={caloriesTrend} caloriesGoal={caloriesGoal} spendTrend={spendTrend} costGoal={costGoal} macroTrends={macroTrends} macroSplit={macroSplit} tickLabels={trendTickLabels} rangeStart={displayDate(summary.range.startDateKey)} rangeEnd={displayDate(summary.range.endDateKey)} /><AnalyticsTotalsSection kind="live" totals={today} /><AnalyticsGoals goals={settings.macroGoals} totals={today} /><AnalyticsTotalsSection kind="planned" totals={weekly} plannedDays={plannedDays} /></div></ScreenContainer>
 }
