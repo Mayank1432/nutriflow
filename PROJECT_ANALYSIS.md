@@ -2,248 +2,32 @@
 
 ## Current Architecture
 
-NutriFlow is a static client-side PWA built with HTML, CSS, and Vanilla JavaScript. It has no backend, database, runtime framework, or runtime build step.
+NutriFlow currently has two deliberately separated application tracks:
+
+1. The **root Vanilla HTML/CSS/JavaScript PWA**, which remains the live production application.
+2. The **React/Vite/TypeScript application under `react-app/`**, which is the staged replacement and has completed the locked roadmap through Sprint 7.
+
+The React application is no longer a mock-only shell, but it has **not** replaced production.
+
+## Live Vanilla Production
 
 Runtime files:
 
-- `index.html`: application markup, inline styles, state, calculations, rendering, and actions.
-- `js/storage.js`: global `KEYS` and `LS` persistence helpers.
-- `manifest.json`: external web app manifest.
-- `sw.js`: external service worker and app-shell cache.
-- `icons/`: install icons.
-
-The app is hosted through GitHub Pages and can be installed as a PWA. The current service-worker cache is `nutriflow-v0.6.0`.
-
-Playwright and npm are development-only QA tooling. They do not change the plain HTML/CSS/JavaScript runtime.
-
-A staged React/Vite/TypeScript migration is planned in `ROADMAP.md` and accepted in ADR-005. Its first isolated shell prototype exists in `react-app/`; no production feature or data port has started.
-
-### React Prototype Boundary
-
-- `react-app/` is a separate Vite, React, and TypeScript package.
-- It provides static Today, Weekly, History, and More shell screens.
-- It uses local React state only for active navigation and the selected weekly day.
-- It does not read or write Local Storage.
-- It does not register a service worker or provide production PWA behavior.
-- It does not replace or modify the root vanilla production app.
-- The root PWA cache remains `nutriflow-v0.6.0`.
-
-### React Mock Domain Layer
-
-`react-app/src/domain/` contains the first compatibility-focused TypeScript port:
-
-- `types.ts`: permissive types for ingredients, dishes, meals, Today, Weekly Plan, and legacy History shapes.
-- `nutrition.ts`: pure calculations for per-100, per-unit, meal, day, planner, History, conversion, and display rounding behavior.
-- `fixtures.ts`: hardcoded mock library and compatibility fixtures only.
-- `verifyNutrition.ts`: lightweight expected-total, finite-output, and non-mutation checks.
-
-Library lookup is supplied explicitly to calculation functions as mock data. The domain layer has no browser API access, does not reference production storage keys, and does not read, migrate, normalize, or save real data. A real storage adapter and production integration remain deferred.
-
-### React Today Prototype
-
-The prototype Today screen now renders its hardcoded `meals -> dishes -> ingredients` fixture through local React state and the mock domain helpers.
-
-- Daily and meal totals recalculate after mock additions, quantity changes, and removals.
-- Protein and calorie progress plus carbs, fat, fibre, and cost summaries are calculated from state.
-- Breakfast, Lunch, Dinner, and Snacks remain expanded and support empty states.
-- Quick Add uses an accessible bottom sheet and entered-quantity nutrition values.
-- Quantity edits scale the item's base nutrition by ratio through pure, non-mutating helpers.
-- Refreshing restores the original fixture.
-
-This screen still has no Local Storage, export/import, History, Weekly Planner, library linking, migration, or production PWA integration.
-
-### React Weekly Planner Prototype
-
-The Weekly screen uses a seven-day mock fixture and local React state.
-
-- Only one selected day is shown at a time.
-- Week totals and planned-day averages use the pure nutrition helpers.
-- Selected-day summaries cover protein, calories, carbs, fat, fibre, and cost.
-- Today meal and ingredient components are reused in read-only mode.
-- Empty days and empty meals have explicit states.
-- Copy Day deep-clones the selected mock day into another day.
-- Clear Day requires confirmation and replaces the selected day with an empty mock shape.
-- Refreshing restores the original mock week.
-
-The Weekly prototype has no Local Storage, planner editing forms, Quick Add, Today transfer, History logging, export/import, migration, or production PWA integration.
-
-### React History Prototype
-
-The History screen uses five newest-first mock saved days and local selection state.
-
-- Summary averages are calculated from mock saved-day meal data.
-- Saved-day cards show date, day name, protein, calories, cost, fibre, meal count, and a mock status badge.
-- The newest day is selected by default.
-- Selected details show all six nutrition totals and Breakfast, Lunch, Dinner, and Snacks in read-only mode.
-- Empty meals use explicit placeholders, and an empty-history component covers a future zero-day state.
-- Refreshing resets selection to the newest mock day.
-
-History has no Local Storage, production schema, migration, real saved data, editing, deletion, restore, copy, search, filters, export/import, or production PWA integration.
-
-## User-Facing Areas
-
-- Today: summary metrics, meal tabs, meal ingredient rows, Quick Add, custom ingredients, and the editable Today Ingredients table.
-- Weekly Plan: ingredients grouped by date and meal, with copy-to-Today behavior.
-- History: recent day summaries and editable previous-day details.
-- Cost / Protein Table.
-- Backup export and import.
-
-Today is meal-first. Users do not see dish controls or a fixed Daily Staples section. Today Ingredients supports quantity and nutrition edits, meal reassignment, and source-path deletion.
-
-Old History entries may still display legacy Staples or dish-style information so historical data remains readable.
-
-## State and Data Flow
-
-The app uses global mutable state and direct state-to-DOM rendering:
-
-1. `js/storage.js` defines `KEYS` and `LS`.
-2. `index.html` loads persisted state from Local Storage.
-3. Startup compatibility logic fills missing meal buckets and normalizes active legacy staples.
-4. Render functions derive totals and replace targeted DOM sections.
-5. Inline event handlers call global action functions.
-6. Actions update state, persist through `autosave()`, and rerender the affected UI.
-
-Important state:
-
-- `todayData`: the active day, including `dateKey` and meals.
-- `custom`: custom ingredient library.
-- `weekPlan`: planned ingredients by date and meal.
-- `log`: History entries.
-- `staples`: retained compatibility state that is normally empty after normalization.
-
-## Today Data Model
-
-The internal Today model remains:
-
-```text
-meals -> dishes -> ingredients
-```
-
-This shape is preserved for existing Local Storage data, backups, Weekly-to-Today copying, and History compatibility. The Today UI flattens ingredients for display and hides the dish concept from users. New Quick Add, custom, and copied ingredients are placed into an internal default dish.
-
-Library-backed ingredient example:
-
-```js
-{
-  libId: 'chicken',
-  name: 'Chicken breast (raw)',
-  qty: 100,
-  unit: 'g'
-}
-```
-
-Editable snapshot example:
-
-```js
-{
-  name: 'Tofu',
-  qty: 100,
-  unit: 'g',
-  pr100: 12,
-  kc100: 100,
-  carb100: 2,
-  fat100: 6,
-  fibre100: 1,
-  pp100: 40
-}
-```
-
-Library and custom-library nutrition values are stored per unit. Editable `pr100`, `kc100`, and related fields mean per 100 g/ml, but per piece when `unit === 'piece'`.
-
-Quantity-only edits preserve `libId`. Direct edits to name, unit, macros, or cost use `ensureEditableIngredient()` to detach a library-backed ingredient into an editable snapshot.
-
-## Legacy Staples
-
-Today no longer presents Daily Staples as a separate feature. On startup and import, active legacy staples are converted into normal Breakfast ingredients, deduplicated when necessary, and removed from active staple state.
-
-The compatibility flow:
-
-- Accepts legacy staples from the top-level `staples` state or `todayData.staples`.
-- Converts per-unit nutrition into the normal editable field representation.
-- Preserves `libId` and piece-unit values where present.
-- Adds converted items to an internal Breakfast dish.
-- Clears active staple storage so repeated reloads do not duplicate ingredients.
-
-`calcDayLog()` continues to understand old History entries containing staples. History cleanup is deferred because old data must remain readable.
-
-## Nutrition Calculations
-
-- `qtyFactor(unit, qty)`: uses `qty / 100` for g/ml and `qty` for pieces.
-- `calcFromP100(item)`: calculates editable/ad hoc ingredient totals.
-- `calcFromPerUnit(food, qty)`: calculates library/custom-library totals.
-- `calcIngr(ingredient)`: selects the correct calculation path.
-- `calcDish(dish)`, `calcMealToday(mealId)`, and `calcAll()`: aggregate Today totals.
-- `calcPlanDay(dateKey)`: aggregates Weekly Plan totals through shared ingredient logic.
-- `calcDayLog(entry)`: aggregates current and legacy History shapes.
-- `pu2p100()` and `p100pu()`: convert g/ml display values while leaving piece values per piece.
-
-Weekly-to-Today copy deep-clones ingredient objects and does not recalculate, convert units, remove `libId`, or mutate the source plan.
-
-## Persistence
-
-`KEYS` and `LS` live in `js/storage.js` and must not be moved back into `index.html`.
-
-Current Local Storage keys:
-
-- `pptd_v5`: Today data.
-- `ppc_v5`: custom ingredient library.
-- `ppwk_v5`: Weekly Plan.
-- `ppst_v5`: legacy staple compatibility state.
-- `ppl_v5`: History log.
-
-Export/import preserves the current backup structure, including `custom`, `log`, `weekPlan`, `staples`, and `todayData`. Storage keys and exported field names must remain compatible unless a separately approved migration is provided.
-
-Normal autosave persists working state. History logging is intentionally separated from ordinary autosave and Weekly-to-Today copy. Daily rollover and explicit History actions control History snapshots.
-
-## PWA
-
-- `manifest.json` provides install metadata.
-- `sw.js` caches the app shell for offline reload.
-- `tests/pwa-smoke.spec.js` verifies hosted or local service-worker registration, cache creation, and offline reload.
-- The current cache name is `nutriflow-v0.6.0`.
-
-When `index.html` changes, the cache name in `sw.js` and the expected name in the PWA smoke test must be updated together. `skipWaiting()` and `clients.claim()` are not part of the approved update strategy.
-
-## Current Compatibility Risks
-
-- Import validation and versioned migration are limited.
-- Old History entries can retain legacy Staples and dish-style display.
-- The internal dish shape remains coupled to compatibility code even though Today hides it.
-- Autosave debounce can lose a very recent change if the page closes immediately.
-- Custom ingredient ID generation should be made collision-safe.
-- Weekly custom-item fields and meal selection need further review.
-- User/imported string escaping is not uniform across every inline handler context.
-
-## Planned Direction
-
-The current vanilla PWA remains the production base. The migration will run in parallel and port modules incrementally; it is not a big-bang rewrite. The React version must not replace the live app until compatibility, PWA, hosted, and installed-Android checks pass.
-
-### Target Architecture
-
-- React, Vite, and TypeScript with simple, pragmatic types.
-- No state-management library unless component state and focused context become insufficient.
-- A Local Storage adapter that preserves safe JSON parsing and serialization behavior.
-- Framework-independent nutrition calculation utilities.
-- Legacy normalization and migration helpers.
-- Export/import compatibility helpers.
-- Mobile-first, app-like UI with bottom navigation for core sections.
-- Light mode by default, with dark mode added later.
-- A Vite-compatible PWA strategy handled during the final deployment task.
-- Optional Capacitor Android packaging only after the React PWA is stable.
-
-The React UI must preserve the current meal-first Today experience: no user-facing dish UI, no fixed Daily Staples section, normal ingredients across meals, smooth Quick Add, and Today Ingredients edit, delete, and move behavior.
-
-The isolated React prototype now has shared UI patterns for headers, notices, summaries, macros, progress, statuses, meal and ingredient cards, empty states, and four-tab navigation. Real storage integration, schema handling, and migration remain deferred.
-
-### React Storage Schema Lock
-
-`STORAGE_SCHEMA.md` locks the v1 contract for future React storage work. React will start with fresh `nutriflow_react_*_v1` keys; the existing vanilla keys are protected and must not be read, written, reset, or removed by React helpers. Old vanilla Local Storage migration and old backup import are deferred.
-
-This lock is documentation-only. The React prototype still has no real Local Storage integration until Task 1.2 or later, and the root vanilla production app remains unchanged.
-
-### Protected Vanilla Data
-
-The current vanilla production app continues to use these protected keys:
+- `index.html` — production application markup, styles, state, calculations, rendering, and actions
+- `js/storage.js` — Vanilla Local Storage keys and helper
+- `manifest.json` — production manifest
+- `sw.js` — production service worker and app-shell cache
+- `icons/` — install icons
+
+The production app:
+
+- is hosted through GitHub Pages
+- is installable as a PWA
+- has no runtime framework or backend
+- continues to use the protected Vanilla Local Storage keys
+- currently uses service-worker cache `nutriflow-v0.6.0`
+
+Protected Vanilla keys:
 
 - `pptd_v5`
 - `ppc_v5`
@@ -251,32 +35,188 @@ The current vanilla production app continues to use these protected keys:
 - `ppst_v5`
 - `ppl_v5`
 
-The fresh React storage adapter must not read or write these keys. Old vanilla migration, old backup import, and compatibility with those formats are deferred unless a separately approved task reopens them. Every active React slice begins at `schemaVersion: 1`; later schema changes require an approved, versioned migration and rollback plan.
+Stable rollback release:
 
-### Module Porting Order
+- **NutriFlow Vanilla v1.0.0**
+- tag: `vanilla-v1.0.0`
+- snapshot: `ddd67751c682fac7a3a4ac2db9c1fa62468427b7`
 
-1. Types and storage adapter.
-2. Nutrition calculation utilities.
-3. Normalization helpers.
-4. Export/import helpers.
-5. Today and Quick Add.
-6. Weekly Planner.
-7. History.
-8. Analytics and theme system.
-9. PWA deployment.
+Publishing that release did not change production runtime source.
 
-Each phase should be testable before the next feature area is ported.
+## React Application Boundary
 
-### Deployment and Rollback
+`react-app/` is a separate Vite + React + TypeScript application.
 
-The React prototype may live in a dedicated subfolder such as `react-app/` in a later task. Development should use small feature branches while `main` and the deployed vanilla app stay stable.
+Current boundaries:
 
-GitHub Pages will serve this project from `/nutriflow/`, so Vite will need the correct base configuration. The current service worker remains unchanged during planning and feature porting. The React PWA strategy and production switch belong to the final deploy task.
+- React uses its own versioned `nutriflow_react_*_v1` Local Storage namespace.
+- React storage helpers must not read, write, reset, inspect, or remove protected Vanilla keys.
+- React schema version remains `1`.
+- React has not replaced the root GitHub Pages production deployment.
+- Production PWA/service-worker work remains deferred to the locked production-readiness sprint.
 
-Before switching production:
+## React Storage Architecture
 
-- Verify existing Local Storage and old backup compatibility.
-- Run local and hosted PWA checks.
-- Check the installed Android PWA.
-- Confirm offline behavior and update behavior.
-- Keep the vanilla release available as the rollback path until React parity is confirmed.
+The locked schema lives in `STORAGE_SCHEMA.md`.
+
+The active React storage family contains approved v1 slices for meta, settings, ingredients, Today, Weekly, History, and Daily Staples. Shopping and Pantry names are reserved for their future roadmap sprint and are not active empty stores.
+
+`react-app/src/storage/` provides:
+
+- storage-key constants
+- TypeScript storage types
+- fresh default factories
+- safe JSON helpers
+- schema/shape validation
+- guarded Local Storage access
+- store-specific read/write wrappers
+- React-only reset allowlisting
+
+The helpers never use `localStorage.clear()`.
+
+## Persisted React Screens and Flows
+
+### Today
+
+Today reads and writes the React Today store and integrates with current History, Ingredients, Daily Staples, and Settings data.
+
+Implemented behavior includes:
+
+- persistent food additions
+- persistent quantity/edit/remove flows in approved areas
+- Quick Add V2
+- custom/Ingredient Library entry flows
+- Daily Staples integration
+- Today-to-History saving
+- History-aware Today rollover/integrity handling
+- Today dashboard metrics and progress
+- seven-day protein preview
+- meal selection and meal-card presentation
+
+### Weekly
+
+Weekly reads/writes the React Weekly store.
+
+Implemented behavior includes persisted plan changes, selected-day workflow, Copy Day, Clear Day, summaries, meal detail, and Option C visual redesign.
+
+### History
+
+History reads real React History storage rather than relying on a purely mock saved-day list.
+
+Implemented behavior includes the real saved-day list/detail, the read-only-first History workflow, History integrity utilities, and Option C History presentation.
+
+Catch-up editing and delete/restore safety remain in the locked future History sprint.
+
+### Ingredient Library and Daily Staples
+
+The React app includes reusable Ingredient Library definitions, custom ingredients, per-100 and per-unit semantics, default quantities/meals where approved, cost/macro data, and Daily Staples definitions with Today integration.
+
+Food entries in Today, Weekly, and History remain snapshots. Later Ingredient Library edits must not silently mutate existing saved entries.
+
+### Settings
+
+Settings uses the persisted React Settings store.
+
+Current implemented settings include light/dark theme, light mode default, Macro Goals, Option C Settings styling, and account/data placeholders where later roadmap work is not yet implemented.
+
+## React App Shell and Navigation
+
+The final mobile structure is implemented around the Option C mobile header, hamburger drawer, and bottom navigation.
+
+Bottom navigation:
+
+- Today
+- Weekly
+- History
+- Analytics
+
+The drawer carries tool/settings/account/data destinations so Today does not become one oversized tools page.
+
+Option C – Colorful & Friendly is the locked whole-app direction, not a Today-only theme.
+
+## Quick Add V2
+
+Implemented Quick Add behavior includes dedicated full-screen flow, search, category chips, recommended/all-food presentation, quantity selection before add, snapshot creation, **Add more**, **Add & return**, success feedback, and Option C styling.
+
+## Analytics Architecture
+
+Sprint 7 selected **Recharts**.
+
+Analytics uses real saved React History and a seven-day local-calendar context.
+
+Implemented areas:
+
+- Analytics screen shell
+- Protein Trend
+- Calories Trend
+- Spend Trend
+- Macro Trends
+- Macro Split
+- Meal-wise Protein Split
+
+The obsolete 30-day view was removed before the later Sprint 7 trend work.
+
+### Trend Data Rules
+
+Business calculations are performed in domain helpers rather than by Recharts.
+
+Missing/invalid saved data is handled conservatively:
+
+- missing dates are not fabricated as zero observations
+- incomplete values are not silently converted to zero
+- insufficient-data states are explicit
+- current goals are current references, not rewritten as historical goals
+
+### Macro Split
+
+Macro Split uses a 100% horizontal stacked bar and has an independent selector for `7-day Average` or eligible saved dates. Average mode uses complete eligible saved days; selected-date mode uses exact saved-day values.
+
+### Meal-wise Protein Split
+
+Meal-wise Protein Split uses a donut chart across Breakfast, Lunch, Dinner, and Snacks. It has its own independent selector for `7-day Average` or eligible saved dates. Incomplete selected-day values do not produce a misleading partial donut.
+
+### Task 7.8
+
+Sprint 7 Task 7.8 — Weight Trend, If Added Later — was intentionally skipped with explicit user approval. It is optional and is not outstanding required Sprint 7 work.
+
+## Domain and Verification Layer
+
+`react-app/src/domain/` contains framework-independent or narrowly UI-supporting logic including nutrition calculations, core types, History integrity logic, Analytics data derivation, Today protein-preview derivation, and focused verifier scripts.
+
+Current focused verifier files include:
+
+- `verifyNutrition.ts`
+- `verifyHistoryIntegrity.ts`
+- `verifyAnalyticsCharts.ts`
+- `verifyTodayProteinPreview.ts`
+
+Some older files retain prototype-era names such as `historyMock.ts` or `weeklyMock.ts`; those filenames do not mean the current React application is still globally mock-only.
+
+## Release and Milestone State
+
+Stable live-production release:
+
+- `vanilla-v1.0.0` — Vanilla production rollback
+
+React development milestone tags:
+
+- `v0.6.0` — Sprint 5: Quick Add V2
+- `v0.7.0` — Sprint 6: Option C App UI Redesign
+- `v0.8.0` — Sprint 7: Analytics + Chart Library
+
+The React tags are milestone markers, not production-deployment claims.
+
+## Current Compatibility and Safety Rules
+
+- Root Vanilla production remains untouched during ordinary React feature work.
+- React must not use protected Vanilla keys.
+- React schema changes require separately approved migration planning.
+- Export/import and production replacement remain future locked-roadmap work.
+- No production replacement occurs before the production-readiness sprint.
+- The Vanilla v1.0.0 release remains an explicit rollback path until React production replacement is safely complete.
+
+## Remaining Locked Direction
+
+The next roadmap work begins with Sprint 8 — Shopping List + Pantry Stock. Later locked work covers History catch-up editing, React export/import and production launch, App Info / Help, account/cloud architecture, login/cloud sync, food image upload and barcode scanner, multi-user sharing, Google Play Store release, and final stabilization.
+
+See `ROADMAP.md` for the exact locked order and task names.

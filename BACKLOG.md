@@ -1,31 +1,41 @@
 # NutriFlow Backlog
 
-## Compatibility and Cleanup
+`ROADMAP.md` is the source of truth for approved sprint/task order. This file tracks remaining work and non-roadmap follow-ups without changing that order.
 
-- [ ] Make History display meal-only while preserving compatibility with old entries that contain legacy Staples or dish-style data.
-- [ ] Add stronger import validation and versioned normalization for old backup shapes.
-- [ ] Make custom ingredient ID generation collision-safe.
-- [ ] Review autosave durability when the page closes during the debounce window.
+## Current Locked Roadmap Position
 
-## Framework Migration
+Completed through:
 
-- [ ] Framework Migration Planning.
-- [ ] React/Vite App Shell Prototype.
-- [ ] Port Storage + Calculations while preserving current Local Storage keys and backups.
-- [ ] Port Today + Quick Add.
-- [ ] Port Weekly + History with legacy History compatibility.
-- [ ] Analytics + Theme System.
-- [ ] PWA Deploy + QA for the migrated app.
+- Sprint 7 — Analytics + Chart Library
+- Task 7.8 — Weight Trend, If Added Later — intentionally skipped by explicit user approval
 
-## Product and Design
+Next locked sprint:
 
-- [ ] Option C colorful and friendly redesign.
-- [ ] Continue mobile and app-like navigation polish.
-- [ ] Add analytics and dashboard views.
-- [ ] Add a light/dark theme system and editable targets.
-- [ ] Improve Quick Add with search, categories, and quantity prompts.
-- [ ] Add reusable recipes or meal templates.
+- Sprint 8 — Shopping List + Pantry Stock
 
-## Future Platform
+## Remaining Locked Roadmap Work
 
-- [ ] Consider a Capacitor or native Android wrapper only after the React/Vite PWA is stable.
+- [ ] Sprint 8 — Shopping List + Pantry Stock
+- [ ] Sprint 9 — History Catch-Up Editing
+- [ ] Sprint 10 — Backup, Export/Import + Local Production Readiness
+- [ ] Sprint 11 — Accounts + Cloud Architecture
+- [ ] Sprint 12 — Login + Cloud Sync
+- [ ] Sprint 13 — Food Image Upload + Barcode Scanner
+- [ ] Sprint 14 — Multi-User Sharing
+- [ ] Sprint 15 — Google Play Store Release
+- [ ] Sprint 16 — Final Stabilization + Project Completion
+
+See `ROADMAP.md` for the locked tasks inside each sprint.
+
+## Compatibility and Cleanup Follow-Ups
+
+These are existing technical follow-ups, not permission to insert new roadmap tasks:
+
+- [ ] Preserve readability of old Vanilla History entries that contain legacy Staples or dish-style data.
+- [ ] Add stronger import validation/versioned normalization when the approved React export/import work is reached.
+- [ ] Keep custom ingredient ID generation collision-safe.
+- [ ] Continue reviewing data durability and recovery behavior as production-readiness work approaches.
+
+## Unscheduled Existing Product Idea
+
+- Reusable recipes or meal templates remain an existing idea only. It is **not** an approved roadmap task and must not be implemented unless the roadmap is explicitly changed by the user.

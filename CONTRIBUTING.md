@@ -1,93 +1,132 @@
 # Contributing to NutriFlow
 
-Keep changes focused, preserve existing user data, and treat the repository documentation as the source of truth.
+Keep changes focused, preserve user data, follow the locked roadmap, and treat repository documentation plus explicit Main Chat approvals as the project source of truth.
 
-## Project Operating Model
+## Project Roles
 
-- User: Product Owner.
-- Main Chat: Project Manager and Release Manager.
-- Sprint Chat: Engineer, System Designer, and Engineering Reviewer.
-- Codex: Implementer only.
-- QA Chat: Tester only.
-- Repository docs: source of truth for current behavior, architecture, plans, and process.
+- **User / Product Owner:** owns final product decisions and all Git writes.
+- **Main Chat:** coordinates roadmap/task scope, accepts review/QA results, and guides release/Git batches.
+- **Sprint Chat:** engineering analysis, system design, implementation review, and technical recommendations.
+- **UI/UX Chat:** UI-heavy design/spec review when required.
+- **Data Compatibility Chat:** storage/data-sensitive review when required.
+- **Codex:** implements only approved scope.
+- **QA Chat:** tests only; it must not modify production/source code.
 
-## Implementation Workflow
+## Locked Roadmap Rule
 
-1. Main Chat plans the task.
-2. Main Chat gives an analysis prompt to Sprint Chat.
-3. Sprint Chat provides an analysis report.
-4. Main Chat reviews the analysis and approves the implementation direction.
-5. Sprint Chat generates the Codex prompt only.
-6. The user sends Sprint Chat's prompt directly to Codex.
-7. Codex implements and reports to Sprint Chat.
-8. Sprint Chat performs engineering review and reports to Main Chat.
-9. Main Chat reviews the engineering report and gives the QA prompt.
-10. QA Chat tests and reports `PASS`, `PASS WITH LIMITATIONS`, or `FAIL`.
-11. Main Chat reviews QA.
-12. Main Chat helps commit.
-13. Main Chat helps merge.
-14. Main Chat helps perform the post-merge live check.
-15. Main Chat closes the task only after the live check passes.
+After roadmap approval, do not introduce, remove, rename, reorder, merge, or skip sprint/tasks unless the user explicitly approves that roadmap change. Every implementation must map to the locked roadmap. Option C is the locked whole-app UI direction.
 
-## Codex Prompt Review Rule
+## Standard Task Workflow
 
-Main Chat does not review every Codex prompt by default. Main Chat reviews a prompt when the task is high risk, scope is unclear, storage or schema changes are involved, deployment strategy changes, or the user asks for review.
+1. Main Chat confirms the task number and goal.
+2. UI/UX Chat reviews if UI-heavy.
+3. Data Compatibility Chat reviews if storage/data-sensitive.
+4. Sprint Chat performs engineering analysis.
+5. Main Chat approves the implementation direction.
+6. Sprint Chat prepares the Codex prompt.
+7. Codex implements on the approved branch.
+8. Sprint Chat performs implementation review.
+9. QA Chat performs focused QA.
+10. Main Chat accepts the QA verdict.
+11. The user performs the approved Git batches.
+12. Main Chat closes the task only after post-merge verification succeeds.
 
-## Approval Authority
+## Git Ownership
 
-Only Main Chat and the user approve:
+The **user owns Git writes**, including staging, commit, merge, push, branch deletion, cleanup, tags, and GitHub Releases.
 
-- Task scope.
-- Implementation direction.
-- Sending work to QA.
-- QA result acceptance and QA approval.
-- Commits.
-- Merges.
-- Task completion.
+Codex must not stage, commit, merge, push, delete branches, clean the repository, create tags, or publish releases unless the user explicitly changes that rule. Codex may create/switch the approved implementation branch when the task prompt allows it. QA must not modify source.
 
-Sprint Chat may say: "Ready to send to Main Chat for final review and QA prompt."
+## Three Git Batches
 
-Sprint Chat must not approve commits or merges, declare a task complete, or approve QA. Codex must not commit unless explicitly instructed, merge, or approve anything. QA Chat must not change code, approve commits or merges, or declare a task complete.
+After QA is accepted, Git work is performed exactly one batch at a time, with complete raw output reviewed before the next batch.
+
+### Batch 1 — Validate / Stage / Commit
+Validate the intended diff, stage only approved files, and create the feature/fix/docs commit.
+
+### Batch 2 — Merge + Verify
+Merge into `main` with a safe non-fast-forward merge and run post-merge verification.
+
+Use a meaningful Conventional Commit-style merge message rather than the default `Merge branch ...` message.
+
+```bash
+git merge --no-ff --no-edit -m "feat: add meal-wise protein split" feature/meal-protein-split
+```
+
+Suitable prefixes include `feat:`, `fix:`, `docs:`, and `refactor:`.
+
+### Batch 3 — Push / Delete / Cleanup
+Push the verified result, delete the completed branch where approved, and confirm the final clean repository state.
+
+## Sprint Tags
+
+After a sprint is fully completed and its final merged state is verified/pushed, create the sprint's annotated Git tag **before starting the next sprint**.
+
+Current milestone examples:
+
+- `v0.6.0` — Sprint 5
+- `v0.7.0` — Sprint 6
+- `v0.8.0` — Sprint 7
+
+The stable Vanilla production release uses a separate tag namespace:
+
+- `vanilla-v1.0.0`
+
+Sprint milestone tags must not be described as React production releases before the React production-launch sprint.
 
 ## Engineering Rules
 
-- Read the relevant implementation and data flow before editing.
-- Keep changes minimal and within the approved scope.
-- Preserve Local Storage keys, stored shapes, and backup compatibility.
-- Preserve existing behavior outside the task.
-- Reuse existing helpers and avoid duplicate logic.
-- Do not add frameworks, dependencies, or build steps without approval.
-- Keep the current runtime usable as plain HTML, CSS, and JavaScript until the planned migration begins.
+- Read relevant implementation/data flow before editing.
+- Keep changes within approved scope.
+- Preserve behavior outside the task.
+- Reuse existing helpers.
+- Do not add dependencies outside approved tasks.
+- Keep the root Vanilla production app stable until the locked production-replacement sprint.
+- React code must not use protected Vanilla Local Storage keys.
+- Do not change storage schemas without explicit approval and migration planning.
 
-## Local Storage Compatibility
+## Local Storage Safety
 
-Changes must preserve existing saved data. Take particular care with ingredient, weekly plan, History, custom-library, and legacy staple shapes. Any approved shape change needs an explicit compatibility or migration path.
+Protected Vanilla keys:
 
-## Testing Changes
+- `pptd_v5`
+- `ppc_v5`
+- `ppwk_v5`
+- `ppst_v5`
+- `ppl_v5`
 
-Test in proportion to the change. Runtime work should cover affected workflows, persistence, calculations, import/export, and PWA behavior where relevant. Documentation-only work needs documentation checks and confirmation that runtime files were untouched.
+React storage uses the locked separate `nutriflow_react_*_v1` family. React reset behavior must remain allowlist-only. Never use `localStorage.clear()`.
+
+## Testing
+
+Test in proportion to the change. Runtime changes should cover affected workflow, persistence, calculations, integrity, responsiveness/accessibility, and PWA behavior where relevant.
+
+Documentation-only work should verify only intended documentation files changed, no runtime/package/PWA source changed, `git diff --check` passes, and stale statements are reviewed rather than blindly replaced.
 
 ## Documentation Checkpoint
 
-Every task must check whether these files need updates:
+Every task checks whether these files need updates:
 
-- `CHANGELOG.md`: what shipped.
-- `BACKLOG.md`: remaining work and follow-ups.
-- `ROADMAP.md`: long-term task order changes.
-- `DECISIONS.md`: architecture or product decisions.
-- `PROJECT_ANALYSIS.md`: current architecture or state.
-- `README.md`: user-facing features or setup.
-- `CONTRIBUTING.md`: workflow or process.
+- `README.md`
+- `CHANGELOG.md`
+- `BACKLOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `PROJECT_ANALYSIS.md`
+- `CONTRIBUTING.md`
+- `STORAGE_SCHEMA.md` when storage contract/status is affected
 
-Only update documents affected by the task.
+Only update documents relevant to the task.
 
 ## Runtime App and PWA Rule
 
-- If `index.html` changes, bump the cache name in `sw.js`.
-- Update the expected cache name in `tests/pwa-smoke.spec.js`.
-- Do not add `skipWaiting()` or `clients.claim()` unless separately approved.
-- Documentation-only changes do not require a PWA cache bump.
+For the live Vanilla app:
 
-## Change Report
+- if `index.html` changes, review/bump the cache name in `sw.js`
+- update the expected cache name in `tests/pwa-smoke.spec.js`
+- do not add `skipWaiting()` or `clients.claim()` without separate approval
+- documentation-only changes do not require a PWA cache bump
 
-Implementation reports should identify what changed, why, files and functions affected, checks performed, known limitations, and Git status. Codex must not commit unless the approved prompt or Main Chat explicitly instructs it to do so.
+## Change Reports
+
+Implementation/review reports should identify branch/baseline, files changed, purpose, checks, protected paths, limitations, final Git status, and explicit confirmation of prohibited Git actions not performed.
