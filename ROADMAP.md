@@ -1,122 +1,339 @@
-# NutriFlow Roadmap
+# NutriFlow Locked Roadmap
 
-NutriFlow is moving from a stable Vanilla JavaScript PWA toward a staged React/Vite architecture. The current app remains the production base until migration tasks are planned, implemented, reviewed, and live-checked.
+This file mirrors the approved NutriFlow roadmap and records current completion status. The sprint/task names and order are locked. No sprint or task may be introduced, removed, renamed, merged, reordered, or skipped without explicit user approval.
 
-## Current Direction
+## Locked Product Direction
 
-- Mobile-first, app-like experience.
-- Option C colorful and friendly design.
-- Light mode by default with optional dark mode.
-- Faster Quick Add and meal-first daily workflows.
-- Analytics, graphs, settings, and editable targets.
-- Installable and offline-capable GitHub Pages PWA.
-- Compatibility with current Local Storage and backup data.
+- Option C – Colorful & Friendly applies to the whole app.
+- Light mode is default.
+- Dark mode belongs in Settings.
+- The UI name is **Macro Goals**.
+- Bottom navigation: Today, Weekly, History, Analytics.
+- Hamburger drawer contains tools, account/data, backup/restore, settings, and separate flows.
+- Quick Add V2 supports **Add more** and **Add & return**.
+- Today dashboard must show Protein, Calories, Cost, 7-Day Protein Trend, and Meals.
+- Cloud/accounts come only after the local React app is stable.
+- Barcode/image work comes only after storage, ingredients, and account/cloud direction are stable.
+- Play Store work comes only after production app, accounts/cloud, camera/media, and sharing are stable.
+- React does not replace the live Vanilla app until the production-replacement sprint is completed.
 
-## Sprint 1 Storage Foundation
+## Status Legend
 
-### Task 1.1 – React Storage Schema Lock
+- ✅ Completed
+- ⏭️ Skipped by explicit user approval
+- ⬜ Not started / remaining locked roadmap work
 
-Document the approved v1 React storage contract in `STORAGE_SCHEMA.md`. This task is documentation-only: the React prototype remains mock-only, protected vanilla keys remain untouched, and no storage behavior is implemented.
+## Sprint 1 — React Real Data Foundation ✅
 
-### Task 1.2 – React Storage Helpers
+**Goal:** Make the React app use real persistent data safely.
 
-Implement the React-only storage constants, helpers, defaults, version checks, and reset allowlist defined by the Task 1.1 contract. Task 1.2 follows the schema lock and must not use protected vanilla keys unless separately approved.
+### Task 1.1 — React Storage Schema Lock ✅
+Define the fresh React storage schema: Today, Weekly, History, custom ingredients, Settings, Theme, Macro Goals, export/import direction, storage keys, defaults, and reset behavior.
 
-## Sprint 5 Forward Plan
+### Task 1.2 — React Storage Helpers ✅
+Implement storage keys, schema versioning, safe JSON parse/write, fallback defaults, reset helpers, protected-key safety, and no root production changes.
 
-### Task 5 - Documentation Refresh + Workflow Rules
+### Task 1.3 — Persist Today ✅
+Persist Today additions, quantity edits, removals, and approved UI state across refresh.
 
-Refresh current-state documentation and record the Main Chat, Sprint Chat, Codex, and QA Chat workflow and authority boundaries.
+### Task 1.4 — Persist Weekly ✅
+Persist Weekly Planner data, selected day where approved, Copy Day, and Clear Day.
 
-### Task 6 - Framework Migration Planning
+### Task 1.5 — Basic Real History ✅
+Use real saved days with Save Today to History, saved-day list, saved-day detail, and read-only-first behavior.
 
-Document a parallel, incremental React, Vite, and TypeScript migration. This task is planning only; it does not create the React app or change the deployed vanilla PWA.
+## Sprint 2 — Core Data + Ingredient Workflows ✅
 
-The plan covers data and backup compatibility, module order, GitHub Pages deployment, PWA behavior, testing, and rollback.
+**Goal:** Fix data/workflow problems before the big Option C UI.
 
-### Task 7 - React/Vite App Shell Prototype
+### Task 2.1 — Core Data & Editing Fixes ✅
+Includes focus-safe editing, Today deletion integrity, zero-value cleanup, History integrity where applicable, cleaner meal handling, and reduced unnecessary dish dependency.
 
-Create a minimal mobile-first prototype without porting the full application:
+### Task 2.2 — Ingredient Library Foundation ✅
+Includes custom ingredients, per-100 and per-unit support, default quantity/meal, category, cost, protein, kcal, carbs, fat, and fibre. Piece-unit semantics must remain correct.
 
-- Today, Weekly, History, and Analytics navigation.
-- Tool access for Quick Add, Today Ingredients, custom ingredients, cost comparison, backup, and settings.
-- Light and dark theme foundations.
-- PWA and GitHub Pages foundations.
+### Task 2.3 — Daily Staples Management ✅
+Includes add/edit/delete staple, default quantity, default meal, and Today workflow integration.
 
-The prototype must not present Daily Staples or dishes as user-facing Today concepts.
+## Sprint 3 — Settings, Theme + Macro Goals ✅
 
-Current implementation: an isolated shell exists in `react-app/` with static placeholder content, local tab/day state, no Local Storage access, and no PWA registration. Production remains the root vanilla app.
+**Goal:** Add the control center for the final app.
 
-### Task 8 - Port Storage + Calculations
+### Task 3.1 — Settings Screen ✅
+Includes Settings, grouped sections, Theme area, Macro Goals area, and account/data placeholders where not yet implemented.
 
-Port persistence and nutrition logic before feature screens:
+### Task 3.2 — Light/Dark Theme Foundation ✅
+Includes light default, dark toggle in Settings, design tokens, and persisted theme setting.
 
-- Preserve `pptd_v5`, `ppc_v5`, `ppwk_v5`, `ppst_v5`, and `ppl_v5`.
-- Preserve backup export/import compatibility.
-- Port calculation and unit-conversion helpers.
-- Add focused calculation and storage tests.
+### Task 3.3 — Macro Goals ✅
+Editable Protein, Calories, Carbs, Fat, Fibre, and Cost/Budget goals.
 
-Current implementation: compatibility-first types and pure calculation helpers are available in `react-app/src/domain/` with mock fixtures and lightweight verification. Real Local Storage access, protected-key integration, data migration, and production feature wiring remain deferred.
+## Sprint 4 — Final App Shell + Navigation ✅
 
-### Task 9 - Port Today + Quick Add
+**Goal:** Create the real mobile app structure.
 
-Port the core daily workflow:
+### Task 4.1 — Option C Mobile Header ✅
+Option C-style header, hamburger icon, NutriFlow title/logo area, date row where needed, and approved theme access.
 
-- Summary metrics and meal-first Today view.
-- Today Ingredients editing and meal reassignment.
-- Custom ingredients.
-- Legacy staple normalization compatibility.
-- Quick Add search, categories, quantity prompt, confirmation, and smooth return to Today.
+### Task 4.2 — Hamburger Drawer ✅
+Locked sections and destinations:
 
-The internal dish model remains a compatibility concern until an approved migration replaces it.
+Main:
+- Today
+- Quick Add
+- Analytics
+- Weekly Planner
+- History
+- Shopping List
+- Pantry / Stock
 
-Current implementation: the React prototype demonstrates Today and Quick Add with mock-only state, calculated meal/day totals, quantity editing, removal, entered-quantity additions, and refresh reset. Real storage, library linking, migration, and production integration remain deferred.
+Today Tools:
+- Today Ingredients
+- Daily Staples
+- Custom Ingredient
+- Cost / Protein Table
 
-### Task 10 – React Weekly Planner Prototype
+Account & Data:
+- Sign in / Sign out
+- Account
+- Cloud Sync
+- Backup & Restore
+- Multi-user Sharing
 
-Current implementation: the React Weekly Planner prototype uses mock-only state for calculated summaries, day selection, read-only meals, deep-copy Copy Day, and confirmed Clear Day actions. Real editing, storage, Today transfer, History integration, and production behavior remain deferred.
+Settings:
+- Settings
+- Macro Goals
+- Theme
+- App Info / Help
 
-### Task 11 – React History Prototype
+### Task 4.3 — Bottom Navigation ✅
+Today, Weekly, History, Analytics.
 
-Current implementation: the React History prototype demonstrates newest-first mock saved days, calculated summary averages, selection, read-only meal details, and empty states. Real history storage, migration, editing, deletion, copying, and production integration remain deferred.
+## Sprint 5 — Quick Add V2 ✅
 
-### Future Task – Analytics + Theme System
+**Goal:** Make food entry fast, smooth, and app-like.
 
-- Light/dark themes.
-- Settings and editable nutrition/budget targets.
-- Weekly averages and protein/spend trends.
-- Macro and meal-level analysis.
+### Task 5.1 — Quick Add Library UI ✅
+Full-screen Quick Add, search, recommended foods, all-food list, category chips, and food cards/rows.
 
-### Task 12 – React Prototype Polish + Navigation Consistency
+Categories:
+- High protein
+- Low cost
+- Veg
+- Animal
+- Custom/Saved
 
-Current implementation: shared UI patterns and four-tab navigation are consistent across the isolated mock-only React prototype. Real storage and schema work remain deferred.
+### Task 5.2 — Quantity While Adding ✅
+Ask quantity before adding, show default quantity, plus/minus or input, and calculate macros/cost correctly.
 
-### Future Task - PWA Deploy + QA
+### Task 5.3 — Add More / Add & Return Flow ✅
+Add more stays in Quick Add. Add & return goes back to Today and shows the added item in the selected meal flow.
 
-- GitHub Pages deployment.
-- Correct Vite base configuration for `/nutriflow/`.
-- Manifest, service worker, and cache verification.
-- Local and hosted PWA smoke tests.
-- Android installed-PWA check.
-- Production switch and vanilla rollback verification.
-- Documentation and release notes.
+**Sprint tag:** `v0.6.0`
 
-## Documentation Rule
+## Sprint 6 — Option C App UI Redesign ✅
 
-Every task checks the documents relevant to its impact:
+**Goal:** Apply Option C – Colorful & Friendly across the whole app.
 
-- `README.md`: current features and setup.
-- `CHANGELOG.md`: shipped changes.
-- `BACKLOG.md`: remaining work and follow-ups.
-- `ROADMAP.md`: planned task order.
-- `DECISIONS.md`: major product or architecture decisions.
-- `PROJECT_ANALYSIS.md`: current architecture and state.
-- `CONTRIBUTING.md`: workflow, QA, and cache rules.
+### Task 6.1 — Today Dashboard Cards ✅
+Today’s Protein, Today’s Calories, Today’s Cost, 7-Day Protein Trend preview, and Option C styling.
 
-## Current Non-Goals
+### Task 6.2 — Protein + Calories Progress ✅
+Protein progress, Calories progress where useful, target-vs-actual, friendly progress visuals.
 
-- User accounts, cloud sync, or a backend database.
-- Multi-user sharing.
-- Barcode scanning or food-image recognition.
-- Immediate full rewrite of the working app.
-- Native wrapper work before the migrated PWA is stable.
+### Task 6.3 — Meal Selector + Meal Card Redesign ✅
+Breakfast / Lunch / Dinner / Snacks selector, selected meal card, ingredient rows, Quick Add button, Add Ingredient button.
+
+### Task 6.4 — Quick Add Visual Redesign ✅
+Option C cards, category chips, friendly rows, clean quantity UI, and confirmation/toast polish.
+
+### Task 6.5 — Weekly Visual Redesign ✅
+Option C Weekly layout, day selector, planned-day cards, weekly summary cards, copy/clear polish.
+
+### Task 6.6 — History Visual Redesign ✅
+Option C saved-day cards, selected-day detail, summary cards, and read-only History presentation unless editing is already implemented.
+
+### Task 6.7 — Settings / Account / Data Screen Styling ✅
+Settings visual polish, Macro Goals styling, Theme styling, Backup/Restore styling, and account placeholder/actual styling according to implementation status.
+
+**Sprint tag:** `v0.7.0`
+
+## Sprint 7 — Analytics + Chart Library ✅
+
+**Goal:** Build the graph screen from the agreed Option C design.
+
+### Task 7.1 — Chart Library Decision ✅
+Recharts selected after size, mobile fit, React support, and maintainability review.
+
+### Task 7.2 — Analytics Screen Shell ✅
+Analytics header, seven-day date context, summary cards, and empty states.
+
+### Task 7.3 — Protein Trend ✅
+Seven-day protein trend, current target reference, and weekly-average wording.
+
+### Task 7.4 — Calories Trend ✅
+Calories trend, target vs actual, and weekly calorie average.
+
+### Task 7.5 — Cost / Spend Trend ✅
+Daily spend trend, seven-day spend context, and budget comparison.
+
+### Task 7.6 — Macro Split Trend ✅
+Protein, carbs, fat, fibre trends plus Macro Split visualization.
+
+### Task 7.7 — Meal-wise Protein Split ✅
+Breakfast, Lunch, Dinner, and Snacks protein split. Final implementation uses a donut chart and independent saved-date / seven-day-average selection.
+
+### Task 7.8 — Weight Trend, If Added Later ⏭️
+Optional body-weight tracking and progress chart. **Intentionally skipped by explicit user approval; not outstanding required Sprint 7 work.**
+
+**Sprint tag:** `v0.8.0`
+
+## Sprint 8 — Shopping List + Pantry Stock ⬜
+
+**Goal:** Help the user track what is in stock and what needs buying.
+
+### Task 8.1 — Pantry / Stock List ⬜
+Mark items in stock, quantity in stock, low-stock indicator, used-often/staple flag.
+
+### Task 8.2 — Shopping List ⬜
+Add items manually, check off bought items, clear completed items.
+
+### Task 8.3 — Generate Shopping List ⬜
+Generate from Weekly Planner, Daily Staples, and low-stock pantry items.
+
+### Task 8.4 — Shopping Cost Estimate ⬜
+Estimated cost, protein-focused shopping view, and budget comparison if useful.
+
+### Task 8.5 — Cost / Protein Table ⬜
+Ingredient name, quantity basis/unit, protein, calories, cost, cost per gram of protein, sorting, filtering/search, correct per-100/per-unit handling, responsive layout, and light/dark support.
+
+## Sprint 9 — History Catch-Up Editing ⬜
+
+**Goal:** Allow fixing missed previous days safely.
+
+### Task 9.1 — Edit Previous Day ⬜
+Open saved day, edit quantity, add missing item, remove wrong item.
+
+### Task 9.2 — History Delete/Restore Safety ⬜
+Delete confirmation, optional undo/restore, and accidental-loss prevention.
+
+## Sprint 10 — Backup, Export/Import + Local Production Readiness ⬜
+
+**Goal:** Prepare React for safe production replacement.
+
+### Task 10.1 — React Export/Import ⬜
+Export React data, import React data, validate backup file, handle invalid backup, restore safely.
+
+### Task 10.2 — Production Replacement Plan ⬜
+Plan React root replacement, GitHub Pages, PWA cache, rollback, and old Vanilla backup handling.
+
+### Task 10.3 — React PWA Production Launch ⬜
+Replace root production with React, update PWA/service worker, verify live URL, install/offline behavior, and post-launch smoke tests.
+
+At this point, NutriFlow becomes the real local-first React PWA.
+
+### Task 10.4 — App Info / Help ⬜
+App/version info, feature overview, navigation help, Today/Quick Add/Weekly/History/Analytics guidance, backup guidance, local-first explanation, account/cloud status, PWA/offline/update guidance, privacy/data ownership, known limitations, and recovery help.
+
+## Sprint 11 — Accounts + Cloud Architecture ⬜
+
+**Goal:** Prepare login/accounts and cloud sync properly.
+
+### Task 11.1 — Backend/Auth Decision ⬜
+Choose backend approach, account model, privacy/data ownership plan, pricing/free-tier risk review.
+
+### Task 11.2 — Account Data Model ⬜
+User profile, settings, ingredients, Today, Weekly, History, pantry/shopping, Analytics data source.
+
+### Task 11.3 — Sync Strategy ⬜
+Local-first vs cloud-first, conflict handling, offline behavior, multi-device behavior.
+
+**Rule:** No login/accounts until the local React app is stable.
+
+## Sprint 12 — Login + Cloud Sync ⬜
+
+**Goal:** Make data available across devices.
+
+### Task 12.1 — Login / Account Creation ⬜
+Sign up, sign in, sign out, account state.
+
+### Task 12.2 — Cloud Sync ⬜
+Upload local data, download cloud data, sync after changes, offline queue if needed.
+
+### Task 12.3 — Multi-Device Testing ⬜
+Phone + desktop, offline/online behavior, conflict safety.
+
+## Sprint 13 — Food Image Upload + Barcode Scanner ⬜
+
+**Goal:** Add camera/media-powered food entry.
+
+### Task 13.1 — Food Image Upload ⬜
+Upload image for custom ingredient, preview, edit/remove, storage strategy based on account/cloud state.
+
+### Task 13.2 — Barcode Scanner ⬜
+Camera scanner, manual fallback, link barcode to saved food, unknown-barcode flow.
+
+### Task 13.3 — Camera Permission + Mobile Testing ⬜
+Permission handling, unsupported-browser fallback, Android testing.
+
+**Rule:** No camera/media work before storage, ingredients, and account/cloud direction are stable.
+
+## Sprint 14 — Multi-User Sharing ⬜
+
+**Goal:** Allow sharing data/plans/lists with others.
+
+### Task 14.1 — Sharing Model ⬜
+Define what can be shared, view-only vs edit access, invite flow.
+
+### Task 14.2 — Shared Weekly Plan / Shopping List ⬜
+Share Weekly Plan, share Shopping List, update visibility.
+
+### Task 14.3 — Multi-User Safety ⬜
+Permissions, conflict handling, owner controls.
+
+**Rule:** Sharing comes after accounts/cloud sync.
+
+## Sprint 15 — Google Play Store Release ⬜
+
+**Goal:** Make NutriFlow downloadable from Google Play Store.
+
+### Task 15.1 — Android Packaging Decision ⬜
+Choose packaging route, PWA/TWA/native wrapper decision, icon/splash review.
+
+### Task 15.2 — Play Store Assets ⬜
+App name, screenshots, description, privacy policy, store listing.
+
+### Task 15.3 — Play Store QA ⬜
+Install, login/cloud, camera/barcode, offline/PWA, release-candidate testing.
+
+### Task 15.4 — Publish ⬜
+Internal testing, closed/open testing if needed, production release.
+
+**Rule:** Play Store comes after the app is stable and privacy/data behavior is clear.
+
+## Sprint 16 — Final Stabilization + Project Completion ⬜
+
+**Goal:** Finish NutriFlow properly.
+
+### Task 16.1 — Full Regression QA ⬜
+Test Today, Weekly, History, Quick Add, Analytics, Shopping List, Pantry/Stock, Settings, Macro Goals, Backup/Restore, Accounts, Cloud Sync, Barcode, Image Upload, Sharing, and Export/Import.
+
+### Task 16.2 — Performance + Mobile Polish ⬜
+Loading speed, layout stability, installability, offline behavior, data recovery, mobile touch behavior, desktop responsive checks.
+
+### Task 16.3 — Final Docs + Version Tag ⬜
+README, changelog, roadmap final status, release tag, known limitations, final project summary.
+
+## Release / Tag State
+
+Stable live-production rollback release:
+
+- `vanilla-v1.0.0` — NutriFlow Vanilla v1.0.0
+
+React sprint milestone tags:
+
+- `v0.6.0` — Sprint 5
+- `v0.7.0` — Sprint 6
+- `v0.8.0` — Sprint 7
+
+After each future sprint is fully completed, create its annotated sprint tag before starting the next sprint.

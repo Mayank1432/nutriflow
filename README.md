@@ -1,53 +1,119 @@
 # NutriFlow
 
-NutriFlow is a lightweight, browser-based app for tracking daily protein, nutrition, and food cost. It runs entirely in the browser, stores data in Local Storage, and requires no account, backend, or runtime build step.
+NutriFlow is a nutrition, protein, meal-planning, cost, and analytics application being migrated in stages from a stable Vanilla JavaScript PWA to a React/Vite/TypeScript PWA.
 
-## Features
+## Production Status
 
-- Meal-first Today view for breakfast, lunch, dinner, and snacks.
-- Daily protein, calories, macros, fibre, and cost tracking.
-- Built-in and custom ingredient libraries.
-- Editable Today Ingredients table with quantity, nutrition, cost, meal reassignment, and delete controls.
-- Weekly ingredient planning with Weekly-to-Today copy.
-- Last-30-days History with editable previous days.
-- Cost-per-gram-of-protein comparison.
-- JSON backup export and import.
-- Installable PWA with an offline app shell.
+The **live production application is still the root Vanilla HTML/CSS/JavaScript PWA** served through GitHub Pages.
 
-Today does not expose dishes or a fixed Daily Staples section. The internal `meals -> dishes -> ingredients` structure remains for data compatibility, and legacy Today staples are normalized into normal Breakfast ingredients.
+Production runtime:
 
-## Stack
-
-- HTML5 and CSS3
-- Vanilla JavaScript
+- `index.html`
+- `js/storage.js`
+- `manifest.json`
+- `sw.js`
+- `icons/`
 - Browser Local Storage
-- External `manifest.json` and `sw.js`
-- Playwright for development-only PWA smoke testing
+- No runtime framework or backend
 
-The production runtime app has no backend, framework, or build step. An isolated React/Vite prototype now lives in `react-app/`; it is not the production app.
+The stable rollback release is:
+
+- Release: **NutriFlow Vanilla v1.0.0**
+- Tag: `vanilla-v1.0.0`
+- Snapshot: `ddd67751c682fac7a3a4ac2db9c1fa62468427b7`
+- Current Vanilla service-worker cache: `nutriflow-v0.6.0`
+
+The React application has **not** replaced production yet.
+
+## React Migration Status
+
+The active React application lives under `react-app/` and uses Vite, React, TypeScript, and a separate React-only Local Storage schema.
+
+Completed React work through Sprint 7 includes:
+
+- React-only v1 storage schema and safe storage helpers
+- Persistent Today data
+- Persistent Weekly Planner data
+- Real saved History
+- Ingredient Library
+- Daily Staples
+- Settings
+- Light/Dark Theme Foundation
+- Macro Goals
+- Option C mobile header
+- Hamburger drawer
+- Bottom navigation
+- Quick Add V2 with quantity selection
+- Add more / Add & return flow
+- Option C whole-app visual redesign work
+- Today dashboard cards and progress
+- Weekly and History visual redesigns
+- Analytics powered by saved React History
+- Recharts-based Protein, Calories, Spend, Macro, and Meal-wise Protein visualizations
+
+React storage is intentionally isolated from the protected Vanilla keys. React must not read, write, reset, or remove:
+
+- `pptd_v5`
+- `ppc_v5`
+- `ppwk_v5`
+- `ppst_v5`
+- `ppl_v5`
+
+See `STORAGE_SCHEMA.md` for the locked React v1 storage contract.
+
+## Current Navigation
+
+Bottom navigation is reserved for the main frequent screens:
+
+- Today
+- Weekly
+- History
+- Analytics
+
+The hamburger drawer provides broader navigation and tool flows, including Quick Add, Today tools, Settings, and future roadmap destinations.
+
+Option C – Colorful & Friendly is the locked visual direction for the whole React app. Light mode is the default; dark mode is controlled through Settings.
+
+## Current Analytics
+
+Sprint 7 selected **Recharts** as the chart library.
+
+The implemented Analytics screen uses a seven-day local-calendar History context and includes:
+
+- Protein Trend
+- Calories Trend
+- Spend Trend
+- Macro Trends
+- Macro Split
+- Meal-wise Protein Split
+
+Macro Split and Meal-wise Protein Split each have an independent selector for the seven-day average or an eligible saved date.
+
+Sprint 7 Task 7.8 — Weight Trend, If Added Later — was intentionally skipped with explicit user approval and is not outstanding required Sprint 7 work.
 
 ## Repository
 
 ```text
 nutriflow/
-|-- index.html              # Runtime application
-|-- js/storage.js           # Local Storage keys and helper
-|-- manifest.json           # PWA manifest
-|-- sw.js                   # Service worker and app-shell cache
-|-- icons/                  # Install icons
-|-- tests/                  # Playwright PWA smoke test
-|-- react-app/              # Isolated React/Vite/TypeScript prototype
-|-- README.md               # User and developer overview
-|-- CONTRIBUTING.md         # Workflow and contribution rules
-|-- PROJECT_ANALYSIS.md     # Current technical architecture
-|-- BACKLOG.md              # Pending work
-|-- ROADMAP.md              # Planned task sequence
-`-- DECISIONS.md            # Architecture decisions
+|-- index.html                       # Live Vanilla production application
+|-- js/storage.js                    # Vanilla Local Storage helper
+|-- manifest.json                    # Vanilla PWA manifest
+|-- sw.js                            # Vanilla service worker
+|-- icons/                           # Production install icons
+|-- tests/                           # Vanilla PWA smoke tests
+|-- react-app/                       # Staged React/Vite/TypeScript application
+|   `-- src/storage/                 # React-only v1 storage helpers
+|-- STORAGE_SCHEMA.md                # Locked React storage contract
+|-- README.md                        # Project overview
+|-- CONTRIBUTING.md                  # Workflow and contribution rules
+|-- PROJECT_ANALYSIS.md              # Current technical architecture
+|-- BACKLOG.md                       # Outstanding work / follow-ups
+|-- ROADMAP.md                       # Locked sprint/task sequence
+|-- CHANGELOG.md                     # Project change history
+`-- DECISIONS.md                     # Architecture decisions
 ```
 
-## Run Locally
-
-The page can be opened directly for basic use. Serve the repository over HTTP to test service-worker and install behavior:
+## Run the Vanilla Production App Locally
 
 ```bash
 python -m http.server 4173
@@ -55,25 +121,7 @@ python -m http.server 4173
 
 Then open `http://127.0.0.1:4173/`.
 
-The hosted app is deployed through GitHub Pages.
-
-## React Prototype
-
-The production vanilla app remains at the repository root. `react-app/` is a separate prototype package with static placeholder data, local navigation state, and no Local Storage or service-worker integration.
-
-The prototype includes compatibility-first TypeScript data types, pure nutrition helpers, and hardcoded mock fixtures in `react-app/src/domain/`. These helpers do not read production data or connect to browser storage.
-
-The React Today prototype uses mock state to demonstrate calculated daily and meal totals, quantity editing, removal, and a Quick Add bottom sheet. Quick Add nutrition values apply to the entered quantity. All changes reset when the page refreshes.
-
-The React Weekly Planner prototype also uses mock-only state. It provides calculated week/day summaries, a seven-day selector, read-only meal details, and local Copy Day/Clear Day actions. Weekly changes reset on refresh and do not transfer to Today or History.
-
-The React History prototype is mock-only and read-only. It shows newest-first saved-day cards, calculated averages, selected-day nutrition, and read-only meals. Selection resets to the newest mock day on refresh; editing, deletion, copying, and real saved data are not connected.
-
-The React prototype now shares consistent headers, notices, summaries, macro displays, statuses, empty states, and four-tab navigation. This polish remains mock-only and does not connect to production storage.
-
-The future React storage contract is locked in `STORAGE_SCHEMA.md`. Task 1.1 only documents the schema; real Local Storage helpers and screen persistence are deferred to Sprint 1 Task 1.2 – React Storage Helpers. The React prototype continues to use mock data, and the root vanilla production app remains unchanged.
-
-Install and run it independently:
+## Run the React App Locally
 
 ```bash
 cd react-app
@@ -81,41 +129,48 @@ npm install
 npm run dev
 ```
 
-Create a production build of the prototype:
+Build and primary verification:
 
 ```bash
 npm run build
-```
-
-Run the lightweight mock nutrition verification:
-
-```bash
 npm run verify:nutrition
 ```
 
-Generated `react-app/dist/` output and `node_modules/` are ignored.
+Additional focused verification utilities exist in `react-app/src/domain/` for History integrity, Analytics charts, and Today protein-preview behavior.
 
-## PWA Smoke Test
-
-Install development dependencies and Playwright Chromium once:
+## Vanilla PWA Smoke Test
 
 ```bash
 npm install
 npx playwright install chromium
 ```
 
-Run against the local server from another PowerShell terminal:
+Local:
 
 ```powershell
 $env:PWA_BASE_URL="http://127.0.0.1:4173/"
 npm run test:pwa
 ```
 
-Run against GitHub Pages:
+Hosted:
 
 ```powershell
 $env:PWA_BASE_URL="https://mayank1432.github.io/nutriflow/"
 npm run test:pwa
 ```
 
-See `ROADMAP.md` for planned migration and product work. Detailed current internals live in `PROJECT_ANALYSIS.md`.
+## Tags and Releases
+
+Stable production rollback release:
+
+- `vanilla-v1.0.0` — NutriFlow Vanilla v1.0.0
+
+React sprint milestone tags:
+
+- `v0.6.0` — Sprint 5: Quick Add V2
+- `v0.7.0` — Sprint 6: Option C App UI Redesign
+- `v0.8.0` — Sprint 7: Analytics + Chart Library
+
+These React sprint tags are development milestones. They do **not** mean the React app is already deployed as production.
+
+See `ROADMAP.md` for the locked remaining sequence and `PROJECT_ANALYSIS.md` for the current architecture.

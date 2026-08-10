@@ -6,6 +6,19 @@ This document is the canonical lock for the fresh React-only Local Storage schem
 
 Task 1.1 is documentation-only. Real storage helpers, Local Storage reads and writes, screen persistence, export/import implementation, reset behavior, and migrations are deferred to later approved tasks.
 
+## Current Implementation Status
+
+The wording above records the historical boundary of Task 1.1. Subsequent approved roadmap work has progressed while preserving this schema contract:
+
+- Task 1.2 implemented the React-only storage helper layer.
+- Approved React screens now use the version-1 stores for persistent application data.
+- Settings persistence, including theme and Macro Goals, is implemented.
+- The protected Vanilla-key rule is unchanged.
+- The active React schema remains `schemaVersion: 1`.
+- Old Vanilla Local Storage migration and old Vanilla backup import remain deferred unless a future approved task explicitly reopens them.
+- React export/import and production replacement remain future locked-roadmap work.
+
+
 ## 2. Non-Goals for Task 1.1
 
 - No storage implementation or Local Storage reads/writes.

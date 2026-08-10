@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to NutriFlow are documented here.
 
 The format is based on Keep a Changelog.
 
@@ -8,50 +8,97 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Documentation
+- Refresh repository documentation to match the implemented React state through Sprint 7.
+- Record the stable Vanilla production release and current sprint milestone tags.
+- Align workflow documentation with current Git ownership, three-batch Git flow, meaningful merge messages, and sprint-tag reminders.
+
+No runtime behavior is changed by this documentation refresh.
+
+## [vanilla-v1.0.0] — Stable Vanilla Production Release
+
+### Release
+- Published **NutriFlow Vanilla v1.0.0** as the stable release of the original HTML/CSS/Vanilla JavaScript PWA.
+- Release tag: `vanilla-v1.0.0`.
+- Production snapshot: `ddd67751c682fac7a3a4ac2db9c1fa62468427b7`.
+- The release remains the rollback production version while React migration work continues.
+- Publishing the release did not alter the production runtime.
+
+## [v0.8.0] — Sprint 7: Analytics + Chart Library
+
 ### Added
-- Documented the locked React storage schema for future React Local Storage helpers; no runtime or storage behavior changed.
-- Added an isolated React/Vite/TypeScript prototype shell under `react-app/`.
-- Added static mobile-first Today, Weekly, History, and More prototype screens while leaving the production vanilla app unchanged.
-- Added compatibility-first TypeScript domain types, pure nutrition calculations, and mock-only fixtures under `react-app/src/domain/`.
-- Added lightweight nutrition verification for per-100, per-unit, aggregate, invalid-value, and non-mutation behavior.
-- Added a mock-only React Today workflow with calculated summaries, expanded meal cards, quantity editing, removal, and empty meal states.
-- Added an accessible Quick Add bottom sheet using entered-quantity nutrition and refresh-reset React state.
-- Added a mock-only React Weekly Planner with calculated week/day summaries, seven-day selection, read-only meal details, and empty states.
-- Added local deep-copy Copy Day and confirmed Clear Day actions that reset on refresh.
-- Added a mock-only, read-only React History screen with newest-first saved-day cards, calculated averages, and selected-day details.
-- Added explicit empty-history and empty-meal states while keeping History free of edit, delete, and copy actions.
+- Selected Recharts as the React Analytics chart library.
+- Added the Analytics screen shell using a seven-day local-calendar History context.
+- Added Protein Trend with current goal reference and seven-day average.
+- Added Calories Trend.
+- Added Spend Trend.
+- Added Macro Trends for protein, carbs, fat, and fibre.
+- Added Macro Split with seven-day-average / saved-date selection.
+- Added Meal-wise Protein Split for Breakfast, Lunch, Dinner, and Snacks using a donut chart with an independent selector.
+- Added/expanded focused Analytics verification utilities.
 
 ### Changed
-- Polished navigation and shared UI patterns across the React Today, Weekly, History, and More screens.
-- Standardized headers, notices, summaries, macro order, progress, badges, empty states, spacing, and focus treatments.
-- Expanded More into a clearly disabled placeholder hub without production actions.
-- Renamed current app and product references from Protein Diet Planner to NutriFlow.
-- Updated the planned GitHub Pages slug from `protein-diet-planner` to `nutriflow`.
-- Updated PWA metadata and cache naming for NutriFlow.
-- Refreshed project documentation for the current meal-first Today UI, legacy staple normalization, external PWA setup, and planned React/Vite migration.
-- Documented Main Chat, Sprint Chat, Codex, and QA Chat workflow responsibilities and approval boundaries.
-- Documented the parallel React/Vite migration strategy and refined the migration roadmap.
-- Recorded data compatibility, PWA deployment, and vanilla rollback planning for the future migration.
+- Removed the obsolete 30-day Analytics mode before later Sprint 7 trend work.
+- Kept business-data derivation in domain helpers rather than delegating calculations to Recharts.
+- Preserved explicit empty, insufficient, zero, and incomplete-data states.
 
-### Fixed
-- Fixed desktop Today Ingredients quantity and macro editing so live multi-digit input keeps focus.
-- Removed user-facing Today dish controls while preserving the internal dish data model.
-- Migrated legacy Daily Staples into normal Breakfast ingredients and stopped hidden staples from contributing to Today totals.
-- Bumped the PWA cache to `protein-planner-v0.5.5`.
-- Fixed Today Ingredients live quantity editing so multi-digit input keeps focus.
-- Fixed Today ingredient deletion to splice the source meal ingredient instead of leaving ghost rows.
-- Added source-path meal reassignment from Today Ingredients while preserving ingredient nutrition data.
-- Added History edit ingredient deletion and conservative ghost cleanup on History save.
-- Bumped the PWA cache to `protein-planner-v0.5.4`.
-- Quick Add ingredients are now fully editable after being added.
-- Added `ensureEditableIngredient()` to centralize conversion of library-backed ingredients into editable snapshots.
-- Prevented nutrition values from being lost when editing library-backed ingredients.
--
+### Roadmap
+- Sprint 7 Task 7.8 — Weight Trend, If Added Later — was intentionally skipped with explicit user approval.
+- Sprint 7 required work therefore ends at Task 7.7.
 
-### Removed
--
+Tag target: `2a0c62fe4f83f0c99398ec8a7db201e1af904a60`.
+
+## [v0.7.0] — Sprint 6: Option C App UI Redesign
+
+### Changed
+- Applied the locked Option C – Colorful & Friendly visual direction across the React app.
+- Added/refined Today dashboard cards and Protein/Calories progress.
+- Added the meal selector / selected meal-card presentation.
+- Redesigned Quick Add, Weekly, History, and Settings-related surfaces.
+- Preserved light mode as default and dark mode through Settings.
+- Added visual-alignment correction work without changing protected storage/domain semantics.
+
+Tag target: `56756b61868b401c25d37a4fc726bbc5e0243966`.
+
+## [v0.6.0] — Sprint 5: Quick Add V2
+
+### Added
+- Quick Add library UI with search, category chips, recommended foods, and all-food browsing.
+- Quantity selection while adding.
+- Add more and Add & return flows.
+- Success/return behavior integrated with the selected Today meal.
+
+Tag target: `53ecb621f2038cfd0fa834fa4ca608b9ceddbb1c`.
+
+## React Migration Foundation Before v0.6.0
+
+### Added / Changed
+- Created the isolated Vite + React + TypeScript application under `react-app/`.
+- Added React domain nutrition helpers and focused verification.
+- Locked the fresh React-only v1 storage schema.
+- Implemented safe React storage helpers.
+- Persisted Today and Weekly data.
+- Added real saved History.
+- Added core data/editing fixes.
+- Added Ingredient Library and Daily Staples workflows.
+- Added Settings, persisted light/dark theme, and Macro Goals.
+- Added Option C mobile header, hamburger drawer, and bottom navigation.
+
+The root Vanilla production PWA remained the live app during this work.
+
+## Vanilla Maintenance After 0.5.0
+
+### Changed / Fixed
+- Renamed the project/product to NutriFlow and updated the GitHub Pages slug.
+- Updated PWA metadata/cache naming to `nutriflow-v0.6.0`.
+- Improved Today ingredient editing and source-path deletion/reassignment.
+- Removed user-facing Today dish controls while preserving compatibility data structures.
+- Normalized legacy Daily Staples into the meal-first Today workflow.
+- Preserved old History compatibility behavior.
+- Kept Playwright/npm tooling development-only.
 
 ---
+
 ## [0.5.0] - 2026-06-25
 
 ### Added

@@ -209,3 +209,105 @@ Use simple TypeScript types and React state patterns initially. Do not add a sta
 - Compatibility tests need representative Local Storage data, exports, and old backups.
 - GitHub Pages base-path and PWA behavior remain explicit release gates.
 - The deployed vanilla app remains the fallback until the final production switch succeeds.
+
+---
+
+## ADR-007: Use a Separate React-Only v1 Storage Namespace
+
+**Status:** Accepted
+
+### Context
+
+ADR-006 originally expected the first React port to preserve/read the existing Vanilla Local Storage keys. The approved React Storage Schema Lock later chose a safer fresh React namespace instead.
+
+### Decision
+
+React uses versioned `nutriflow_react_*_v1` keys and must not read, write, reset, inspect, or remove the protected Vanilla keys:
+
+- `pptd_v5`
+- `ppc_v5`
+- `ppwk_v5`
+- `ppst_v5`
+- `ppl_v5`
+
+React reset operations are allowlist-only and must never call `localStorage.clear()`.
+
+This decision supersedes the storage-key-preservation portion of ADR-006. The parallel/incremental migration and production-safety parts of ADR-006 remain valid.
+
+### Consequences
+
+- Vanilla production data remains isolated and safe.
+- React starts from a clear versioned storage family.
+- Old Vanilla migration/import requires a separately approved future task.
+- Schema changes require explicit versioned migration planning.
+
+---
+
+## ADR-008: Lock Option C as the Whole-App React UI Direction
+
+**Status:** Accepted
+
+### Decision
+
+Option C – Colorful & Friendly is the visual direction for the whole React application, not only Today.
+
+The app uses:
+
+- light mode by default
+- optional dark mode through Settings
+- Option C surfaces/cards/icons
+- mobile-first focused screens
+- hamburger drawer for tools/settings/account/data flows
+- bottom navigation for Today, Weekly, History, and Analytics
+
+### Consequences
+
+- Future UI-heavy work must align to Option C unless the user explicitly changes the roadmap.
+- Today must not become one oversized tools page.
+- The navigation hierarchy remains stable across future sprints.
+
+---
+
+## ADR-009: Use Recharts and a Seven-Day Analytics Context
+
+**Status:** Accepted
+
+### Decision
+
+Use Recharts for the Sprint 7 Analytics charts.
+
+Analytics uses a seven-day local-calendar History context. The obsolete 30-day mode is not part of the final Sprint 7 implementation.
+
+Business calculations remain in NutriFlow domain helpers; Recharts is a presentation layer.
+
+### Consequences
+
+- Protein, Calories, Spend, Macro, Macro Split, and Meal-wise Protein views share one chart library.
+- Missing/incomplete History data must not be fabricated as zeros.
+- Current goals are current references, not retroactive historical goals.
+- Exact-data and empty/insufficient states remain explicit.
+- Task 7.8 Weight Trend was optional and was skipped by explicit user approval.
+
+---
+
+## ADR-010: Keep the Stable Vanilla Release as the Rollback Production Path
+
+**Status:** Accepted
+
+### Decision
+
+The root Vanilla application remains production until the locked React production-launch sprint succeeds.
+
+The stable rollback release is:
+
+- **NutriFlow Vanilla v1.0.0**
+- tag: `vanilla-v1.0.0`
+- snapshot: `ddd67751c682fac7a3a4ac2db9c1fa62468427b7`
+
+React sprint tags (`v0.6.0`, `v0.7.0`, `v0.8.0`, and later sprint milestones) are development milestones and must not be described as production releases before the React production switch.
+
+### Consequences
+
+- A known-good production rollback stays identifiable.
+- React development can continue without reclassifying the live app.
+- Production replacement remains an explicit future release gate.
