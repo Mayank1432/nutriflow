@@ -1,4 +1,4 @@
-import { buildContinuousMetricDomain, type AnalyticsRangeDays, type CaloriesTrendSummary, type HistoricalSummary, type ProteinTrendSummary } from '../../domain/analyticsCharts'
+import { buildContinuousMetricDomain, type CaloriesTrendSummary, type HistoricalSummary, type ProteinTrendSummary } from '../../domain/analyticsCharts'
 import type { DailyTotals, MacroGoals } from '../../storage'
 import AnalyticsIcon from './AnalyticsIcon'
 import CaloriesTrendChart from './CaloriesTrendChart'
@@ -21,9 +21,7 @@ export function AnalyticsSummaryGrid({ summary }: { summary: HistoricalSummary }
   return <div className="analytics-summary-grid" aria-label="Historical summary">{cards.map(([icon, label, display, detail]) => <article className={`analytics-summary-card ${icon}`} key={label}><AnalyticsIcon name={icon} /><span>{label}</span><strong>{display}</strong><small>{detail}</small></article>)}</div>
 }
 
-export function AnalyticsChartShell({ rangeDays, trend, proteinGoal, caloriesTrend, caloriesGoal, tickLabels, rangeStart, rangeEnd }: { rangeDays: AnalyticsRangeDays; trend: ProteinTrendSummary; proteinGoal: number | null; caloriesTrend: CaloriesTrendSummary; caloriesGoal: number | null; tickLabels: string[]; rangeStart: string; rangeEnd: string }) {
-  if (rangeDays === 30) return <section className="analytics-section" aria-labelledby="historical-trends-deferred-title"><p className="eyebrow">HISTORICAL TRENDS</p><h2 id="historical-trends-deferred-title">Historical Trends</h2><div className="analytics-chart-shell"><AnalyticsIcon name="trend" /><strong>30-day trend charts are not available yet.</strong><p>Select 7 Days to view Protein and Calories Trends.</p></div></section>
-
+export function AnalyticsChartShell({ trend, proteinGoal, caloriesTrend, caloriesGoal, tickLabels, rangeStart, rangeEnd }: { trend: ProteinTrendSummary; proteinGoal: number | null; caloriesTrend: CaloriesTrendSummary; caloriesGoal: number | null; tickLabels: string[]; rangeStart: string; rangeEnd: string }) {
   const average = trend.averageProtein === null ? null : number.format(trend.averageProtein)
   const proteinDomain = buildContinuousMetricDomain({ values: trend.points.map((point) => point.proteinGrams), referenceValues: proteinGoal === null ? [] : [proteinGoal], minimumSpan: 30, paddingRatio: .1, roundingStep: 5, floorAtZero: true })
   const proteinSummaryText = trend.trackedDays ? `7-day range average: ${average}g across ${trend.trackedDays} saved ${trend.trackedDays === 1 ? 'day' : 'days'}.` : 'No saved protein data for this 7-day range.'

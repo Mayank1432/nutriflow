@@ -1,2 +1,0 @@
-import type { AnalyticsRangeDays } from '../../domain/analyticsCharts'
-export default function AnalyticsRangeControl({ value, onChange }: { value: AnalyticsRangeDays; onChange: (value: AnalyticsRangeDays) => void }) { return <fieldset className="analytics-range"><legend className="sr-only">Historical date range</legend>{([7, 30] as const).map((days) => <label key={days}><input type="radio" name="analytics-range" value={days} checked={value === days} onChange={() => onChange(days)} /><span>{days} Days <b aria-hidden="true">✓</b></span></label>)}</fieldset> }
