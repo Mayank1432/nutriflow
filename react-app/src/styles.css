@@ -4160,7 +4160,23 @@ button:focus-visible { outline-color: var(--focus); }
 .macro-split-details i { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; }
 .macro-split-details strong { text-align: right; }
 .macro-split-details small { grid-column: 1 / -1; color: var(--muted); }
+.meal-protein-split { display: grid; min-width: 0; gap: 14px; }
+.meal-protein-split-chart { width: 100%; height: 240px; min-width: 0; }
+.meal-donut-total { fill: var(--ink); font-size: 19px; font-weight: 850; }
+.meal-donut-label { fill: var(--muted); font-size: 11px; font-weight: 750; }
+.meal-protein-state { display: grid; gap: 6px; padding: 16px; border: 1px dashed var(--line); border-radius: var(--radius-small); background: var(--surface-elevated); text-align: center; }
+.meal-protein-state p { margin: 0; color: var(--muted); }
+.meal-protein-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.meal-protein-details > li { display: grid; min-width: 0; gap: 5px; padding: 10px; border-radius: var(--radius-small); background: var(--surface-elevated); }
+.meal-protein-details li > span { display: flex; align-items: center; gap: 7px; color: var(--ink); font-weight: 750; }
+.meal-protein-details li i { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; }
+.meal-protein-details strong { color: var(--ink); font-size: 13px; }
+.meal-protein-details small { color: var(--muted); font-size: 11px; }
+.analytics-history-select { display: grid; min-width: 0; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 750; }
+.analytics-history-select select { width: 100%; min-width: 0; min-height: 44px; padding: 8px 34px 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--control-background); color: var(--ink); font: inherit; }
+.analytics-history-select select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 @media (min-width: 600px) { .macro-trends-legend { grid-template-columns: repeat(4, minmax(0, 1fr)); } .macro-split-details { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 600px) { .meal-protein-split-chart { height: 270px; } .meal-protein-details { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 340px) { .protein-trend-chart { height: 230px; } .protein-trend-card { padding: 10px; } }
 @media (min-width: 600px) { .protein-trend-chart { height: 290px; } }
 .analytics-data-card { padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow); }

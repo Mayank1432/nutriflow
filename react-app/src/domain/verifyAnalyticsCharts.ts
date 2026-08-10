@@ -1,6 +1,6 @@
 import { CURRENT_REACT_SCHEMA_VERSION } from '../storage/storageKeys'
 import type { FoodEntry, HistoryDay, MealsByName } from '../storage/storageTypes'
-import { buildCaloriesTrendPoints, buildContinuousMetricDomain, buildLocalDateRange, buildMacroTrendDays, buildProteinTrendPoints, buildSpendTrendPoints, countPointsMeetingCurrentGoal, getValidCaloriesGoal, getValidCostGoal, getValidProteinGoal, selectHistoryRange, summarizeCaloriesTrend, summarizeHistoryRange, summarizeMacroSplit, summarizeMacroTrends, summarizeProteinTrend, summarizeSpendTrend } from './analyticsCharts'
+import { buildAnalyticsSavedDateOptions, buildCaloriesTrendPoints, buildContinuousMetricDomain, buildLocalDateRange, buildMacroTrendDays, buildProteinTrendPoints, buildSpendTrendPoints, countPointsMeetingCurrentGoal, getValidCaloriesGoal, getValidCostGoal, getValidProteinGoal, selectHistoryRange, summarizeCaloriesTrend, summarizeHistoryRange, summarizeMacroSplit, summarizeMacroSplitForDate, summarizeMacroTrends, summarizeMealProteinSplit, summarizeMealProteinSplitForDate, summarizeProteinTrend, summarizeSpendTrend } from './analyticsCharts'
 
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message) }
 const emptyMeals = (): MealsByName => ({ Breakfast: { name: 'Breakfast', entries: [] }, Lunch: { name: 'Lunch', entries: [] }, Dinner: { name: 'Dinner', entries: [] }, Snacks: { name: 'Snacks', entries: [] } })
@@ -276,13 +276,103 @@ assert(JSON.stringify(macroDomainValues) === JSON.stringify(macroDomainValuesBef
 const zeroMacroDomain = buildContinuousMetricDomain({ values: [0, 0], referenceValues: [], minimumSpan: 50, paddingRatio: .1, roundingStep: 10, floorAtZero: true }); assert(zeroMacroDomain[0] === 0 && zeroMacroDomain[1] === 50, 'flat-zero Macro domain remains visible')
 const splitInputBefore = structuredClone(macroDays)
 const macroSplit = summarizeMacroSplit(macroDays)
-assert(macroSplit.status === 'available' && macroSplit.completeDays === 4 && macroSplit.totalGrams === 468, 'Macro Split aggregates complete saved days and exact total grams')
+assert(macroSplit.status === 'available' && macroSplit.completeDays === 4 && macroSplit.totalGrams === 117, 'Macro Split displays average grams across complete saved days')
+assert(macroSplit.data.map((item) => item.grams).join(',') === '30,60,15,12', 'each Macro Split average uses the common complete-day denominator')
 assert(Math.abs(macroSplit.data.reduce((sum, item) => sum + item.percentage!, 0) - 100) < 1e-9 && macroSplit.data.every((item) => Number.isFinite(item.percentage)), 'available Macro Split percentages are finite and sum approximately 100')
+const aggregatePercentages = [120, 240, 60, 48].map((grams) => grams / 468 * 100)
+assert(macroSplit.data.every((item, index) => Math.abs(item.percentage! - aggregatePercentages[index]) < 1e-9), 'average-share percentages equal aggregate-share percentages for the same complete days')
 assert(JSON.stringify(macroDays) === JSON.stringify(splitInputBefore), 'Macro Split does not mutate input')
 assert(summarizeMacroSplit(partialDays).completeDays === 1, 'partial-invalid day is excluded entirely from Macro Split')
 const singleSplit = summarizeMacroSplit([macroDays[0]]); assert(singleSplit.status === 'available' && singleSplit.completeDays === 1, 'one complete positive day makes Macro Split available')
 const zeroSplit = summarizeMacroSplit([zeroMacro]); assert(zeroSplit.status === 'zero' && zeroSplit.totalGrams === 0 && zeroSplit.data.every((item) => item.percentage === null), 'all-zero complete data produces zero state without invalid percentages')
+const macroWithEmpty = summarizeMacroSplit([macroDays[0], zeroMacro]); assert(macroWithEmpty.completeDays === 2 && macroWithEmpty.data[0].grams === 5, 'saved-empty complete Macro day increments denominator and contributes zeros')
 assert(summarizeMacroSplit(partialDays.map((item) => ({ ...item, fatGrams: null }))).status === 'empty', 'no complete macro days produces empty split')
 const proteinOnlySplit = summarizeMacroSplit([{ ...zeroMacro, proteinGrams: 10 }]); assert(proteinOnlySplit.status === 'available' && proteinOnlySplit.data.find((item) => item.metric === 'protein')?.percentage === 100 && proteinOnlySplit.data.filter((item) => item.metric !== 'protein').every((item) => item.percentage === 0), 'one non-zero macro produces 100 percent with finite zero-percent peers')
+
+const mealDay = (id: string, date: string, savedAt: string, values: Partial<Record<'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks', number>>): HistoryDay => {
+  const result = day(id, date, savedAt, false)
+  for (const [meal, protein] of Object.entries(values)) result.meals[meal as keyof MealsByName].entries.push(food(`${id}-${meal}`, protein))
+  result.totals.protein = 123456
+  return result
+}
+const mealSource = [
+  mealDay('meal-outside', '2025-12-26', '2025-12-26T08:00:00Z', { Breakfast: 99 }),
+  mealDay('meal-start', '2025-12-27', '2025-12-27T08:00:00Z', { Breakfast: 10, Lunch: 20, Dinner: 30, Snacks: 40 }),
+  mealDay('meal-old', '2026-01-01', '2026-01-01T08:00:00Z', { Breakfast: 100 }),
+  mealDay('meal-new', '2026-01-01', '2026-01-01T09:00:00Z', { Breakfast: 30, Lunch: 40, Dinner: 50, Snacks: 60 }),
+  mealDay('meal-end', '2026-01-02', '2026-01-02T08:00:00Z', { Breakfast: 50, Lunch: 60, Dinner: 70, Snacks: 80 }),
+  mealDay('meal-future', '2026-01-03', '2026-01-03T08:00:00Z', { Breakfast: 99 }),
+  mealDay('meal-bad-date', 'bad-date', '2026-01-02T08:00:00Z', { Breakfast: 99 }),
+]
+const mealSourceBefore = structuredClone(mealSource)
+const mealSplit = summarizeMealProteinSplit(mealSource, end)
+assert(mealSplit.status === 'available' && mealSplit.completeDays === 3 && mealSplit.totalProteinGrams === 180, 'Meal split uses complete canonical days and a common denominator')
+assert(mealSplit.data.map((item) => item.meal).join(',') === 'Breakfast,Lunch,Dinner,Snacks', 'meal split keeps fixed meal order')
+assert(mealSplit.data.map((item) => item.proteinGrams).join(',') === '30,40,50,60', 'meal averages use snapshot-derived values and one completeDays denominator')
+assert(JSON.stringify(mealSource) === JSON.stringify(mealSourceBefore), 'meal split does not mutate History input arrays or snapshots')
+assert(!JSON.stringify(mealSplit).includes('123456'), 'persisted History totals are ignored by meal split')
+assert(!mealSplit.data.some((item) => 'percentage' in item || 'dayIndex' in item), 'meal split exposes no percentages or dayIndex fields')
+
+const emptyMealSplit = summarizeMealProteinSplit([], end)
+assert(emptyMealSplit.status === 'empty' && emptyMealSplit.completeDays === 0 && emptyMealSplit.totalProteinGrams === null && emptyMealSplit.data.every((item) => item.proteinGrams === null), 'no complete saved days produce four unavailable meals')
+const savedEmptyMealSplit = summarizeMealProteinSplit([day('meal-empty', '2026-01-02', '2026-01-02T08:00:00Z', false)], end)
+assert(savedEmptyMealSplit.status === 'zero' && savedEmptyMealSplit.completeDays === 1 && savedEmptyMealSplit.totalProteinGrams === 0 && savedEmptyMealSplit.data.every((item) => item.proteinGrams === 0), 'saved-empty day is complete and contributes four zeros')
+const onePositiveMealSplit = summarizeMealProteinSplit([mealDay('meal-positive', '2026-01-02', '2026-01-02T08:00:00Z', { Dinner: 12 })], end)
+assert(onePositiveMealSplit.status === 'available' && onePositiveMealSplit.completeDays === 1 && onePositiveMealSplit.data.find((item) => item.meal === 'Dinner')?.proteinGrams === 12, 'one complete positive saved day makes meal split available')
+assert(onePositiveMealSplit.data.filter((item) => item.meal !== 'Dinner').every((item) => item.proteinGrams === 0), 'empty peer meals on a saved day are valid zeros')
+
+const quantityDay = mealDay('meal-quantity', '2026-01-02', '2026-01-02T08:00:00Z', {})
+const per100Protein = food('meal-per-100', 20); per100Protein.basisType = 'per_100'; per100Protein.quantity = 50
+const perUnitProtein = food('meal-per-unit', 7); perUnitProtein.quantity = 3
+quantityDay.meals.Breakfast.entries.push(per100Protein, food('meal-extra', 5)); quantityDay.meals.Lunch.entries.push(perUnitProtein)
+const quantitySplit = summarizeMealProteinSplit([quantityDay], end)
+assert(quantitySplit.data[0].proteinGrams === 15 && quantitySplit.data[1].proteinGrams === 21, 'meal totals sum multiple entries and preserve per_100 and per_unit snapshot scaling')
+
+for (const invalid of [-1, NaN, Infinity, -Infinity]) {
+  const invalidMealDay = mealDay(`meal-invalid-${String(invalid)}`, '2026-01-02', '2026-01-02T08:00:00Z', { Breakfast: invalid, Lunch: 20 })
+  const invalidSplit = summarizeMealProteinSplit([invalidMealDay], end)
+  assert(invalidSplit.status === 'empty' && invalidSplit.completeDays === 0 && invalidSplit.data.every((item) => item.proteinGrams === null), `${String(invalid)} excludes the entire incomplete day from average composition`)
+}
+const denominatorDay = mealDay('meal-denominator', '2026-01-01', '2026-01-01T08:00:00Z', { Breakfast: 10, Lunch: 20 })
+const denominatorInvalid = mealDay('meal-denominator-invalid', '2026-01-02', '2026-01-02T08:00:00Z', { Breakfast: Infinity, Lunch: 40 })
+const denominatorSplit = summarizeMealProteinSplit([denominatorDay, denominatorInvalid], end)
+assert(denominatorSplit.completeDays === 1 && denominatorSplit.data[0].proteinGrams === 10 && denominatorSplit.data[1].proteinGrams === 20, 'partial-invalid day is wholly excluded and all meals share one denominator')
+const duplicateSplit = summarizeMealProteinSplit([mealDay('meal-duplicate-old', '2026-01-02', '2026-01-02T08:00:00Z', { Breakfast: 10 }), mealDay('meal-duplicate-new', '2026-01-02', '2026-01-02T09:00:00Z', { Breakfast: 40 })], end)
+assert(duplicateSplit.data[0].proteinGrams === 40 && duplicateSplit.completeDays === 1, 'duplicate dates use only the canonical latest save')
+assert(mealSplit.data.filter((item) => item.proteinGrams !== null).every((item) => Number.isFinite(item.proteinGrams) && item.proteinGrams! >= 0), 'all non-null meal averages are finite and non-negative')
+
+const dateOptionsBefore = structuredClone(mealSource)
+const dateOptions = buildAnalyticsSavedDateOptions(mealSource, end)
+assert(dateOptions.map((item) => item.date).join(',') === '2026-01-02,2026-01-01,2025-12-27', 'saved date options are canonical in-range and newest first')
+assert(dateOptions.every((item) => item.dateLabel.length > 0) && !dateOptions.some((item) => ['2025-12-26', '2026-01-03', 'bad-date'].includes(item.date)), 'saved date options exclude malformed outside and unsaved dates')
+assert(JSON.stringify(mealSource) === JSON.stringify(dateOptionsBefore), 'saved date option construction is immutable')
+const incompleteOptionSource = structuredClone(mealSource); incompleteOptionSource.at(-3)!.meals.Breakfast.entries[0].nutritionSnapshot.protein = Infinity
+assert(buildAnalyticsSavedDateOptions(incompleteOptionSource, end).some((item) => item.date === '2026-01-02'), 'incomplete saved date remains selectable')
+assert(buildAnalyticsSavedDateOptions([day('option-zero', '2026-01-02', '2026-01-02T12:00:00Z', false)], end)[0].date === '2026-01-02', 'all-zero saved date remains selectable')
+
+const selectedMeal = summarizeMealProteinSplitForDate(mealSource, '2026-01-02', end)
+assert(selectedMeal.status === 'available' && selectedMeal.completeDays === 1 && selectedMeal.totalProteinGrams === 260 && selectedMeal.data.map((item) => item.proteinGrams).join(',') === '50,60,70,80', 'selected Meal date exposes exact four-meal grams without averaging')
+assert(summarizeMealProteinSplitForDate(mealSource, '2026-01-01', end).data[0].proteinGrams === 30, 'selected duplicate Meal date uses canonical latest survivor')
+assert(summarizeMealProteinSplitForDate([], '2026-01-02', end).status === 'empty' && summarizeMealProteinSplitForDate(mealSource, '2025-12-26', end).status === 'empty' && summarizeMealProteinSplitForDate(mealSource, 'bad-date', end).status === 'empty', 'missing outside and malformed Meal selections are unavailable')
+const selectedMealZero = summarizeMealProteinSplitForDate([day('selected-meal-zero', '2026-01-02', '2026-01-02T12:00:00Z', false)], '2026-01-02', end); assert(selectedMealZero.status === 'zero' && selectedMealZero.totalProteinGrams === 0, 'selected all-zero Meal date produces zero state')
+const selectedMealInvalidSource = [mealDay('selected-meal-invalid', '2026-01-02', '2026-01-02T12:00:00Z', { Breakfast: Infinity, Lunch: 40 })]
+const selectedMealInvalidBefore = structuredClone(selectedMealInvalidSource)
+const selectedMealInvalid = summarizeMealProteinSplitForDate(selectedMealInvalidSource, '2026-01-02', end)
+assert(selectedMealInvalid.status === 'incomplete' && selectedMealInvalid.totalProteinGrams === null && selectedMealInvalid.data[0].proteinGrams === null && selectedMealInvalid.data[1].proteinGrams === 40, 'selected invalid Meal stays unavailable while valid peers remain exact and no partial total is presented')
+assert(JSON.stringify(selectedMealInvalidSource) === JSON.stringify(selectedMealInvalidBefore), 'selected Meal summary is immutable')
+selectedMealInvalidSource[0].meals.Dinner.entries.push(food('second-invalid-meal', Infinity)); assert(summarizeMealProteinSplitForDate(selectedMealInvalidSource, '2026-01-02', end).data.filter((item) => item.proteinGrams === null).length === 2, 'multiple invalid selected meals remain independently unavailable')
+
+const selectedMacro = summarizeMacroSplitForDate(macroSource, '2026-01-02', end)
+assert(selectedMacro.status === 'available' && selectedMacro.totalGrams === 195 && selectedMacro.data.map((item) => item.grams).join(',') === '50,100,25,20', 'selected Macro date exposes exact snapshot-derived grams')
+assert(summarizeMacroSplitForDate(macroSource, '2026-01-01', end).data[0].grams === 40, 'selected duplicate Macro date uses canonical latest survivor')
+assert(Math.abs(selectedMacro.data.reduce((sum, item) => sum + item.percentage!, 0) - 100) < 1e-9, 'selected complete positive Macro percentages sum to 100')
+const selectedMacroZero = summarizeMacroSplitForDate([macroEmptyDay], '2026-01-02', end); assert(selectedMacroZero.status === 'zero' && selectedMacroZero.totalGrams === 0, 'selected all-zero Macro date produces zero state')
+for (const metric of ['protein', 'carbs', 'fat', 'fibre'] as const) {
+  const invalidSource = [macroDay(`selected-invalid-${metric}`, '2026-01-02', '2026-01-02T12:00:00Z', { protein: 10, carbs: 20, fat: 5, fibre: 4 })]
+  invalidSource[0].meals.Breakfast.entries[0].nutritionSnapshot[metric] = Infinity
+  const invalidSelected = summarizeMacroSplitForDate(invalidSource, '2026-01-02', end)
+  assert(invalidSelected.status === 'incomplete' && invalidSelected.totalGrams === null && invalidSelected.data.find((item) => item.metric === metric)?.grams === null && invalidSelected.data.filter((item) => item.metric !== metric).every((item) => item.grams !== null && item.percentage === null), `selected invalid ${metric} suppresses partial Macro composition and preserves valid peers`)
+}
+assert(summarizeMacroSplitForDate(macroSource, '2025-12-26', end).status === 'empty' && summarizeMacroSplitForDate(macroSource, 'missing', end).status === 'empty', 'outside malformed and missing Macro selection is unavailable')
 assert(CURRENT_REACT_SCHEMA_VERSION === 1, 'schema remains current')
 console.log('Analytics charts verification passed.')
