@@ -7,6 +7,8 @@ export type ProteinTrendPoint = { id: string; date: string; dayIndex: number; da
 export type ProteinTrendSummary = { points: ProteinTrendPoint[]; trackedDays: number; status: AnalyticsHistoryStatus; averageProtein: number | null; minimumProtein: number | null; maximumProtein: number | null; latestPoint: ProteinTrendPoint | null }
 export type CaloriesTrendPoint = { id: string; date: string; dayIndex: number; dateLabel: string; shortDateLabel: string; caloriesKcal: number }
 export type CaloriesTrendSummary = { points: CaloriesTrendPoint[]; trackedDays: number; status: AnalyticsHistoryStatus; averageCalories: number | null; minimumCalories: number | null; maximumCalories: number | null; latestPoint: CaloriesTrendPoint | null }
+export type SpendTrendPoint = { id: string; date: string; dayIndex: number; dateLabel: string; shortDateLabel: string; spendAmount: number }
+export type SpendTrendSummary = { points: SpendTrendPoint[]; trackedDays: number; status: AnalyticsHistoryStatus; averageSpend: number | null; minimumSpend: number | null; maximumSpend: number | null; latestPoint: SpendTrendPoint | null }
 export type ContinuousMetricDomainOptions = { values: readonly number[]; referenceValues?: readonly number[]; minimumSpan: number; paddingRatio: number; roundingStep: number; floorAtZero: boolean }
 export type HistoricalSummary = {
   range: { days: 7; startDateKey: string; endDateKey: string }
@@ -77,6 +79,24 @@ export const summarizeCaloriesTrend = (points: readonly CaloriesTrendPoint[]): C
 }
 
 export const getValidCaloriesGoal = (goal: { enabled: boolean; value: number | null }): number | null => goal.enabled && goal.value !== null && Number.isFinite(goal.value) && goal.value > 0 ? goal.value : null
+
+export const buildSpendTrendPoints = (savedDays: readonly HistoryDay[], endDate = new Date()): SpendTrendPoint[] => {
+  const range = buildLocalDateRange(endDate)
+  const indexByDate = new Map(range.map((date, index) => [date, index]))
+  return selectHistoryRange(savedDays, endDate).flatMap((point) => {
+    if (!Number.isFinite(point.totals.cost) || point.totals.cost < 0) return []
+    const parsed = parseStrictLocalDateKey(point.date)!
+    return [{ id: point.id, date: point.date, dayIndex: indexByDate.get(point.date)!, dateLabel: parsed.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }), shortDateLabel: parsed.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), spendAmount: point.totals.cost }]
+  })
+}
+
+export const summarizeSpendTrend = (points: readonly SpendTrendPoint[]): SpendTrendSummary => {
+  const copy = [...points].sort((a, b) => a.dayIndex - b.dayIndex)
+  const values = copy.map((point) => point.spendAmount)
+  return { points: copy, trackedDays: copy.length, status: copy.length === 0 ? 'empty' : copy.length === 1 ? 'insufficient' : 'available', averageSpend: copy.length ? values.reduce((a, b) => a + b, 0) / copy.length : null, minimumSpend: copy.length ? Math.min(...values) : null, maximumSpend: copy.length ? Math.max(...values) : null, latestPoint: copy.at(-1) ?? null }
+}
+
+export const getValidCostGoal = (goal: { enabled: boolean; value: number | null }): number | null => goal.enabled && goal.value !== null && Number.isFinite(goal.value) && goal.value > 0 ? goal.value : null
 
 export const buildContinuousMetricDomain = ({ values, referenceValues = [], minimumSpan, paddingRatio, roundingStep, floorAtZero }: ContinuousMetricDomainOptions): [number, number] => {
   const finiteValues = [...values, ...referenceValues].filter(Number.isFinite)

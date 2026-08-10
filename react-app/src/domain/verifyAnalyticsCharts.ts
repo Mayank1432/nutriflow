@@ -1,6 +1,6 @@
 import { CURRENT_REACT_SCHEMA_VERSION } from '../storage/storageKeys'
 import type { FoodEntry, HistoryDay, MealsByName } from '../storage/storageTypes'
-import { buildCaloriesTrendPoints, buildContinuousMetricDomain, buildLocalDateRange, buildProteinTrendPoints, countPointsMeetingCurrentGoal, getValidCaloriesGoal, getValidProteinGoal, selectHistoryRange, summarizeCaloriesTrend, summarizeHistoryRange, summarizeProteinTrend } from './analyticsCharts'
+import { buildCaloriesTrendPoints, buildContinuousMetricDomain, buildLocalDateRange, buildProteinTrendPoints, buildSpendTrendPoints, countPointsMeetingCurrentGoal, getValidCaloriesGoal, getValidCostGoal, getValidProteinGoal, selectHistoryRange, summarizeCaloriesTrend, summarizeHistoryRange, summarizeProteinTrend, summarizeSpendTrend } from './analyticsCharts'
 
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message) }
 const emptyMeals = (): MealsByName => ({ Breakfast: { name: 'Breakfast', entries: [] }, Lunch: { name: 'Lunch', entries: [] }, Dinner: { name: 'Dinner', entries: [] }, Snacks: { name: 'Snacks', entries: [] } })
@@ -148,5 +148,76 @@ const invalidCaloriesGoal = getValidCaloriesGoal({ enabled: true, value: Infinit
 const withoutGoalDomain = caloriesDomain([1500, 1700])
 const invalidGoalDomain = caloriesDomain([1500, 1700], invalidCaloriesGoal === null ? [] : [invalidCaloriesGoal])
 assert(JSON.stringify(invalidGoalDomain) === JSON.stringify(withoutGoalDomain), 'invalid Calories goal is excluded from domain')
+
+const spendDay = (id: string, date: string, savedAt: string, amount: number, quantity = 1, basisType: 'per_100' | 'per_unit' = 'per_unit'): HistoryDay => {
+  const result = day(id, date, savedAt)
+  result.meals.Breakfast.entries[0] = food(id, 10, 100, amount)
+  result.meals.Breakfast.entries[0].quantity = quantity
+  result.meals.Breakfast.entries[0].basisType = basisType
+  result.totals.cost = 987654
+  return result
+}
+const spendSource = [
+  spendDay('outside-spend', '2025-12-26', '2025-12-26T08:00:00Z', 50),
+  spendDay('range-start-spend', '2025-12-27', '2025-12-27T08:00:00Z', 200),
+  spendDay('internal-spend', '2025-12-30', '2025-12-30T08:00:00Z', 250),
+  spendDay('old-spend-duplicate', '2026-01-01', '2026-01-01T08:00:00Z', 300),
+  spendDay('new-spend-duplicate', '2026-01-01', '2026-01-01T09:00:00Z', 350),
+  spendDay('ending-spend', '2026-01-02', '2026-01-02T08:00:00Z', 400),
+  spendDay('future-spend', '2026-01-03', '2026-01-03T08:00:00Z', 450),
+  spendDay('malformed-spend', 'not-a-date', '2026-01-02T08:00:00Z', 500),
+]
+const spendSourceBefore = structuredClone(spendSource)
+const spendPoints = buildSpendTrendPoints(spendSource, end)
+assert(spendPoints.map((point) => point.date).join(',') === '2025-12-27,2025-12-30,2026-01-01,2026-01-02', 'Spend points use canonical current seven-day range in chronological order')
+assert(spendPoints.map((point) => point.dayIndex).join(',') === '0,3,5,6' && spendPoints.every((point) => point.dayIndex >= 0 && point.dayIndex <= 6), 'Spend points preserve calendar gaps and dayIndex zero through six')
+assert(spendPoints[2].id === 'new-spend-duplicate' && spendPoints[2].spendAmount === 350, 'Spend duplicate date uses canonical survivor and cost snapshot authority')
+assert(!spendPoints.some((point) => ['outside-spend', 'future-spend', 'malformed-spend'].includes(point.id)), 'Spend excludes outside-range future and malformed dates')
+assert(JSON.stringify(spendSource) === JSON.stringify(spendSourceBefore), 'Spend point construction does not mutate source History')
+const per100Spend = buildSpendTrendPoints([spendDay('per-100-spend', '2026-01-02', '2026-01-02T09:00:00Z', 8, 50, 'per_100')], end)
+const perUnitSpend = buildSpendTrendPoints([spendDay('per-unit-spend', '2026-01-02', '2026-01-02T09:00:00Z', 8, 2, 'per_unit')], end)
+assert(per100Spend[0].spendAmount === 4 && perUnitSpend[0].spendAmount === 16, 'Spend respects shared per_100 and per_unit quantity cost semantics')
+const missingLeadingSpend = buildSpendTrendPoints([spendDay('middle-spend', '2025-12-30', '2025-12-30T08:00:00Z', 100)], end)
+const missingInternalSpend = buildSpendTrendPoints([spendDay('spend-start', '2025-12-27', '2025-12-27T08:00:00Z', 100), spendDay('spend-end', '2026-01-02', '2026-01-02T08:00:00Z', 200)], end)
+const missingEndingSpend = buildSpendTrendPoints([spendDay('spend-leading', '2025-12-27', '2025-12-27T08:00:00Z', 100)], end)
+assert(missingLeadingSpend[0].dayIndex === 3 && missingInternalSpend.map((point) => point.dayIndex).join(',') === '0,6' && missingEndingSpend[0].dayIndex === 0, 'Spend missing leading internal and ending dates remain gaps')
+const emptySpendDay = day('empty-spend', '2026-01-02', '2026-01-02T10:00:00Z', false)
+assert(buildSpendTrendPoints([emptySpendDay], end)[0].spendAmount === 0, 'saved-empty Spend point retained as zero')
+const missingCostDay = spendDay('missing-cost', '2026-01-02', '2026-01-02T10:30:00Z', 10)
+delete missingCostDay.meals.Breakfast.entries[0].costSnapshot
+assert(buildSpendTrendPoints([missingCostDay], end)[0].spendAmount === 0, 'missing cost snapshot follows shared zero-cost semantics')
+for (const [label, invalid] of [['negative', -1], ['NaN', NaN], ['Infinity', Infinity], ['negative Infinity', -Infinity]] as const) {
+  assert(buildSpendTrendPoints([spendDay(`invalid-spend-${label}`, '2026-01-02', '2026-01-02T11:00:00Z', invalid)], end).length === 0, `${label} Spend point omitted`)
+}
+const spendEmpty = summarizeSpendTrend([])
+const spendOne = summarizeSpendTrend([spendPoints[0]])
+const spendTwo = summarizeSpendTrend(spendPoints.slice(0, 2))
+const twoZeroSpend = summarizeSpendTrend(buildSpendTrendPoints([day('zero-spend-one', '2026-01-01', '2026-01-01T08:00:00Z', false), emptySpendDay], end))
+assert(spendEmpty.status === 'empty' && spendEmpty.averageSpend === null && spendEmpty.minimumSpend === null && spendEmpty.maximumSpend === null && spendEmpty.latestPoint === null, 'zero Spend points produce empty summary')
+assert(spendOne.status === 'insufficient' && spendOne.averageSpend === 200 && spendOne.latestPoint?.id === spendPoints[0].id, 'one Spend point produces insufficient summary')
+assert(spendTwo.status === 'available' && spendTwo.trackedDays === 2 && spendTwo.averageSpend === 225 && spendTwo.minimumSpend === 200 && spendTwo.maximumSpend === 250 && spendTwo.latestPoint?.spendAmount === 250, 'Spend summary derives average range and latest from valid observations only')
+assert(twoZeroSpend.status === 'available' && twoZeroSpend.averageSpend === 0 && twoZeroSpend.minimumSpend === 0 && twoZeroSpend.maximumSpend === 0, 'two zero Spend points remain an available flat-zero trend')
+assert(summarizeSpendTrend([spendPoints[0], { ...spendPoints[1], spendAmount: 0 }]).averageSpend === 100, 'saved zero participates and missing dates do not divide Spend average by seven')
+assert(getValidCostGoal({ enabled: true, value: 500 }) === 500, 'valid Cost goal retained')
+for (const goal of [{ enabled: false, value: 500 }, { enabled: true, value: null }, { enabled: true, value: 0 }, { enabled: true, value: -1 }, { enabled: true, value: NaN }, { enabled: true, value: Infinity }, { enabled: true, value: -Infinity }]) assert(getValidCostGoal(goal) === null, 'invalid Cost goal omitted')
+const spendBeforeGoal = summarizeSpendTrend(spendPoints)
+const validCostGoal = getValidCostGoal({ enabled: true, value: 600 })
+const spendAfterGoal = summarizeSpendTrend(spendPoints)
+assert(JSON.stringify(spendBeforeGoal) === JSON.stringify(spendAfterGoal) && validCostGoal === 600, 'Cost goal does not alter Spend observations or summary')
+assert(summarizeSpendTrend([]).status === 'empty' && validCostGoal !== null, 'Cost goal alone does not create Spend availability')
+const spendDomain = (values: number[], referenceValues: number[] = []) => buildContinuousMetricDomain({ values, referenceValues, minimumSpan: 100, paddingRatio: .1, roundingStep: 25, floorAtZero: true })
+for (const testCase of [{ values: [200, 210] }, { values: [200, 250] }, { values: [200, 50] }, { values: [200, 200] }, { values: [0, 0] }, { values: [200] }, { values: [200, 250], references: [600] }, { values: [200, 250], references: [50] }]) {
+  const valuesBefore = [...testCase.values]; const references = testCase.references ?? []; const referencesBefore = [...references]; const domain = spendDomain(testCase.values, references)
+  assert(Number.isFinite(domain[0]) && Number.isFinite(domain[1]) && domain[0] >= 0 && domain[0] < domain[1], 'Spend domain is finite ordered and non-negative')
+  assert(testCase.values.every((value) => value >= domain[0] && value <= domain[1]) && references.every((goal) => goal >= domain[0] && goal <= domain[1]), 'Spend domain includes actual values and valid goal')
+  assert(JSON.stringify(testCase.values) === JSON.stringify(valuesBefore) && JSON.stringify(references) === JSON.stringify(referencesBefore), 'Spend domain does not mutate inputs')
+}
+const spendMovement = (values: number[]) => { const [lower, upper] = spendDomain(values); return Math.abs(values.at(-1)! - values[0]) / (upper - lower) }
+assert(spendMovement([200, 210]) < spendMovement([200, 250]) && spendMovement([200, 250]) < spendMovement([200, 50]), 'Spend small moderate and large movement hierarchy')
+const flatSpendDomain = spendDomain([200, 200]); assert(flatSpendDomain[0] < 200 && flatSpendDomain[1] > 200, 'flat-positive Spend domain has visible space')
+const flatZeroSpendDomain = spendDomain([0, 0]); assert(flatZeroSpendDomain[0] === 0 && flatZeroSpendDomain[1] === 100, 'flat-zero Spend domain is zero through 100')
+assert(spendDomain([200, 250], [600])[1] >= 600 && spendDomain([200, 250], [50])[0] <= 50, 'Cost goals above and below actual Spend extend domain')
+const invalidCostGoal = getValidCostGoal({ enabled: true, value: Infinity })
+assert(JSON.stringify(spendDomain([200, 250], invalidCostGoal === null ? [] : [invalidCostGoal])) === JSON.stringify(spendDomain([200, 250])), 'invalid Cost goal does not change Spend domain')
 assert(CURRENT_REACT_SCHEMA_VERSION === 1, 'schema remains current')
 console.log('Analytics charts verification passed.')
