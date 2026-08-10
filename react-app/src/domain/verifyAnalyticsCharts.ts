@@ -1,6 +1,6 @@
 import { CURRENT_REACT_SCHEMA_VERSION } from '../storage/storageKeys'
 import type { FoodEntry, HistoryDay, MealsByName } from '../storage/storageTypes'
-import { buildContinuousMetricDomain, buildLocalDateRange, buildProteinTrendPoints, countPointsMeetingCurrentGoal, getValidProteinGoal, selectHistoryRange, summarizeHistoryRange, summarizeProteinTrend } from './analyticsCharts'
+import { buildCaloriesTrendPoints, buildContinuousMetricDomain, buildLocalDateRange, buildProteinTrendPoints, countPointsMeetingCurrentGoal, getValidCaloriesGoal, getValidProteinGoal, selectHistoryRange, summarizeCaloriesTrend, summarizeHistoryRange, summarizeProteinTrend } from './analyticsCharts'
 
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message) }
 const emptyMeals = (): MealsByName => ({ Breakfast: { name: 'Breakfast', entries: [] }, Lunch: { name: 'Lunch', entries: [] }, Dinner: { name: 'Dinner', entries: [] }, Snacks: { name: 'Snacks', entries: [] } })
@@ -68,5 +68,85 @@ const withGoal = buildContinuousMetricDomain({ values: [120], referenceValues: [
 const belowGoal = buildContinuousMetricDomain({ values: [120, 130], referenceValues: [50], minimumSpan: 30, paddingRatio: .1, roundingStep: 5, floorAtZero: true }); assert(belowGoal[0] <= 50 && belowGoal[1] >= 130, 'goal below all actual values included')
 const movement = (values: number[]) => { const [lo, hi] = buildContinuousMetricDomain({ values, minimumSpan: 30, paddingRatio: .1, roundingStep: 5, floorAtZero: true }); return Math.abs(values.at(-1)! - values[0]) / (hi - lo) }
 assert(movement([120, 121]) < movement([120, 130]) && movement([120, 130]) < movement([120, 60]), 'movement hierarchy')
+
+const caloriesDay = (id: string, date: string, savedAt: string, calories: number, populated = true): HistoryDay => {
+  const result = day(id, date, savedAt, populated)
+  if (populated) result.meals.Breakfast.entries[0] = food(id, 10, calories, 5)
+  result.totals.calories = 987654
+  return result
+}
+const caloriesSource = [
+  caloriesDay('outside-calories', '2025-12-26', '2025-12-26T08:00:00Z', 500),
+  caloriesDay('range-start-calories', '2025-12-27', '2025-12-27T08:00:00Z', 1500),
+  caloriesDay('internal-calories', '2025-12-30', '2025-12-30T08:00:00Z', 1700),
+  caloriesDay('old-calories-duplicate', '2026-01-01', '2026-01-01T08:00:00Z', 1800),
+  caloriesDay('new-calories-duplicate', '2026-01-01', '2026-01-01T09:00:00Z', 2000),
+  caloriesDay('ending-calories', '2026-01-02', '2026-01-02T08:00:00Z', 2200),
+  caloriesDay('future-calories', '2026-01-03', '2026-01-03T08:00:00Z', 2300),
+  caloriesDay('malformed-calories', 'not-a-date', '2026-01-02T08:00:00Z', 2400),
+]
+const caloriesSourceBefore = structuredClone(caloriesSource)
+const caloriesPoints = buildCaloriesTrendPoints(caloriesSource, end)
+assert(caloriesPoints.map((point) => point.date).join(',') === '2025-12-27,2025-12-30,2026-01-01,2026-01-02', 'Calories points use canonical current seven-day range in chronological order')
+assert(caloriesPoints.map((point) => point.dayIndex).join(',') === '0,3,5,6', 'Calories points preserve missing-date calendar positions from zero through six')
+assert(caloriesPoints.every((point) => point.dayIndex >= 0 && point.dayIndex <= 6), 'Calories dayIndex remains within zero through six')
+assert(caloriesPoints[2].id === 'new-calories-duplicate' && caloriesPoints[2].caloriesKcal === 2000, 'Calories duplicate date uses canonical survivor and snapshot authority')
+assert(!caloriesPoints.some((point) => ['outside-calories', 'future-calories', 'malformed-calories'].includes(point.id)), 'Calories excludes outside-range future and malformed dates')
+assert(JSON.stringify(caloriesSource) === JSON.stringify(caloriesSourceBefore), 'Calories point construction does not mutate source History')
+const missingLeadingCalories = buildCaloriesTrendPoints([caloriesDay('middle-only', '2025-12-30', '2025-12-30T08:00:00Z', 1600)], end)
+assert(missingLeadingCalories.length === 1 && missingLeadingCalories[0].dayIndex === 3, 'Calories missing leading dates are not fabricated')
+const missingInternalCalories = buildCaloriesTrendPoints([caloriesDay('cal-start', '2025-12-27', '2025-12-27T08:00:00Z', 1500), caloriesDay('cal-end', '2026-01-02', '2026-01-02T08:00:00Z', 1700)], end)
+assert(missingInternalCalories.map((point) => point.dayIndex).join(',') === '0,6', 'Calories missing internal dates remain visual gaps')
+const missingEndingCalories = buildCaloriesTrendPoints([caloriesDay('cal-leading', '2025-12-27', '2025-12-27T08:00:00Z', 1500)], end)
+assert(missingEndingCalories.length === 1 && missingEndingCalories[0].dayIndex === 0, 'Calories missing ending dates are not fabricated')
+const zeroCaloriesDay = caloriesDay('zero-calories', '2026-01-02', '2026-01-02T10:00:00Z', 0, false)
+assert(buildCaloriesTrendPoints([zeroCaloriesDay], end)[0].caloriesKcal === 0, 'saved-empty zero Calories point retained')
+for (const [label, invalid] of [['negative', -1], ['NaN', NaN], ['Infinity', Infinity], ['negative Infinity', -Infinity]] as const) {
+  const invalidDay = caloriesDay(`invalid-${label}`, '2026-01-02', '2026-01-02T11:00:00Z', invalid)
+  assert(buildCaloriesTrendPoints([invalidDay], end).length === 0, `${label} Calories point omitted`)
+}
+const caloriesEmpty = summarizeCaloriesTrend([])
+const caloriesOne = summarizeCaloriesTrend([caloriesPoints[0]])
+const caloriesTwo = summarizeCaloriesTrend(caloriesPoints.slice(0, 2))
+const caloriesZeroAvailable = summarizeCaloriesTrend(buildCaloriesTrendPoints([caloriesDay('zero-one', '2026-01-01', '2026-01-01T08:00:00Z', 0, false), zeroCaloriesDay], end))
+assert(caloriesEmpty.status === 'empty' && caloriesEmpty.trackedDays === 0 && caloriesEmpty.averageCalories === null && caloriesEmpty.minimumCalories === null && caloriesEmpty.maximumCalories === null && caloriesEmpty.latestPoint === null, 'zero Calories points produce empty summary')
+assert(caloriesOne.status === 'insufficient' && caloriesOne.trackedDays === 1 && caloriesOne.averageCalories === 1500 && caloriesOne.minimumCalories === 1500 && caloriesOne.maximumCalories === 1500 && caloriesOne.latestPoint?.id === caloriesPoints[0].id, 'one Calories point produces complete insufficient summary')
+assert(caloriesTwo.status === 'available' && caloriesTwo.averageCalories === 1600 && caloriesTwo.minimumCalories === 1500 && caloriesTwo.maximumCalories === 1700 && caloriesTwo.latestPoint?.caloriesKcal === 1700, 'Calories summary uses valid point count and chronological latest point')
+assert(caloriesZeroAvailable.status === 'available' && caloriesZeroAvailable.trackedDays === 2 && caloriesZeroAvailable.averageCalories === 0 && caloriesZeroAvailable.minimumCalories === 0 && caloriesZeroAvailable.maximumCalories === 0, 'two zero Calories points remain an available flat-zero trend')
+assert(getValidCaloriesGoal({ enabled: true, value: 2200 }) === 2200, 'valid Calories goal retained')
+for (const goal of [{ enabled: false, value: 2200 }, { enabled: true, value: null }, { enabled: true, value: 0 }, { enabled: true, value: -1 }, { enabled: true, value: NaN }, { enabled: true, value: Infinity }, { enabled: true, value: -Infinity }]) assert(getValidCaloriesGoal(goal) === null, 'invalid Calories goal omitted')
+const caloriesBeforeGoal = summarizeCaloriesTrend(caloriesPoints)
+const validCaloriesGoal = getValidCaloriesGoal({ enabled: true, value: 2400 })
+const caloriesAfterGoal = summarizeCaloriesTrend(caloriesPoints)
+assert(JSON.stringify(caloriesBeforeGoal) === JSON.stringify(caloriesAfterGoal) && validCaloriesGoal === 2400, 'Calories goal is independent from observations summaries and availability')
+assert(summarizeCaloriesTrend([]).status === 'empty' && validCaloriesGoal !== null, 'Calories goal alone does not create chart availability')
+
+const caloriesDomain = (values: number[], referenceValues: number[] = []) => buildContinuousMetricDomain({ values, referenceValues, minimumSpan: 500, paddingRatio: .1, roundingStep: 100, floorAtZero: true })
+const caloriesDomainCases: Array<{ values: number[]; references?: number[] }> = [
+  { values: [2000, 2010] }, { values: [2000, 2200] }, { values: [2000, 1000] },
+  { values: [2000, 2000] }, { values: [0, 0] }, { values: [1800] },
+  { values: [1500, 1700], references: [2400] }, { values: [2200, 2400], references: [1600] },
+  { values: [1500, 1700] }, { values: [1500, 1700], references: [] },
+]
+for (const testCase of caloriesDomainCases) {
+  const valuesBefore = [...testCase.values]
+  const references = testCase.references ?? []
+  const referencesBefore = [...references]
+  const domain = caloriesDomain(testCase.values, references)
+  assert(Number.isFinite(domain[0]) && Number.isFinite(domain[1]) && domain[0] >= 0 && domain[0] < domain[1], 'Calories domain is finite ordered and non-negative')
+  assert(testCase.values.every((value) => value >= domain[0] && value <= domain[1]), 'Calories domain includes every actual value')
+  assert(references.every((goal) => goal >= domain[0] && goal <= domain[1]), 'Calories domain includes valid current goal')
+  assert(JSON.stringify(testCase.values) === JSON.stringify(valuesBefore) && JSON.stringify(references) === JSON.stringify(referencesBefore), 'Calories domain construction does not mutate inputs')
+}
+const caloriesMovement = (values: number[]) => { const [lower, upper] = caloriesDomain(values); return Math.abs(values.at(-1)! - values[0]) / (upper - lower) }
+assert(caloriesMovement([2000, 2010]) < caloriesMovement([2000, 2200]) && caloriesMovement([2000, 2200]) < caloriesMovement([2000, 1000]), 'Calories close moderate and large movement hierarchy')
+const flatCaloriesDomain = caloriesDomain([2000, 2000]); assert(flatCaloriesDomain[0] < 2000 && flatCaloriesDomain[1] > 2000, 'flat-positive Calories domain has visible space above and below')
+const flatZeroCaloriesDomain = caloriesDomain([0, 0]); assert(flatZeroCaloriesDomain[0] === 0 && flatZeroCaloriesDomain[1] === 500, 'flat-zero Calories domain is zero through 500 kcal')
+assert(caloriesDomain([1500, 1700], [2400])[1] >= 2400, 'valid Calories goal above values extends domain')
+assert(caloriesDomain([2200, 2400], [1600])[0] <= 1600, 'valid Calories goal below values extends domain')
+const invalidCaloriesGoal = getValidCaloriesGoal({ enabled: true, value: Infinity })
+const withoutGoalDomain = caloriesDomain([1500, 1700])
+const invalidGoalDomain = caloriesDomain([1500, 1700], invalidCaloriesGoal === null ? [] : [invalidCaloriesGoal])
+assert(JSON.stringify(invalidGoalDomain) === JSON.stringify(withoutGoalDomain), 'invalid Calories goal is excluded from domain')
 assert(CURRENT_REACT_SCHEMA_VERSION === 1, 'schema remains current')
 console.log('Analytics charts verification passed.')
