@@ -4134,6 +4134,26 @@ button:focus-visible { outline-color: var(--focus); }
 .calories-single > strong { color: var(--orange); }
 .spend-chart-shell .analytics-icon,
 .spend-single > strong { color: var(--cost); }
+.macro-trends-visual { display: grid; min-width: 0; gap: 10px; }
+.macro-trends-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.macro-trends-legend span { display: flex; min-width: 0; align-items: center; gap: 7px; color: var(--ink); font-size: 12px; font-weight: 750; }
+.macro-trends-legend svg { width: 32px; height: 8px; flex: 0 0 auto; }
+.macro-table-scroll { min-width: 0; overflow-x: auto; }
+.macro-trends-table { min-width: 520px; }
+.macro-split-helper { margin: -4px 0 0; color: var(--muted); font-size: 12px; }
+.macro-split-chart { display: grid; gap: 14px; }
+.macro-split-visual { position: relative; isolation: isolate; }
+.macro-split-bar { width: 100%; height: 42px; overflow: hidden; border-radius: 999px; background: var(--surface-strong); }
+.macro-split-tooltip-portal { position: absolute; inset: 0; overflow: visible; pointer-events: none; z-index: 1; }
+.macro-split-tooltip-portal > .recharts-tooltip-wrapper { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.macro-split-tooltip-portal .macro-split-tooltip { position: absolute; top: calc(100% + 6px); left: clamp(52px, var(--macro-split-tooltip-x), calc(100% - 52px)); width: max-content; transform: translateX(-50%); pointer-events: auto; white-space: nowrap; }
+.macro-split-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.macro-split-details div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; padding: 9px; border-radius: var(--radius-small); background: var(--surface-elevated); }
+.macro-split-details span { display: flex; min-width: 0; align-items: center; gap: 6px; font-weight: 750; }
+.macro-split-details i { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; }
+.macro-split-details strong { text-align: right; }
+.macro-split-details small { grid-column: 1 / -1; color: var(--muted); }
+@media (min-width: 600px) { .macro-trends-legend { grid-template-columns: repeat(4, minmax(0, 1fr)); } .macro-split-details { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 340px) { .protein-trend-chart { height: 230px; } .protein-trend-card { padding: 10px; } }
 @media (min-width: 600px) { .protein-trend-chart { height: 290px; } }
 .analytics-data-card { padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow); }
