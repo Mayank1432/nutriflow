@@ -1,5 +1,5 @@
-import { calculateMealsTotals, getCanonicalValidHistoryDays, getLocalDateKey, parseStrictLocalDateKey } from './historyIntegrity'
-import type { DailyTotals, HistoryDay } from '../storage/storageTypes'
+import { calculateFoodEntryTotals, calculateMealsTotals, getCanonicalValidHistoryDays, getLocalDateKey, parseStrictLocalDateKey } from './historyIntegrity'
+import type { DailyTotals, HistoryDay, MealName } from '../storage/storageTypes'
 
 export type AnalyticsHistoryStatus = 'empty' | 'insufficient' | 'available'
 export type AnalyticsDayPoint = { id: string; date: string; totals: DailyTotals }
@@ -13,8 +13,11 @@ export type MacroMetric = 'protein' | 'carbs' | 'fat' | 'fibre'
 export type MacroTrendDay = { id: string; date: string; dayIndex: number; dateLabel: string; shortDateLabel: string; proteinGrams: number | null; carbsGrams: number | null; fatGrams: number | null; fibreGrams: number | null }
 export type MacroMetricSummary = { trackedDays: number; status: AnalyticsHistoryStatus; average: number | null; minimum: number | null; maximum: number | null; latestValue: number | null; latestDate: string | null }
 export type MacroTrendsSummary = { days: MacroTrendDay[]; status: AnalyticsHistoryStatus; protein: MacroMetricSummary; carbs: MacroMetricSummary; fat: MacroMetricSummary; fibre: MacroMetricSummary }
-export type MacroSplitDatum = { metric: MacroMetric; label: string; grams: number; percentage: number | null }
-export type MacroSplitSummary = { status: 'empty' | 'zero' | 'available'; completeDays: number; totalGrams: number; data: MacroSplitDatum[] }
+export type MacroSplitDatum = { metric: MacroMetric; label: string; grams: number | null; percentage: number | null }
+export type MacroSplitSummary = { status: 'empty' | 'zero' | 'available' | 'incomplete'; completeDays: number; totalGrams: number | null; data: MacroSplitDatum[] }
+export type MealProteinSplitDatum = { meal: MealName; proteinGrams: number | null }
+export type MealProteinSplitSummary = { status: 'empty' | 'zero' | 'available' | 'incomplete'; completeDays: number; totalProteinGrams: number | null; data: MealProteinSplitDatum[] }
+export type AnalyticsSavedDateOption = { date: string; dateLabel: string }
 export type ContinuousMetricDomainOptions = { values: readonly number[]; referenceValues?: readonly number[]; minimumSpan: number; paddingRatio: number; roundingStep: number; floorAtZero: boolean }
 export type HistoricalSummary = {
   range: { days: 7; startDateKey: string; endDateKey: string }
@@ -131,9 +134,56 @@ export const summarizeMacroTrends = (days: readonly MacroTrendDay[]): MacroTrend
 export const summarizeMacroSplit = (days: readonly MacroTrendDay[]): MacroSplitSummary => {
   const complete = days.filter((day) => day.proteinGrams !== null && day.carbsGrams !== null && day.fatGrams !== null && day.fibreGrams !== null)
   const totals = { protein: complete.reduce((sum, day) => sum + day.proteinGrams!, 0), carbs: complete.reduce((sum, day) => sum + day.carbsGrams!, 0), fat: complete.reduce((sum, day) => sum + day.fatGrams!, 0), fibre: complete.reduce((sum, day) => sum + day.fibreGrams!, 0) }
-  const totalGrams = totals.protein + totals.carbs + totals.fat + totals.fibre
-  const data: MacroSplitDatum[] = ([['protein', 'Protein'], ['carbs', 'Carbs'], ['fat', 'Fat'], ['fibre', 'Fibre']] as const).map(([metric, label]) => ({ metric, label, grams: totals[metric], percentage: totalGrams > 0 ? totals[metric] / totalGrams * 100 : null }))
+  const averages = { protein: complete.length ? totals.protein / complete.length : 0, carbs: complete.length ? totals.carbs / complete.length : 0, fat: complete.length ? totals.fat / complete.length : 0, fibre: complete.length ? totals.fibre / complete.length : 0 }
+  const totalGrams = averages.protein + averages.carbs + averages.fat + averages.fibre
+  const data: MacroSplitDatum[] = ([['protein', 'Protein'], ['carbs', 'Carbs'], ['fat', 'Fat'], ['fibre', 'Fibre']] as const).map(([metric, label]) => ({ metric, label, grams: averages[metric], percentage: totalGrams > 0 ? averages[metric] / totalGrams * 100 : null }))
   return { status: complete.length === 0 ? 'empty' : totalGrams === 0 ? 'zero' : 'available', completeDays: complete.length, totalGrams, data }
+}
+
+const emptyMacroSplitData = (): MacroSplitDatum[] => ([['protein', 'Protein'], ['carbs', 'Carbs'], ['fat', 'Fat'], ['fibre', 'Fibre']] as const).map(([metric, label]) => ({ metric, label, grams: null, percentage: null }))
+
+export const summarizeMacroSplitForDate = (savedDays: readonly HistoryDay[], selectedDate: string, endDate = new Date()): MacroSplitSummary => {
+  const day = buildMacroTrendDays(savedDays, endDate).find((item) => item.date === selectedDate)
+  if (!day) return { status: 'empty', completeDays: 0, totalGrams: null, data: emptyMacroSplitData() }
+  const data: MacroSplitDatum[] = ([['protein', 'Protein', day.proteinGrams], ['carbs', 'Carbs', day.carbsGrams], ['fat', 'Fat', day.fatGrams], ['fibre', 'Fibre', day.fibreGrams]] as const).map(([metric, label, grams]) => ({ metric, label, grams, percentage: null }))
+  if (data.some((item) => item.grams === null)) return { status: 'incomplete', completeDays: 0, totalGrams: null, data }
+  const totalGrams = data.reduce((sum, item) => sum + item.grams!, 0)
+  return { status: totalGrams === 0 ? 'zero' : 'available', completeDays: 1, totalGrams, data: data.map((item) => ({ ...item, percentage: totalGrams > 0 ? item.grams! / totalGrams * 100 : null })) }
+}
+
+export const buildAnalyticsSavedDateOptions = (savedDays: readonly HistoryDay[], endDate = new Date()): AnalyticsSavedDateOption[] => {
+  const range = new Set(buildLocalDateRange(endDate))
+  return getCanonicalValidHistoryDays(savedDays)
+    .filter((day) => range.has(day.date))
+    .sort((left, right) => right.date.localeCompare(left.date))
+    .map((day) => ({ date: day.date, dateLabel: parseStrictLocalDateKey(day.date)!.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) }))
+}
+
+const MEAL_PROTEIN_ORDER: readonly MealName[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
+
+export const summarizeMealProteinSplit = (savedDays: readonly HistoryDay[], endDate = new Date()): MealProteinSplitSummary => {
+  const range = new Set(buildLocalDateRange(endDate))
+  const days = getCanonicalValidHistoryDays(savedDays).filter((day) => range.has(day.date))
+  const complete = days.map((day) => MEAL_PROTEIN_ORDER.map((meal) => {
+    const values = day.meals[meal].entries.map((entry) => calculateFoodEntryTotals(entry).protein)
+    return values.every((value) => Number.isFinite(value) && value >= 0) ? values.reduce((sum, value) => sum + value, 0) : null
+  })).filter((values) => values.every((value) => value !== null)) as number[][]
+  const data = MEAL_PROTEIN_ORDER.map((meal, index) => ({ meal, proteinGrams: complete.length ? complete.reduce((sum, values) => sum + values[index], 0) / complete.length : null }))
+  const totalProteinGrams = complete.length ? data.reduce((sum, item) => sum + item.proteinGrams!, 0) : null
+  return { status: complete.length === 0 ? 'empty' : totalProteinGrams === 0 ? 'zero' : 'available', completeDays: complete.length, totalProteinGrams, data }
+}
+
+export const summarizeMealProteinSplitForDate = (savedDays: readonly HistoryDay[], selectedDate: string, endDate = new Date()): MealProteinSplitSummary => {
+  const range = new Set(buildLocalDateRange(endDate))
+  const day = getCanonicalValidHistoryDays(savedDays).find((item) => item.date === selectedDate && range.has(item.date))
+  if (!day) return { status: 'empty', completeDays: 0, totalProteinGrams: null, data: MEAL_PROTEIN_ORDER.map((meal) => ({ meal, proteinGrams: null })) }
+  const data = MEAL_PROTEIN_ORDER.map((meal) => {
+    const values = day.meals[meal].entries.map((entry) => calculateFoodEntryTotals(entry).protein)
+    return { meal, proteinGrams: values.every((value) => Number.isFinite(value) && value >= 0) ? values.reduce((sum, value) => sum + value, 0) : null }
+  })
+  if (data.some((item) => item.proteinGrams === null)) return { status: 'incomplete', completeDays: 0, totalProteinGrams: null, data }
+  const totalProteinGrams = data.reduce((sum, item) => sum + item.proteinGrams!, 0)
+  return { status: totalProteinGrams === 0 ? 'zero' : 'available', completeDays: 1, totalProteinGrams, data }
 }
 
 export const buildContinuousMetricDomain = ({ values, referenceValues = [], minimumSpan, paddingRatio, roundingStep, floorAtZero }: ContinuousMetricDomainOptions): [number, number] => {
