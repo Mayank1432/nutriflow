@@ -8,6 +8,7 @@ export const REACT_STORAGE_KEYS = {
   settings: "nutriflow_react_settings_v1",
   meta: "nutriflow_react_meta_v1",
   dailyStaples: "nutriflow_react_daily_staples_v1",
+  pantry: "nutriflow_react_pantry_v1",
 } as const;
 
 export type ReactStorageKey =
@@ -18,5 +19,4 @@ export const REACT_STORAGE_KEY_ALLOWLIST: readonly ReactStorageKey[] =
 
 export const RESERVED_REACT_STORAGE_KEYS = {
   shopping: "nutriflow_react_shopping_v1",
-  pantry: "nutriflow_react_pantry_v1",
 } as const;

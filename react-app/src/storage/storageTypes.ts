@@ -128,6 +128,24 @@ export interface ReactDailyStaplesStore extends VersionedSlice {
   staples: DailyStapleDefinition[];
 }
 
+export interface PantryItem {
+  id: string;
+  ingredientId: string;
+  name: string;
+  unit: ServingUnit;
+  image?: string;
+  quantityInStock: number;
+  inStock: boolean;
+  lowStock: boolean;
+  usedOften: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReactPantryStore extends VersionedSlice {
+  pantryItems: PantryItem[];
+}
+
 export interface MacroGoal {
   enabled: boolean;
   value: number | null;
@@ -166,6 +184,7 @@ export interface ReactStores {
   history: ReactHistoryStore;
   ingredients: ReactIngredientsStore;
   dailyStaples: ReactDailyStaplesStore;
+  pantry: ReactPantryStore;
   settings: ReactSettingsStore;
   meta: ReactMetaStore;
 }

@@ -6,6 +6,7 @@ import TodayScreen from './screens/TodayScreen'
 import WeeklyScreen from './screens/WeeklyScreen'
 import SettingsScreen from './screens/SettingsScreen'
 import AnalyticsScreen from './screens/AnalyticsScreen'
+import PantryScreen from './screens/PantryScreen'
 import { readReactSettingsStore, writeReactSettingsStore, type MacroGoals } from './storage'
 import type { DrawerDestination } from './components/HamburgerDrawer'
 
@@ -18,6 +19,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>('today')
   const [showSettings, setShowSettings] = useState(false)
   const [moreSection, setMoreSection] = useState<'ingredient-library' | 'daily-staples' | null>(null)
+  const [showPantry, setShowPantry] = useState(false)
   const [settings, setSettings] = useState(() => readReactSettingsStore())
   const [uiIntent, setUiIntent] = useState<UiIntent | null>(null)
   const [quickAddVisible, setQuickAddVisible] = useState(false)
@@ -65,7 +67,7 @@ function App() {
     weekly: <WeeklyScreen />,
     history: <HistoryScreen />,
     analytics: <AnalyticsScreen />,
-    more: showSettings
+    more: showPantry ? <PantryScreen /> : showSettings
       ? <SettingsScreen
           onBack={() => setShowSettings(false)}
           settings={settings}
@@ -88,6 +90,10 @@ function App() {
 
   const navigateDrawer = (destination: DrawerDestination) => {
     setUiIntent(null)
+    setShowPantry(false)
+    if (destination === 'pantry') {
+      setActiveTab('more'); setShowSettings(false); setMoreSection(null); setShowPantry(true); return
+    }
     if (destination === 'quick-add' || destination === 'today-ingredients') {
       setActiveTab('today'); setShowSettings(false); setMoreSection(null); issueIntent(destination); return
     }
@@ -112,7 +118,9 @@ function App() {
     setShowSettings(false)
     setMoreSection(null)
   }
-  const activeDestination: DrawerDestination = showSettings
+  const activeDestination: DrawerDestination = showPantry
+    ? 'pantry'
+    : showSettings
     ? 'settings'
     : moreSection ?? activeTab
 
@@ -120,6 +128,7 @@ function App() {
     <div className="theme-root" data-theme={settings.theme.mode}>
     <AppShell activeTab={activeTab} hideBottomNavigation={quickAddVisible} onTabChange={(tab) => {
       setUiIntent(null)
+      setShowPantry(false)
       setActiveTab(tab)
       if (tab !== 'more') setShowSettings(false)
     }} activeDestination={activeDestination} onDrawerNavigate={navigateDrawer}>

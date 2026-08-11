@@ -13,4 +13,4 @@ This module implements infrastructure for the locked schema in the root `STORAGE
 - Reset helpers remove only allowlisted React keys.
 - Never use `localStorage.clear()`.
 
-Shopping and Pantry remain reserved constants until their approved sprint. Daily Staples is active and included in the React-only runtime allowlist.
+Pantry is active in Sprint 8 Task 8.1 and is included in the React-only runtime allowlist. Shopping remains reserved. Daily Staples remains active.

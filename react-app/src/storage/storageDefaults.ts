@@ -6,6 +6,7 @@ import type {
   ReactDailyStaplesStore,
   ReactIngredientsStore,
   ReactMetaStore,
+  ReactPantryStore,
   ReactSettingsStore,
   ReactStores,
   ReactTodayStore,
@@ -93,6 +94,12 @@ export const createDefaultReactDailyStaplesStore = (): ReactDailyStaplesStore =>
   staples: [],
 });
 
+export const createDefaultReactPantryStore = (): ReactPantryStore => ({
+  schemaVersion: CURRENT_REACT_SCHEMA_VERSION,
+  updatedAt: nowIso(),
+  pantryItems: [],
+});
+
 export const createDefaultReactSettingsStore = (): ReactSettingsStore => ({
   schemaVersion: CURRENT_REACT_SCHEMA_VERSION,
   updatedAt: nowIso(),
@@ -126,6 +133,7 @@ export const createDefaultReactStores = (): ReactStores => ({
   history: createDefaultReactHistoryStore(),
   ingredients: createDefaultReactIngredientsStore(),
   dailyStaples: createDefaultReactDailyStaplesStore(),
+  pantry: createDefaultReactPantryStore(),
   settings: createDefaultReactSettingsStore(),
   meta: createDefaultReactMetaStore(),
 });

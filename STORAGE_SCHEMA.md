@@ -39,15 +39,15 @@ The active React v1 keys are:
 - `nutriflow_react_settings_v1`
 - `nutriflow_react_meta_v1`
 - `nutriflow_react_daily_staples_v1`
+- `nutriflow_react_pantry_v1`
 
 These are the only active keys in the initial React schema.
 
 ## 4. Reserved Future Keys
 
 - `nutriflow_react_shopping_v1`
-- `nutriflow_react_pantry_v1`
 
-These names are reserved only. They must not be created as active empty slices before their approved future sprints.
+Shopping remains reserved only and must not be created as an active empty slice before its approved future sprint.
 
 ## 5. Protected Vanilla Keys
 
@@ -341,7 +341,36 @@ React v1 storage starts fresh. Migration from old vanilla Local Storage and old 
 
 Daily Staples is active in its approved sprint under `nutriflow_react_daily_staples_v1`. Its versioned store contains reusable `DailyStapleDefinition` records with stable ID, optional Ingredient Library reference, name, default quantity and meal, explicit unit and basis, nutrition/cost snapshots, archive status, and timestamps. Staples never contain active meal entries.
 
-Shopping and Pantry remain reserved; no active empty slices are created for them.
+Pantry is active in Sprint 8 Task 8.1. Shopping remains reserved.
+
+## 18.1 Pantry / Stock Store
+
+Key: `nutriflow_react_pantry_v1`
+
+```ts
+interface PantryItem {
+  id: string;
+  ingredientId: string;
+  name: string;
+  unit: ServingUnit;
+  image?: string;
+  quantityInStock: number;
+  inStock: boolean;
+  lowStock: boolean;
+  usedOften: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ReactPantryStore extends VersionedSlice {
+  schemaVersion: 1;
+  pantryItems: PantryItem[];
+}
+```
+
+Pantry creation uses the Ingredient Library only. A new record snapshots the ingredient ID, name, `defaultUnit` (`g`, `ml`, `piece`, or `serving`), and optional existing image; it does not snapshot nutrition, cost, default meal, basis type, barcode, or category. `quantityInStock` must be finite and at least zero. Quantity and `inStock` are independent; `lowStock` and `usedOften` are manual booleans and do not synchronize with Daily Staples.
+
+Each store permits one Pantry record per `ingredientId` and requires unique Pantry IDs. Existing Pantry snapshots remain stable when their source Ingredient is renamed, edited, archived, deleted, or given another image. Task 8.1 has no Pantry Remove/Delete action. Pantry summary totals are derived, not persisted. React reset may remove the active Pantry key through the React-only allowlist and must never touch protected Vanilla keys; Shopping remains outside the active allowlist.
 
 ## 19. Implementation Rules for Task 1.2
 
