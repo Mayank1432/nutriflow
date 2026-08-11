@@ -3,6 +3,7 @@ import {
   createDefaultReactDailyStaplesStore,
   createDefaultReactIngredientsStore,
   createDefaultReactMetaStore,
+  createDefaultReactPantryStore,
   createDefaultReactSettingsStore,
   createDefaultReactTodayStore,
   createDefaultReactWeeklyStore,
@@ -26,10 +27,12 @@ import type {
   MealName,
   MealsByName,
   NutritionSnapshot,
+  PantryItem,
   ReactHistoryStore,
   ReactDailyStaplesStore,
   ReactIngredientsStore,
   ReactMetaStore,
+  ReactPantryStore,
   ReactSettingsStore,
   ReactTodayStore,
   ReactWeeklyStore,
@@ -235,6 +238,35 @@ const isReactDailyStaplesStore: StoreValidator<ReactDailyStaplesStore> = (
   hasValidSchemaVersion(value) &&
   Array.isArray(value.staples) &&
   value.staples.every(isDailyStapleDefinition);
+
+export const isPantryItem = (value: unknown): value is PantryItem =>
+  isRecord(value) &&
+  isString(value.id) && value.id.length > 0 &&
+  isString(value.ingredientId) && value.ingredientId.length > 0 &&
+  isString(value.name) && value.name.length > 0 &&
+  SERVING_UNITS.includes(value.unit as ServingUnit) &&
+  isOptionalString(value.image) &&
+  isNumber(value.quantityInStock) &&
+  typeof value.inStock === "boolean" &&
+  typeof value.lowStock === "boolean" &&
+  typeof value.usedOften === "boolean" &&
+  isString(value.createdAt) &&
+  isString(value.updatedAt);
+
+export const isReactPantryStore: StoreValidator<ReactPantryStore> = (
+  value,
+): value is ReactPantryStore => {
+  if (!isRecord(value) || !hasValidSchemaVersion(value) ||
+      !Array.isArray(value.pantryItems) || !value.pantryItems.every(isPantryItem)) return false;
+  const ids = new Set<string>();
+  const ingredientIds = new Set<string>();
+  for (const item of value.pantryItems) {
+    if (ids.has(item.id) || ingredientIds.has(item.ingredientId)) return false;
+    ids.add(item.id);
+    ingredientIds.add(item.ingredientId);
+  }
+  return true;
+};
 
 const isReactSettingsStore: StoreValidator<ReactSettingsStore> = (
   value,
@@ -463,6 +495,13 @@ export const resetReactDailyStaplesStore = (): ReactDailyStaplesStore =>
     createDefaultReactDailyStaplesStore,
     isReactDailyStaplesStore,
   );
+
+export const readReactPantryStore = (): ReactPantryStore =>
+  readReactStore(REACT_STORAGE_KEYS.pantry, createDefaultReactPantryStore, isReactPantryStore);
+export const writeReactPantryStore = (store: ReactPantryStore): boolean =>
+  writeReactStore(REACT_STORAGE_KEYS.pantry, store, isReactPantryStore);
+export const resetReactPantryStore = (): ReactPantryStore =>
+  resetReactStore(REACT_STORAGE_KEYS.pantry, createDefaultReactPantryStore, isReactPantryStore);
 
 export const readReactSettingsStore = (): ReactSettingsStore =>
   readReactStore(
