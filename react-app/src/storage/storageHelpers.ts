@@ -40,6 +40,7 @@ import type {
   ReactWeeklyStore,
   ServingUnit,
   ShoppingItem,
+  ShoppingGeneratedSnapshot,
   WeeklyDay,
 } from "./storageTypes";
 
@@ -271,13 +272,38 @@ export const isReactPantryStore: StoreValidator<ReactPantryStore> = (
   return true;
 };
 
+const isNonEmptyString = (value: unknown): value is string => isString(value) && value.length > 0;
+
+export const isShoppingGeneratedSnapshot = (value: unknown): value is ShoppingGeneratedSnapshot => {
+  if (!isRecord(value) || (value.ingredientId !== undefined && !isNonEmptyString(value.ingredientId))) return false;
+  const weekly = value.weekly;
+  if (weekly !== undefined) {
+    if (!isRecord(weekly) || !isNumber(weekly.quantity) || weekly.quantity <= 0 ||
+        !SERVING_UNITS.includes(weekly.unit as ServingUnit)) return false;
+    if (weekly.occurrenceIds !== undefined) {
+      if (!Array.isArray(weekly.occurrenceIds) || weekly.occurrenceIds.length === 0 ||
+          !weekly.occurrenceIds.every(isNonEmptyString) || new Set(weekly.occurrenceIds).size !== weekly.occurrenceIds.length) return false;
+    }
+  }
+  const dailyStaple = value.dailyStaple;
+  if (dailyStaple !== undefined && (!isRecord(dailyStaple) || !isNonEmptyString(dailyStaple.stapleId) ||
+      !isNumber(dailyStaple.quantity) || dailyStaple.quantity <= 0 ||
+      !SERVING_UNITS.includes(dailyStaple.unit as ServingUnit))) return false;
+  const pantry = value.pantry;
+  if (pantry !== undefined && (!isRecord(pantry) || !isNonEmptyString(pantry.pantryItemId) ||
+      !isNumber(pantry.quantityInStock) || pantry.quantityInStock < 0 ||
+      !SERVING_UNITS.includes(pantry.unit as ServingUnit))) return false;
+  return weekly !== undefined || dailyStaple !== undefined || pantry !== undefined;
+};
+
 export const isShoppingItem = (value: unknown): value is ShoppingItem =>
   isRecord(value) &&
   isString(value.id) && value.id.length > 0 &&
   isString(value.name) && value.name.length > 0 && value.name === value.name.trim() &&
   typeof value.completed === "boolean" &&
   isString(value.createdAt) &&
-  isString(value.updatedAt);
+  isString(value.updatedAt) &&
+  (value.generated === undefined || isShoppingGeneratedSnapshot(value.generated));
 
 export const isReactShoppingStore: StoreValidator<ReactShoppingStore> = (
   value,

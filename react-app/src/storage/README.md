@@ -13,4 +13,4 @@ This module implements infrastructure for the locked schema in the root `STORAGE
 - Reset helpers remove only allowlisted React keys.
 - Never use `localStorage.clear()`.
 
-Pantry, Shopping, and Daily Staples are active and included in the React-only runtime allowlist. Shopping was activated in Sprint 8 Task 8.2.
+Pantry, Shopping, and Daily Staples are active and included in the React-only runtime allowlist. Shopping was activated in Sprint 8 Task 8.2. Sprint 8 Task 8.3 keeps the same Shopping v1 key/schema and adds an optional validated provenance snapshot for explicitly confirmed generated items. Weekly Planner, Daily Staples, and Low-stock Pantry are read-only generation sources; preview state is ephemeral and confirmation performs at most one Shopping write.

@@ -340,7 +340,7 @@ React v1 storage starts fresh. Migration from old vanilla Local Storage and old 
 
 Daily Staples is active in its approved sprint under `nutriflow_react_daily_staples_v1`. Its versioned store contains reusable `DailyStapleDefinition` records with stable ID, optional Ingredient Library reference, name, default quantity and meal, explicit unit and basis, nutrition/cost snapshots, archive status, and timestamps. Staples never contain active meal entries.
 
-Pantry is active in Sprint 8 Task 8.1. Shopping is active in Sprint 8 Task 8.2.
+Pantry is active in Sprint 8 Task 8.1. Shopping is active from Sprint 8 Task 8.2, with generated Shopping provenance added in Task 8.3.
 
 ## 18.1 Pantry / Stock Store
 
@@ -384,6 +384,14 @@ interface ShoppingItem {
   completed: boolean;
   createdAt: string;
   updatedAt: string;
+  generated?: ShoppingGeneratedSnapshot;
+}
+
+interface ShoppingGeneratedSnapshot {
+  ingredientId?: string;
+  weekly?: { quantity: number; unit: ServingUnit; occurrenceIds?: string[] };
+  dailyStaple?: { stapleId: string; quantity: number; unit: ServingUnit };
+  pantry?: { pantryItemId: string; quantityInStock: number; unit: ServingUnit };
 }
 
 interface ReactShoppingStore extends VersionedSlice {
@@ -394,7 +402,11 @@ interface ReactShoppingStore extends VersionedSlice {
 
 Shopping names trim outer whitespace on creation while preserving Unicode, case, and internal spacing. IDs are identity and must be unique; duplicate names are allowed. Completion is changed manually with the same record ID. TO BUY and COMPLETED are derived from the single authoritative array without reordering it. Clear completed removes completed records only and leaves active records and timestamps unchanged.
 
-Task 8.2 stores no quantity, unit, cost, nutrition, provenance, or source references. It has no Ingredient Library, Pantry, Daily Staples, or Weekly dependency. Task 8.3 generation and provenance are not implemented.
+Manual Task 8.2 records remain valid and keep their original five-field shape. Task 8.3 may append a deep-copied `generated` provenance snapshot after an explicit preview and confirmation flow. A generated snapshot must contain at least one of `weekly`, `dailyStaple`, or `pantry`; `ingredientId` alone is not provenance. Quantities must be finite and positive, except Pantry `quantityInStock`, which may be zero because it records stock left rather than a purchase amount. Units remain exact and are never converted.
+
+Weekly generation follows persisted day order, Breakfast/Lunch/Dinner/Snacks order, and entry order. Entries with the same non-empty Ingredient ID and exact unit aggregate; identityless entries remain separate and match only through reliable structural occurrence IDs. Daily Staples generate once per unique active staple definition without multiplying by seven. Pantry generation includes only records explicitly marked Low stock. Sources never merge with one another, even when names or Ingredient IDs match.
+
+Generated matching uses source identity rather than name or quantity: Weekly Ingredient ID plus exact unit, reliable Weekly occurrence-ID sets, Daily Staple ID, or Pantry item ID. Active matches are unavailable; completed matches require explicit opt-in. Confirmation re-reads the latest Shopping store, skips stale conflicts, preserves existing records, appends accepted preview snapshots in deterministic order, and performs at most one Shopping write. Weekly, Daily Staples, and Pantry remain read-only generation sources; no nutrition, cost, or live source definition is stored or re-read for generated row display.
 
 ## 19. Implementation Rules for Task 1.2
 

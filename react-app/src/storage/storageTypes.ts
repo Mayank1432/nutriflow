@@ -146,12 +146,32 @@ export interface ReactPantryStore extends VersionedSlice {
   pantryItems: PantryItem[];
 }
 
+export interface ShoppingGeneratedSnapshot {
+  ingredientId?: string;
+  weekly?: {
+    quantity: number;
+    unit: ServingUnit;
+    occurrenceIds?: string[];
+  };
+  dailyStaple?: {
+    stapleId: string;
+    quantity: number;
+    unit: ServingUnit;
+  };
+  pantry?: {
+    pantryItemId: string;
+    quantityInStock: number;
+    unit: ServingUnit;
+  };
+}
+
 export interface ShoppingItem {
   id: string;
   name: string;
   completed: boolean;
   createdAt: string;
   updatedAt: string;
+  generated?: ShoppingGeneratedSnapshot;
 }
 
 export interface ReactShoppingStore extends VersionedSlice {
