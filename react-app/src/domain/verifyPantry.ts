@@ -1,6 +1,6 @@
 import { createDefaultReactPantryStore, createDefaultReactStores } from '../storage/storageDefaults'
 import { isPantryItem, isReactPantryStore, resetReactPantryStore } from '../storage/storageHelpers'
-import { CURRENT_REACT_SCHEMA_VERSION, REACT_STORAGE_KEY_ALLOWLIST, REACT_STORAGE_KEYS, RESERVED_REACT_STORAGE_KEYS } from '../storage/storageKeys'
+import { CURRENT_REACT_SCHEMA_VERSION, REACT_STORAGE_KEY_ALLOWLIST, REACT_STORAGE_KEYS } from '../storage/storageKeys'
 import type { IngredientDefinition, PantryItem, ReactPantryStore, ServingUnit } from '../storage/storageTypes'
 import { createPantryItem, derivePantrySummary, parsePantryQuantity } from './pantry'
 
@@ -14,10 +14,9 @@ const item = createPantryItem(ingredient, timestamp, () => 'pantry-1')
 const store = (pantryItems: PantryItem[]): ReactPantryStore => ({ schemaVersion: 1, updatedAt: timestamp, pantryItems })
 
 assert(REACT_STORAGE_KEYS.pantry === 'nutriflow_react_pantry_v1', 'Pantry key must be active')
-assert(RESERVED_REACT_STORAGE_KEYS.shopping === 'nutriflow_react_shopping_v1', 'Shopping key must remain reserved')
 assert(CURRENT_REACT_SCHEMA_VERSION === 1, 'Schema version must remain 1')
 assert(REACT_STORAGE_KEY_ALLOWLIST.includes(REACT_STORAGE_KEYS.pantry), 'Pantry must be allowlisted')
-assert(!REACT_STORAGE_KEY_ALLOWLIST.includes(RESERVED_REACT_STORAGE_KEYS.shopping as never), 'Shopping must not be allowlisted')
+assert(REACT_STORAGE_KEY_ALLOWLIST.includes(REACT_STORAGE_KEYS.shopping), 'Shopping must be allowlisted after Task 8.2')
 for (const key of ['pptd_v5', 'ppc_v5', 'ppwk_v5', 'ppst_v5', 'ppl_v5']) assert(!REACT_STORAGE_KEY_ALLOWLIST.includes(key as never), `${key} must be protected`)
 
 const firstDefault = createDefaultReactPantryStore(); const secondDefault = createDefaultReactPantryStore()
@@ -39,6 +38,7 @@ for (const field of ['inStock', 'lowStock', 'usedOften'] as const) assert(!isPan
 assert(isPantryItem({ ...item, image: undefined }) && !isPantryItem({ ...item, image: 1 }), 'Optional image validation failed')
 
 assert(isReactPantryStore(store([item])), 'Valid Pantry store rejected')
+assert(isReactPantryStore(store([{ ...item, inStock: true, lowStock: true }])), 'Legacy both-true Pantry state must remain validator-compatible')
 assert(!isReactPantryStore(store([item, { ...item, ingredientId: 'ingredient-2' }])), 'Duplicate ids must be rejected')
 assert(!isReactPantryStore(store([item, { ...item, id: 'pantry-2' }])), 'Duplicate ingredientIds must be rejected')
 assert(store([item, { ...item, id: 'pantry-2' }]).pantryItems.length === 2, 'Validation must not merge/dedupe')

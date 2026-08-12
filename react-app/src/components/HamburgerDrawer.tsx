@@ -5,7 +5,7 @@ export type DrawerDestination =
   | 'analytics' | 'ingredient-library' | 'daily-staples' | 'settings'
   | 'quick-add' | 'today-ingredients' | 'custom-ingredient'
   | 'macro-goals' | 'theme'
-  | 'pantry'
+  | 'pantry' | 'shopping'
 
 type HamburgerDrawerProps = {
   activeDestination: DrawerDestination
@@ -30,7 +30,7 @@ const groups: Array<{ label: string; links: DrawerLink[] }> = [
       { id: 'analytics', label: 'Analytics', destination: 'analytics', activeFor: 'analytics' },
       { id: 'weekly-planner', label: 'Weekly Planner', destination: 'weekly', activeFor: 'weekly' },
       { id: 'history', label: 'History', destination: 'history', activeFor: 'history' },
-      { id: 'shopping-list', label: 'Shopping List' },
+      { id: 'shopping-list', label: 'Shopping List', destination: 'shopping', activeFor: 'shopping' },
       { id: 'pantry-stock', label: 'Pantry / Stock', destination: 'pantry', activeFor: 'pantry' },
     ],
   },

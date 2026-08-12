@@ -2200,6 +2200,34 @@ body {
   }
 }
 
+/* Sprint 8.2 Shopping List */
+.shopping-screen { display: grid; width: min(100%, 720px); margin: 0 auto; gap: 18px; }
+.shopping-add { display: grid; gap: 6px; }
+.shopping-add > label { color: var(--muted); font-size: 12px; font-weight: 750; }
+.shopping-add > div { display: grid; grid-template-columns: minmax(0, 1fr) 48px; gap: 8px; }
+.shopping-add input { min-width: 0; min-height: 48px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--control-background); color: var(--ink); font: inherit; }
+.shopping-add button { min-width: 48px; min-height: 48px; padding: 0; font-size: 22px; }
+.shopping-add input:focus-visible, .shopping-row input:focus-visible, .shopping-section-heading button:focus-visible, .shopping-empty:focus-visible, .shopping-section-heading h2:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.shopping-error { margin: 0; color: var(--danger); font-size: 13px; }
+.shopping-feedback { min-height: 18px; margin: -8px 0 0; color: var(--muted); font-size: 12px; }
+.shopping-section, .shopping-list { display: grid; gap: 9px; }
+.shopping-section-heading { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 10px; }
+.shopping-section-heading h2 { margin: 0; font-size: 13px; letter-spacing: .08em; }
+.shopping-section-heading button { min-height: 44px; }
+.shopping-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow); }
+.shopping-row label { display: grid; grid-template-columns: 44px minmax(0, 1fr); min-width: 0; align-items: center; cursor: pointer; }
+.shopping-row input { width: 22px; height: 22px; justify-self: center; accent-color: var(--blue); }
+.shopping-row label span { display: grid; min-width: 0; gap: 3px; }
+.shopping-row strong { overflow-wrap: anywhere; }
+.shopping-row small { color: var(--muted); }
+.shopping-row.is-completed strong { text-decoration: line-through; text-decoration-thickness: 2px; }
+.shopping-dots { color: var(--muted); letter-spacing: 2px; }
+.shopping-empty { display: grid; min-height: 170px; place-items: center; align-content: center; gap: 7px; padding: 20px; border: 1px dashed var(--line); border-radius: var(--radius-card); background: var(--surface); text-align: center; }
+.shopping-empty.compact { min-height: 115px; }
+.shopping-empty h2, .shopping-empty p { margin: 0; }
+.shopping-empty p { color: var(--muted); }
+@media (max-width: 340px) { .shopping-row { padding-inline: 8px; } .shopping-section-heading { align-items: flex-start; } }
+
 /* Sprint 8.1 Pantry / Stock */
 .pantry-screen { display: grid; width: min(100%, 720px); margin: 0 auto; gap: 14px; }
 .pantry-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }

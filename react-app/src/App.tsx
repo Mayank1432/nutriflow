@@ -7,6 +7,7 @@ import WeeklyScreen from './screens/WeeklyScreen'
 import SettingsScreen from './screens/SettingsScreen'
 import AnalyticsScreen from './screens/AnalyticsScreen'
 import PantryScreen from './screens/PantryScreen'
+import ShoppingScreen from './screens/ShoppingScreen'
 import { readReactSettingsStore, writeReactSettingsStore, type MacroGoals } from './storage'
 import type { DrawerDestination } from './components/HamburgerDrawer'
 
@@ -20,6 +21,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [moreSection, setMoreSection] = useState<'ingredient-library' | 'daily-staples' | null>(null)
   const [showPantry, setShowPantry] = useState(false)
+  const [showShopping, setShowShopping] = useState(false)
   const [settings, setSettings] = useState(() => readReactSettingsStore())
   const [uiIntent, setUiIntent] = useState<UiIntent | null>(null)
   const [quickAddVisible, setQuickAddVisible] = useState(false)
@@ -67,7 +69,7 @@ function App() {
     weekly: <WeeklyScreen />,
     history: <HistoryScreen />,
     analytics: <AnalyticsScreen />,
-    more: showPantry ? <PantryScreen /> : showSettings
+    more: showShopping ? <ShoppingScreen /> : showPantry ? <PantryScreen /> : showSettings
       ? <SettingsScreen
           onBack={() => setShowSettings(false)}
           settings={settings}
@@ -91,6 +93,10 @@ function App() {
   const navigateDrawer = (destination: DrawerDestination) => {
     setUiIntent(null)
     setShowPantry(false)
+    setShowShopping(false)
+    if (destination === 'shopping') {
+      setActiveTab('more'); setShowSettings(false); setMoreSection(null); setShowShopping(true); return
+    }
     if (destination === 'pantry') {
       setActiveTab('more'); setShowSettings(false); setMoreSection(null); setShowPantry(true); return
     }
@@ -118,7 +124,9 @@ function App() {
     setShowSettings(false)
     setMoreSection(null)
   }
-  const activeDestination: DrawerDestination = showPantry
+  const activeDestination: DrawerDestination = showShopping
+    ? 'shopping'
+    : showPantry
     ? 'pantry'
     : showSettings
     ? 'settings'
@@ -129,6 +137,7 @@ function App() {
     <AppShell activeTab={activeTab} hideBottomNavigation={quickAddVisible} onTabChange={(tab) => {
       setUiIntent(null)
       setShowPantry(false)
+      setShowShopping(false)
       setActiveTab(tab)
       if (tab !== 'more') setShowSettings(false)
     }} activeDestination={activeDestination} onDrawerNavigate={navigateDrawer}>

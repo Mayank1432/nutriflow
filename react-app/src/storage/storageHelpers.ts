@@ -5,6 +5,7 @@ import {
   createDefaultReactMetaStore,
   createDefaultReactPantryStore,
   createDefaultReactSettingsStore,
+  createDefaultReactShoppingStore,
   createDefaultReactTodayStore,
   createDefaultReactWeeklyStore,
 } from "./storageDefaults";
@@ -34,9 +35,11 @@ import type {
   ReactMetaStore,
   ReactPantryStore,
   ReactSettingsStore,
+  ReactShoppingStore,
   ReactTodayStore,
   ReactWeeklyStore,
   ServingUnit,
+  ShoppingItem,
   WeeklyDay,
 } from "./storageTypes";
 
@@ -264,6 +267,27 @@ export const isReactPantryStore: StoreValidator<ReactPantryStore> = (
     if (ids.has(item.id) || ingredientIds.has(item.ingredientId)) return false;
     ids.add(item.id);
     ingredientIds.add(item.ingredientId);
+  }
+  return true;
+};
+
+export const isShoppingItem = (value: unknown): value is ShoppingItem =>
+  isRecord(value) &&
+  isString(value.id) && value.id.length > 0 &&
+  isString(value.name) && value.name.length > 0 && value.name === value.name.trim() &&
+  typeof value.completed === "boolean" &&
+  isString(value.createdAt) &&
+  isString(value.updatedAt);
+
+export const isReactShoppingStore: StoreValidator<ReactShoppingStore> = (
+  value,
+): value is ReactShoppingStore => {
+  if (!isRecord(value) || !hasValidSchemaVersion(value) ||
+      !Array.isArray(value.shoppingItems) || !value.shoppingItems.every(isShoppingItem)) return false;
+  const ids = new Set<string>();
+  for (const item of value.shoppingItems) {
+    if (ids.has(item.id)) return false;
+    ids.add(item.id);
   }
   return true;
 };
@@ -502,6 +526,13 @@ export const writeReactPantryStore = (store: ReactPantryStore): boolean =>
   writeReactStore(REACT_STORAGE_KEYS.pantry, store, isReactPantryStore);
 export const resetReactPantryStore = (): ReactPantryStore =>
   resetReactStore(REACT_STORAGE_KEYS.pantry, createDefaultReactPantryStore, isReactPantryStore);
+
+export const readReactShoppingStore = (): ReactShoppingStore =>
+  readReactStore(REACT_STORAGE_KEYS.shopping, createDefaultReactShoppingStore, isReactShoppingStore);
+export const writeReactShoppingStore = (store: ReactShoppingStore): boolean =>
+  writeReactStore(REACT_STORAGE_KEYS.shopping, store, isReactShoppingStore);
+export const resetReactShoppingStore = (): ReactShoppingStore =>
+  resetReactStore(REACT_STORAGE_KEYS.shopping, createDefaultReactShoppingStore, isReactShoppingStore);
 
 export const readReactSettingsStore = (): ReactSettingsStore =>
   readReactStore(

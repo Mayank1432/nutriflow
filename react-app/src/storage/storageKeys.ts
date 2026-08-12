@@ -9,6 +9,7 @@ export const REACT_STORAGE_KEYS = {
   meta: "nutriflow_react_meta_v1",
   dailyStaples: "nutriflow_react_daily_staples_v1",
   pantry: "nutriflow_react_pantry_v1",
+  shopping: "nutriflow_react_shopping_v1",
 } as const;
 
 export type ReactStorageKey =
@@ -17,6 +18,4 @@ export type ReactStorageKey =
 export const REACT_STORAGE_KEY_ALLOWLIST: readonly ReactStorageKey[] =
   Object.freeze(Object.values(REACT_STORAGE_KEYS));
 
-export const RESERVED_REACT_STORAGE_KEYS = {
-  shopping: "nutriflow_react_shopping_v1",
-} as const;
+export const RESERVED_REACT_STORAGE_KEYS = {} as const;
