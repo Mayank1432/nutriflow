@@ -146,6 +146,18 @@ export interface ReactPantryStore extends VersionedSlice {
   pantryItems: PantryItem[];
 }
 
+export interface ShoppingItem {
+  id: string;
+  name: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReactShoppingStore extends VersionedSlice {
+  shoppingItems: ShoppingItem[];
+}
+
 export interface MacroGoal {
   enabled: boolean;
   value: number | null;
@@ -185,6 +197,7 @@ export interface ReactStores {
   ingredients: ReactIngredientsStore;
   dailyStaples: ReactDailyStaplesStore;
   pantry: ReactPantryStore;
+  shopping: ReactShoppingStore;
   settings: ReactSettingsStore;
   meta: ReactMetaStore;
 }

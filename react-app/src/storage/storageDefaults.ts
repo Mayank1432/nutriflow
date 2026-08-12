@@ -8,6 +8,7 @@ import type {
   ReactMetaStore,
   ReactPantryStore,
   ReactSettingsStore,
+  ReactShoppingStore,
   ReactStores,
   ReactTodayStore,
   ReactWeeklyStore,
@@ -100,6 +101,12 @@ export const createDefaultReactPantryStore = (): ReactPantryStore => ({
   pantryItems: [],
 });
 
+export const createDefaultReactShoppingStore = (): ReactShoppingStore => ({
+  schemaVersion: CURRENT_REACT_SCHEMA_VERSION,
+  updatedAt: nowIso(),
+  shoppingItems: [],
+});
+
 export const createDefaultReactSettingsStore = (): ReactSettingsStore => ({
   schemaVersion: CURRENT_REACT_SCHEMA_VERSION,
   updatedAt: nowIso(),
@@ -134,6 +141,7 @@ export const createDefaultReactStores = (): ReactStores => ({
   ingredients: createDefaultReactIngredientsStore(),
   dailyStaples: createDefaultReactDailyStaplesStore(),
   pantry: createDefaultReactPantryStore(),
+  shopping: createDefaultReactShoppingStore(),
   settings: createDefaultReactSettingsStore(),
   meta: createDefaultReactMetaStore(),
 });

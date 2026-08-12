@@ -9,7 +9,7 @@ type Props = { mode: 'create' | 'edit'; identity: Identity; item?: PantryItem; o
 
 function PantryEditSheet({ mode, identity, item, onSave, onCancel }: Props) {
   const unit = 'defaultUnit' in identity ? identity.defaultUnit : identity.unit
-  const [draft, setDraft] = useState<PantryDraft>(() => ({ quantity: item ? String(item.quantityInStock) : '0', inStock: item?.inStock ?? true, lowStock: item?.lowStock ?? false, usedOften: item?.usedOften ?? false }))
+  const [draft, setDraft] = useState<PantryDraft>(() => ({ quantity: item ? String(item.quantityInStock) : '0', inStock: item?.lowStock ? false : item?.inStock ?? true, lowStock: item?.lowStock ?? false, usedOften: item?.usedOften ?? false }))
   const [error, setError] = useState('')
   const dialogRef = useRef<HTMLElement>(null)
   const quantityRef = useRef<HTMLInputElement>(null)
@@ -42,7 +42,9 @@ function PantryEditSheet({ mode, identity, item, onSave, onCancel }: Props) {
       <form noValidate onSubmit={submit}>
         <label className="pantry-quantity"><span>Quantity in stock</span><span><input ref={quantityRef} type="number" min="0" step="any" inputMode="decimal" value={draft.quantity} aria-invalid={!!error} aria-describedby={error ? 'pantry-quantity-error' : undefined} onChange={(e) => { setDraft({ ...draft, quantity: e.target.value }); setError('') }} /><b>{unit}</b></span></label>
         <div className="pantry-toggles">
-          {([['inStock', 'In stock'], ['usedOften', 'Used often'], ['lowStock', 'Low stock']] as const).map(([field, label]) => <label key={field}><input type="checkbox" checked={draft[field]} onChange={(e) => setDraft({ ...draft, [field]: e.target.checked })} /><span>{label}</span></label>)}
+          <label><input type="checkbox" checked={draft.inStock} onChange={(event) => setDraft({ ...draft, inStock: event.target.checked, ...(event.target.checked ? { lowStock: false } : {}) })} /><span>In stock</span></label>
+          <label><input type="checkbox" checked={draft.usedOften} onChange={(event) => setDraft({ ...draft, usedOften: event.target.checked })} /><span>Used often</span></label>
+          <label><input type="checkbox" checked={draft.lowStock} onChange={(event) => setDraft({ ...draft, lowStock: event.target.checked, ...(event.target.checked ? { inStock: false } : {}) })} /><span>Low stock</span></label>
         </div>
         {error && <p id="pantry-quantity-error" className="pantry-error" role="alert">{error}</p>}
         <div className="pantry-sheet-actions"><button type="button" className="secondary-action" onClick={onCancel}>Cancel</button><button type="submit" className="primary-action">Save</button></div>
