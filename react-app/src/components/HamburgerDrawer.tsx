@@ -6,6 +6,7 @@ export type DrawerDestination =
   | 'quick-add' | 'today-ingredients' | 'custom-ingredient'
   | 'macro-goals' | 'theme'
   | 'pantry' | 'shopping'
+  | 'cost-protein-table'
 
 type HamburgerDrawerProps = {
   activeDestination: DrawerDestination
@@ -40,7 +41,7 @@ const groups: Array<{ label: string; links: DrawerLink[] }> = [
       { id: 'today-ingredients', label: 'Today Ingredients', destination: 'today-ingredients' },
       { id: 'daily-staples', label: 'Daily Staples', destination: 'daily-staples', activeFor: 'daily-staples' },
       { id: 'custom-ingredient', label: 'Custom Ingredient', destination: 'custom-ingredient' },
-      { id: 'cost-protein-table', label: 'Cost / Protein Table' },
+      { id: 'cost-protein-table', label: 'Cost / Protein Table', destination: 'cost-protein-table', activeFor: 'cost-protein-table' },
     ],
   },
   {

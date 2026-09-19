@@ -8,6 +8,7 @@ import SettingsScreen from './screens/SettingsScreen'
 import AnalyticsScreen from './screens/AnalyticsScreen'
 import PantryScreen from './screens/PantryScreen'
 import ShoppingScreen from './screens/ShoppingScreen'
+import CostProteinTableScreen from './screens/CostProteinTableScreen'
 import { readReactSettingsStore, writeReactSettingsStore, type MacroGoals } from './storage'
 import type { DrawerDestination } from './components/HamburgerDrawer'
 
@@ -22,6 +23,7 @@ function App() {
   const [moreSection, setMoreSection] = useState<'ingredient-library' | 'daily-staples' | null>(null)
   const [showPantry, setShowPantry] = useState(false)
   const [showShopping, setShowShopping] = useState(false)
+  const [showCostProteinTable, setShowCostProteinTable] = useState(false)
   const [settings, setSettings] = useState(() => readReactSettingsStore())
   const [uiIntent, setUiIntent] = useState<UiIntent | null>(null)
   const [quickAddVisible, setQuickAddVisible] = useState(false)
@@ -69,7 +71,7 @@ function App() {
     weekly: <WeeklyScreen />,
     history: <HistoryScreen />,
     analytics: <AnalyticsScreen />,
-    more: showShopping ? <ShoppingScreen /> : showPantry ? <PantryScreen /> : showSettings
+    more: showCostProteinTable ? <CostProteinTableScreen /> : showShopping ? <ShoppingScreen /> : showPantry ? <PantryScreen /> : showSettings
       ? <SettingsScreen
           onBack={() => setShowSettings(false)}
           settings={settings}
@@ -94,6 +96,10 @@ function App() {
     setUiIntent(null)
     setShowPantry(false)
     setShowShopping(false)
+    setShowCostProteinTable(false)
+    if (destination === 'cost-protein-table') {
+      setActiveTab('more'); setShowSettings(false); setMoreSection(null); setShowCostProteinTable(true); return
+    }
     if (destination === 'shopping') {
       setActiveTab('more'); setShowSettings(false); setMoreSection(null); setShowShopping(true); return
     }
@@ -126,6 +132,8 @@ function App() {
   }
   const activeDestination: DrawerDestination = showShopping
     ? 'shopping'
+    : showCostProteinTable
+    ? 'cost-protein-table'
     : showPantry
     ? 'pantry'
     : showSettings
@@ -138,6 +146,7 @@ function App() {
       setUiIntent(null)
       setShowPantry(false)
       setShowShopping(false)
+      setShowCostProteinTable(false)
       setActiveTab(tab)
       if (tab !== 'more') setShowSettings(false)
     }} activeDestination={activeDestination} onDrawerNavigate={navigateDrawer}>
