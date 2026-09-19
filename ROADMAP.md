@@ -188,24 +188,26 @@ Optional body-weight tracking and progress chart. **Intentionally skipped by exp
 
 **Sprint tag:** `v0.8.0`
 
-## Sprint 8 — Shopping List + Pantry Stock ⬜
+## Sprint 8 — Shopping List + Pantry Stock ✅
 
 **Goal:** Help the user track what is in stock and what needs buying.
 
-### Task 8.1 — Pantry / Stock List ⬜
+### Task 8.1 — Pantry / Stock List ✅
 Mark items in stock, quantity in stock, low-stock indicator, used-often/staple flag.
 
-### Task 8.2 — Shopping List ⬜
+### Task 8.2 — Shopping List ✅
 Add items manually, check off bought items, clear completed items.
 
-### Task 8.3 — Generate Shopping List ⬜
+### Task 8.3 — Generate Shopping List ✅
 Generate from Weekly Planner, Daily Staples, and low-stock pantry items.
 
-### Task 8.4 — Shopping Cost Estimate ⬜
+### Task 8.4 — Shopping Cost Estimate ✅
 Estimated cost, protein-focused shopping view, and budget comparison if useful.
 
-### Task 8.5 — Cost / Protein Table ⬜
+### Task 8.5 — Cost / Protein Table ✅
 Ingredient name, quantity basis/unit, protein, calories, cost, cost per gram of protein, sorting, filtering/search, correct per-100/per-unit handling, responsive layout, and light/dark support.
+
+**Sprint tag:** `v0.9.0`
 
 ## Sprint 9 — History Catch-Up Editing ⬜
 

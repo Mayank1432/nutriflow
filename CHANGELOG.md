@@ -15,6 +15,16 @@ The format is based on Keep a Changelog.
 
 No runtime behavior is changed by this documentation refresh.
 
+## [v0.9.0] — Sprint 8: Shopping List + Pantry Stock
+
+### Added
+- Added Pantry / Stock list with in-stock marking, quantity in stock, low-stock indicator, and used-often/staple flag.
+- Added Shopping List with manual item add, check-off, and clear-completed actions.
+- Added Generate Shopping List, combining Weekly Planner, Daily Staples, and low-stock Pantry items into a single list.
+- Added Shopping Cost Estimate with a protein-focused shopping view and budget comparison.
+- Added Cost / Protein Table comparing ingredient protein, calories, and cost, with cost-per-gram-of-protein sorting, search, and per-100/per-unit basis filtering.
+- Added focused domain verifiers for Pantry, Shopping, Shopping Generation, Shopping Cost Estimate, and Cost / Protein Table.
+
 ## [vanilla-v1.0.0] — Stable Vanilla Production Release
 
 ### Release

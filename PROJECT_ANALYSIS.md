@@ -5,7 +5,7 @@
 NutriFlow currently has two deliberately separated application tracks:
 
 1. The **root Vanilla HTML/CSS/JavaScript PWA**, which remains the live production application.
-2. The **React/Vite/TypeScript application under `react-app/`**, which is the staged replacement and has completed the locked roadmap through Sprint 7.
+2. The **React/Vite/TypeScript application under `react-app/`**, which is the staged replacement and has completed the locked roadmap through Sprint 8.
 
 The React application is no longer a mock-only shell, but it has **not** replaced production.
 
@@ -59,7 +59,7 @@ Current boundaries:
 
 The locked schema lives in `STORAGE_SCHEMA.md`.
 
-The active React storage family contains approved v1 slices for meta, settings, ingredients, Today, Weekly, History, and Daily Staples. Shopping and Pantry names are reserved for their future roadmap sprint and are not active empty stores.
+The active React storage family contains approved v1 slices for meta, settings, ingredients, Today, Weekly, History, Daily Staples, Shopping, and Pantry.
 
 `react-app/src/storage/` provides:
 
@@ -118,6 +118,16 @@ Food entries in Today, Weekly, and History remain snapshots. Later Ingredient Li
 Settings uses the persisted React Settings store.
 
 Current implemented settings include light/dark theme, light mode default, Macro Goals, Option C Settings styling, and account/data placeholders where later roadmap work is not yet implemented.
+
+### Shopping List and Pantry / Stock
+
+Pantry / Stock reads and writes the React Pantry store, tracking in-stock status, quantity in stock, a low-stock indicator, and a used-often/staple flag per ingredient.
+
+Shopping reads and writes the React Shopping store. Implemented behavior includes manually added items, check-off/complete tracking, clearing completed items, and Generate Shopping List, which combines the Weekly Planner, Daily Staples, and low-stock Pantry items into a single generated list. Shopping Cost Estimate adds an estimated total cost, a protein-focused shopping view, and budget comparison.
+
+### Cost / Protein Table
+
+The Cost / Protein Table screen derives comparison rows from the Ingredient Library, resolving each ingredient's nutrition basis (per-100 g/ml or per-piece/serving) and computing cost per gram of protein. It supports search, a basis filter (all/per-100/per-unit), and six sort modes (protein, cost, and cost-per-gram-of-protein, each ascending/descending). The screen renders as a sortable table on wide viewports and a card list on narrow viewports, using the app's existing theme tokens for light/dark support.
 
 ## React App Shell and Navigation
 
@@ -189,6 +199,11 @@ Current focused verifier files include:
 - `verifyHistoryIntegrity.ts`
 - `verifyAnalyticsCharts.ts`
 - `verifyTodayProteinPreview.ts`
+- `verifyPantry.ts`
+- `verifyShopping.ts`
+- `verifyShoppingGeneration.ts`
+- `verifyShoppingCostEstimate.ts`
+- `verifyCostProteinComparison.ts`
 
 Some older files retain prototype-era names such as `historyMock.ts` or `weeklyMock.ts`; those filenames do not mean the current React application is still globally mock-only.
 
@@ -203,6 +218,7 @@ React development milestone tags:
 - `v0.6.0` — Sprint 5: Quick Add V2
 - `v0.7.0` — Sprint 6: Option C App UI Redesign
 - `v0.8.0` — Sprint 7: Analytics + Chart Library
+- `v0.9.0` — Sprint 8: Shopping List + Pantry Stock
 
 The React tags are milestone markers, not production-deployment claims.
 
@@ -217,6 +233,6 @@ The React tags are milestone markers, not production-deployment claims.
 
 ## Remaining Locked Direction
 
-The next roadmap work begins with Sprint 8 — Shopping List + Pantry Stock. Later locked work covers History catch-up editing, React export/import and production launch, App Info / Help, account/cloud architecture, login/cloud sync, food image upload and barcode scanner, multi-user sharing, Google Play Store release, and final stabilization.
+The next roadmap work begins with Sprint 9 — History Catch-Up Editing. Later locked work covers React export/import and production launch, App Info / Help, account/cloud architecture, login/cloud sync, food image upload and barcode scanner, multi-user sharing, Google Play Store release, and final stabilization.
 
 See `ROADMAP.md` for the exact locked order and task names.
