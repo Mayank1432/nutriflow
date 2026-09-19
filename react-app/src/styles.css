@@ -2318,6 +2318,38 @@ body {
 @media (max-width: 340px) { .pantry-card { grid-template-columns: 42px minmax(0, 1fr); } .pantry-edit { grid-column: 1 / -1; width: 100%; } .pantry-thumbnail { width: 42px; height: 42px; } }
 @media (min-width: 600px) { .pantry-sheet-backdrop { align-items: center; } .pantry-sheet { border-radius: var(--radius-card); } }
 
+/* Sprint 8.5 Cost / Protein Table */
+.cost-protein-screen { display: grid; width: min(100%, 1080px); margin: 0 auto; gap: 14px; container-type: inline-size; }
+.cost-protein-controls { display: grid; gap: 9px; }
+.cost-protein-controls label { display: grid; min-width: 0; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 750; }
+.cost-protein-controls input, .cost-protein-controls select { width: 100%; min-width: 0; min-height: 44px; padding: 8px 11px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--control-background); color: var(--ink); font: inherit; }
+.cost-protein-controls input:focus-visible, .cost-protein-controls select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.cost-protein-copy { margin: 0; padding: 10px 12px; border-radius: var(--radius-small); background: var(--surface); color: var(--muted); font-size: 13px; }
+.cost-protein-results { min-width: 0; }
+.cost-protein-table { display: none; width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+.cost-protein-table th, .cost-protein-table td { padding: 11px 10px; border-bottom: 1px solid var(--line); text-align: right; }
+.cost-protein-table thead th { background: var(--control-background); color: var(--muted); font-size: 12px; }
+.cost-protein-table th:first-child, .cost-protein-table td:first-child { text-align: left; }
+.cost-protein-table tbody tr:last-child > * { border-bottom: 0; }
+.cost-protein-table tbody th { font-weight: 800; }
+.cost-protein-emphasis { color: var(--blue); font-weight: 850; }
+.cost-protein-mobile-list { display: grid; gap: 9px; }
+.cost-protein-mobile-list article { display: grid; gap: 9px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow); }
+.cost-protein-mobile-list h2 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.cost-protein-mobile-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cost-protein-mobile-metrics > div { display: grid; min-width: 0; gap: 2px; }
+.cost-protein-mobile-metrics span { color: var(--muted); font-size: 11px; }
+.cost-protein-mobile-metrics strong { overflow-wrap: anywhere; font-size: 13px; }
+.cost-protein-mobile-metrics .cost-protein-emphasis { grid-column: 1 / -1; padding-top: 7px; border-top: 1px solid var(--line); }
+.cost-protein-empty { display: grid; min-height: 170px; place-items: center; align-content: center; gap: 7px; padding: 20px; border: 1px dashed var(--line); border-radius: var(--radius-card); background: var(--surface); text-align: center; }
+.cost-protein-empty h2, .cost-protein-empty p { margin: 0; }
+.cost-protein-empty p { color: var(--muted); }
+@container (min-width: 820px) {
+  .cost-protein-controls { grid-template-columns: minmax(260px, 1fr) minmax(245px, .8fr) minmax(140px, .4fr); align-items: end; }
+  .cost-protein-table { display: table; }
+  .cost-protein-mobile-list { display: none; }
+}
+
 .quick-add-sheet .sheet-heading {
   position: sticky;
   z-index: 2;
