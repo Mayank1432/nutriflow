@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { calcAll } from '../domain/nutrition'
 import { savedDayToToday } from '../domain/historyMock'
 import type { MealId, MockSavedDay } from '../domain/types'
+import DeleteDayConfirm from './DeleteDayConfirm'
 import MealCard from './MealCard'
 import StatusBadge from './StatusBadge'
 
@@ -13,6 +14,8 @@ const meals: Array<{ id: MealId; name: string }> = [
   { id: 'snacks', name: 'Snacks' },
 ]
 
+type DeleteDayOutcome = { ok: boolean; message?: string }
+
 type SelectedHistoryDetailProps = {
   day: MockSavedDay
   headingRef: RefObject<HTMLHeadingElement | null>
@@ -20,6 +23,7 @@ type SelectedHistoryDetailProps = {
   onQuantityChange?: (mealId: MealId, entryId: string, quantity: number) => void
   onRemove?: (mealId: MealId, entryId: string) => void
   onOpenQuickAdd?: (mealId: MealId) => void
+  onDeleteDay?: () => DeleteDayOutcome
 }
 
 const displayNumber = (value: number, digits = 0): string =>
@@ -32,14 +36,32 @@ function SelectedHistoryDetail({
   onQuantityChange,
   onRemove,
   onOpenQuickAdd,
+  onDeleteDay,
 }: SelectedHistoryDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isDeleteOpen, setDeleteOpen] = useState(false)
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   const todayShape = savedDayToToday(day)
   const totals = calcAll(todayShape)
   const hasFoods = meals.some(({ id }) => (
     todayShape.meals?.[id]?.dishes ?? []
   ).some((dish) => (dish.ingredients ?? []).length > 0))
   const canEdit = Boolean(onQuantityChange && onRemove)
+
+  const confirmDelete = () => {
+    if (!onDeleteDay) return
+    setDeleteSubmitting(true)
+    const result = onDeleteDay()
+    setDeleteSubmitting(false)
+    if (!result.ok) {
+      setDeleteError(result.message ?? 'That could not be deleted. Try again.')
+      return
+    }
+    setDeleteOpen(false)
+    setDeleteError('')
+    onBack()
+  }
 
   return (
     <div className="history-detail-view">
@@ -60,6 +82,15 @@ function SelectedHistoryDetail({
                 onClick={() => setIsEditing((value) => !value)}
               >
                 {isEditing ? 'Done' : 'Edit day'}
+              </button>
+            )}
+            {isEditing && onDeleteDay && (
+              <button
+                className="history-delete-toggle"
+                type="button"
+                onClick={() => { setDeleteError(''); setDeleteOpen(true) }}
+              >
+                Delete day
               </button>
             )}
           </div>
@@ -92,6 +123,18 @@ function SelectedHistoryDetail({
           <div className="history-day-empty">No foods were saved for this day.</div>
         )}
       </section>
+      {isDeleteOpen && (
+        <DeleteDayConfirm
+          title={`Delete ${day.dayName}, ${day.dateLabel}?`}
+          body="This moves the saved day to Recently deleted. You can restore it later, or delete it permanently from there."
+          confirmLabel="Delete Day"
+          pendingLabel="Deleting…"
+          submitting={deleteSubmitting}
+          error={deleteError}
+          onCancel={() => { setDeleteOpen(false); setDeleteError('') }}
+          onConfirm={confirmDelete}
+        />
+      )}
     </div>
   )
 }

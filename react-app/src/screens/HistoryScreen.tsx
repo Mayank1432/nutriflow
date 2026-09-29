@@ -6,6 +6,7 @@ import ScreenContainer from '../components/ScreenContainer'
 import SelectedHistoryDetail from '../components/SelectedHistoryDetail'
 import SuccessToast from '../components/SuccessToast'
 import QuickAddSheet from '../components/QuickAddSheet'
+import DeleteDayConfirm from '../components/DeleteDayConfirm'
 import {
   sourceKey,
   type QuickAddDraft,
@@ -15,7 +16,10 @@ import { calcHistorySummary } from '../domain/historyMock'
 import {
   addHistoryEntry,
   changeHistoryEntryQuantity,
+  permanentlyDeleteHistoryDay,
   removeHistoryEntry,
+  restoreHistoryDay,
+  softDeleteHistoryDay,
 } from '../domain/historyEdit'
 import { calculateFoodEntryTotals } from '../domain/historyIntegrity'
 import type {
@@ -160,11 +164,15 @@ function HistoryScreen() {
   const [historyView, setHistoryView] = useState<'list' | 'detail'>('list')
   const [selectedHistoryId, setSelectedHistoryId] = useState('')
   const [editError, setEditError] = useState('')
+  const [restoreError, setRestoreError] = useState('')
   const [toastMessage, setToastMessage] = useState<ReactNode>(null)
   const [isQuickAddOpen, setQuickAddOpen] = useState(false)
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddDraft>(() => blankDraft())
   const [quickAddError, setQuickAddError] = useState('')
   const [quickAddSources, setQuickAddSources] = useState<QuickAddSource[]>([])
+  const [permanentDeleteTargetId, setPermanentDeleteTargetId] = useState('')
+  const [permanentDeleteSubmitting, setPermanentDeleteSubmitting] = useState(false)
+  const [permanentDeleteError, setPermanentDeleteError] = useState('')
   const listScrollYRef = useRef(0)
   const originDayIdRef = useRef('')
   const detailHeadingRef = useRef<HTMLHeadingElement>(null)
@@ -175,6 +183,13 @@ function HistoryScreen() {
       .map(toMockSavedDay),
   }), [historyStore])
 
+  const deletedDays: MockSavedDay[] = useMemo(() => (
+    [...(historyStore.deletedDays ?? [])]
+      .sort((a, b) => b.savedAt.localeCompare(a.savedAt))
+      .map(toMockSavedDay)
+  ), [historyStore])
+
+  const permanentDeleteTarget = deletedDays.find((day) => day.id === permanentDeleteTargetId)
   const selectedDay = historyData.savedDays.find((day) => day.id === selectedHistoryId)
   const summary = calcHistorySummary(historyData)
 
@@ -244,6 +259,49 @@ function HistoryScreen() {
     setToastMessage('Item removed.')
   }
 
+  const handleDeleteDay = (): { ok: boolean; message?: string } => {
+    const result = softDeleteHistoryDay(historyStore, selectedHistoryId, new Date().toISOString())
+    if (!result.ok || !writeReactHistoryStore(result.store)) {
+      return { ok: false, message: 'That day could not be deleted. Try again.' }
+    }
+    setHistoryStore(result.store)
+    setToastMessage('Day deleted. Restore it from Recently deleted if needed.')
+    return { ok: true }
+  }
+
+  const handleRestoreDay = (dayId: string) => {
+    const result = restoreHistoryDay(historyStore, dayId, new Date().toISOString())
+    if (!result.ok) {
+      setRestoreError(
+        result.reason === 'date_conflict'
+          ? 'A day is already saved for that date. Remove or edit it before restoring this one.'
+          : 'That day could not be restored. Try again.',
+      )
+      return
+    }
+    if (!writeReactHistoryStore(result.store)) {
+      setRestoreError('That day could not be restored. Try again.')
+      return
+    }
+    setRestoreError('')
+    setHistoryStore(result.store)
+    setToastMessage('Day restored.')
+  }
+
+  const confirmPermanentDelete = () => {
+    setPermanentDeleteSubmitting(true)
+    const result = permanentlyDeleteHistoryDay(historyStore, permanentDeleteTargetId, new Date().toISOString())
+    setPermanentDeleteSubmitting(false)
+    if (!result.ok || !writeReactHistoryStore(result.store)) {
+      setPermanentDeleteError('That day could not be deleted. Try again.')
+      return
+    }
+    setHistoryStore(result.store)
+    setPermanentDeleteError('')
+    setPermanentDeleteTargetId('')
+    setToastMessage('Day permanently deleted.')
+  }
+
   const openHistoryQuickAdd = (mealId: MealId) => {
     setQuickAddSources([
       ...readReactIngredientsStore().ingredients
@@ -310,8 +368,8 @@ function HistoryScreen() {
 
   return (
     <ScreenContainer title="History" subtitle="Review your saved days and nutrition snapshots.">
-      <PrototypeNotice>Saved days can now be corrected: use Edit day to fix a quantity, add a missing item, or remove one.</PrototypeNotice>
-      {historyData.savedDays.length === 0 ? (
+      <PrototypeNotice>Saved days can now be corrected: use Edit day to fix a quantity, add a missing item, remove one, or delete the whole day.</PrototypeNotice>
+      {historyData.savedDays.length === 0 && deletedDays.length === 0 ? (
         <EmptyHistoryState />
       ) : historyView === 'detail' && selectedDay ? (
         <>
@@ -323,12 +381,44 @@ function HistoryScreen() {
             onQuantityChange={handleQuantityChange}
             onRemove={handleRemove}
             onOpenQuickAdd={openHistoryQuickAdd}
+            onDeleteDay={handleDeleteDay}
           />
         </>
       ) : (
         <>
           <HistorySummaryCard summary={summary} />
-          <SavedDayList days={historyData.savedDays} onSelect={openSavedDay} />
+          {historyData.savedDays.length > 0 && (
+            <SavedDayList days={historyData.savedDays} onSelect={openSavedDay} />
+          )}
+          {deletedDays.length > 0 && (
+            <section className="deleted-day-list" aria-labelledby="deleted-days-title">
+              <div className="history-section-heading">
+                <h2 id="deleted-days-title">Recently deleted</h2>
+                <span>{deletedDays.length} {deletedDays.length === 1 ? 'day' : 'days'}</span>
+              </div>
+              {restoreError && <p className="history-edit-error" role="alert">{restoreError}</p>}
+              <ul className="deleted-day-cards">
+                {deletedDays.map((day) => (
+                  <li key={day.id} className="deleted-day-card">
+                    <div>
+                      <strong>{day.dateLabel}</strong>
+                      <span>{day.dayName}</span>
+                    </div>
+                    <div className="deleted-day-actions">
+                      <button className="secondary-action" type="button" onClick={() => handleRestoreDay(day.id)}>Restore</button>
+                      <button
+                        className="danger-action"
+                        type="button"
+                        onClick={() => { setPermanentDeleteError(''); setPermanentDeleteTargetId(day.id) }}
+                      >
+                        Delete permanently
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </>
       )}
       {isQuickAddOpen && (
@@ -340,6 +430,18 @@ function HistoryScreen() {
           onClose={() => setQuickAddOpen(false)}
           onSubmit={submitHistoryQuickAdd}
           onSaveCost={() => ({ ok: false, message: 'Edit ingredient cost from the Ingredient Library.' })}
+        />
+      )}
+      {permanentDeleteTarget && (
+        <DeleteDayConfirm
+          title={`Permanently delete ${permanentDeleteTarget.dayName}, ${permanentDeleteTarget.dateLabel}?`}
+          body="This cannot be undone. The saved day and its foods will be removed for good."
+          confirmLabel="Delete Permanently"
+          pendingLabel="Deleting…"
+          submitting={permanentDeleteSubmitting}
+          error={permanentDeleteError}
+          onCancel={() => { setPermanentDeleteTargetId(''); setPermanentDeleteError('') }}
+          onConfirm={confirmPermanentDelete}
         />
       )}
       <SuccessToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
