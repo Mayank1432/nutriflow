@@ -3432,6 +3432,35 @@ body {
   font-size: 11px;
 }
 
+.history-detail-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.history-edit-toggle {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #b9dcca;
+  background: var(--surface);
+  color: var(--green-dark);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.history-edit-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #f1c4bb;
+  background: #fff0ec;
+  color: #a44836;
+  font-weight: 700;
+}
+
 .history-detail-macros {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
