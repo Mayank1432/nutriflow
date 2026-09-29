@@ -91,3 +91,70 @@ export const addHistoryEntry = (
   if (!Number.isFinite(entry.quantity) || entry.quantity <= 0) return { ok: false, reason: 'invalid_quantity' }
   return applyToDay(history, dayId, mealName, (entries) => [...entries, entry], updatedAt)
 }
+
+export type HistoryDeleteResult =
+  | { ok: true; store: ReactHistoryStore }
+  | { ok: false; reason: 'day_not_found' }
+
+export const softDeleteHistoryDay = (
+  history: ReactHistoryStore,
+  dayId: string,
+  deletedAt: string,
+): HistoryDeleteResult => {
+  const day = history.savedDays.find((candidate) => candidate.id === dayId)
+  if (!day) return { ok: false, reason: 'day_not_found' }
+  return {
+    ok: true,
+    store: {
+      ...history,
+      updatedAt: deletedAt,
+      savedDays: history.savedDays.filter((candidate) => candidate.id !== dayId),
+      deletedDays: [...(history.deletedDays ?? []), day],
+    },
+  }
+}
+
+export type HistoryRestoreResult =
+  | { ok: true; store: ReactHistoryStore }
+  | { ok: false; reason: 'day_not_found' | 'date_conflict' }
+
+export const restoreHistoryDay = (
+  history: ReactHistoryStore,
+  dayId: string,
+  restoredAt: string,
+): HistoryRestoreResult => {
+  const deletedDays = history.deletedDays ?? []
+  const day = deletedDays.find((candidate) => candidate.id === dayId)
+  if (!day) return { ok: false, reason: 'day_not_found' }
+  if (history.savedDays.some((candidate) => candidate.date === day.date)) {
+    return { ok: false, reason: 'date_conflict' }
+  }
+  return {
+    ok: true,
+    store: {
+      ...history,
+      updatedAt: restoredAt,
+      savedDays: [...history.savedDays, day],
+      deletedDays: deletedDays.filter((candidate) => candidate.id !== dayId),
+    },
+  }
+}
+
+export const permanentlyDeleteHistoryDay = (
+  history: ReactHistoryStore,
+  dayId: string,
+  updatedAt: string,
+): HistoryDeleteResult => {
+  const deletedDays = history.deletedDays ?? []
+  if (!deletedDays.some((candidate) => candidate.id === dayId)) {
+    return { ok: false, reason: 'day_not_found' }
+  }
+  return {
+    ok: true,
+    store: {
+      ...history,
+      updatedAt,
+      deletedDays: deletedDays.filter((candidate) => candidate.id !== dayId),
+    },
+  }
+}
