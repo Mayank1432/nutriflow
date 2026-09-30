@@ -7,6 +7,7 @@ export type DrawerDestination =
   | 'macro-goals' | 'theme'
   | 'pantry' | 'shopping'
   | 'cost-protein-table'
+  | 'backup-restore'
 
 type HamburgerDrawerProps = {
   activeDestination: DrawerDestination
@@ -50,7 +51,7 @@ const groups: Array<{ label: string; links: DrawerLink[] }> = [
       { id: 'sign-in-out', label: 'Sign in / Sign out' },
       { id: 'account', label: 'Account' },
       { id: 'cloud-sync', label: 'Cloud Sync' },
-      { id: 'backup-restore', label: 'Backup & Restore' },
+      { id: 'backup-restore', label: 'Backup & Restore', destination: 'backup-restore', activeFor: 'backup-restore' },
       { id: 'multi-user-sharing', label: 'Multi-user Sharing' },
     ],
   },

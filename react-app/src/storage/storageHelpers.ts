@@ -589,3 +589,73 @@ export const resetReactMetaStore = (): ReactMetaStore =>
     createDefaultReactMetaStore,
     isReactMetaStore,
   );
+
+const STORE_VALIDATORS: Record<ReactStorageKey, (value: unknown) => boolean> = {
+  [REACT_STORAGE_KEYS.today]: isReactTodayStore,
+  [REACT_STORAGE_KEYS.weekly]: isReactWeeklyStore,
+  [REACT_STORAGE_KEYS.history]: isReactHistoryStore,
+  [REACT_STORAGE_KEYS.ingredients]: isReactIngredientsStore,
+  [REACT_STORAGE_KEYS.settings]: isReactSettingsStore,
+  [REACT_STORAGE_KEYS.meta]: isReactMetaStore,
+  [REACT_STORAGE_KEYS.dailyStaples]: isReactDailyStaplesStore,
+  [REACT_STORAGE_KEYS.pantry]: isReactPantryStore,
+  [REACT_STORAGE_KEYS.shopping]: isReactShoppingStore,
+};
+
+export const isValidReactStoreValue = (key: string, value: unknown): boolean =>
+  isReactStorageKey(key) && STORE_VALIDATORS[key](value);
+
+export type ReactStoreValues = Partial<Record<ReactStorageKey, unknown>>;
+
+// Replaces every React store in one step. Every value is validated and
+// serialized before anything is written. Keys missing from `values` are
+// removed so they fall back to defaults. If any write fails, the previous
+// raw values are restored. Only allowlisted React keys are ever touched.
+export const replaceReactStores = (values: ReactStoreValues): boolean => {
+  const storage = getLocalStorage();
+  if (storage === null) {
+    return false;
+  }
+
+  const serialized: Array<[ReactStorageKey, string]> = [];
+  for (const key of REACT_STORAGE_KEY_ALLOWLIST) {
+    if (!(key in values)) {
+      continue;
+    }
+    const value = values[key];
+    if (!isValidReactStoreValue(key, value)) {
+      return false;
+    }
+    const text = safeJsonStringify(value);
+    if (text === null) {
+      return false;
+    }
+    serialized.push([key, text]);
+  }
+
+  let previous: Array<[ReactStorageKey, string | null]>;
+  try {
+    previous = REACT_STORAGE_KEY_ALLOWLIST.map((key) => [key, storage.getItem(key)]);
+  } catch {
+    return false;
+  }
+
+  try {
+    REACT_STORAGE_KEY_ALLOWLIST.forEach((key) => storage.removeItem(key));
+    serialized.forEach(([key, text]) => storage.setItem(key, text));
+    return true;
+  } catch {
+    try {
+      previous.forEach(([key, raw]) => {
+        if (raw === null) {
+          storage.removeItem(key);
+        } else {
+          storage.setItem(key, raw);
+        }
+      });
+    } catch {
+      // Best effort: nothing more can be done if restoring also fails.
+    }
+    return false;
+  }
+};

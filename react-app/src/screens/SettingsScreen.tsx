@@ -9,6 +9,7 @@ type SettingsScreenProps = {
   onSaveMacroGoals: (goals: MacroGoals) => boolean
   focusSection?: { type: 'macro-goals' | 'theme'; token: number } | null
   onFocusConsumed?: (token: number) => void
+  onOpenBackup?: () => void
 }
 
 const goalNames = ['protein', 'calories', 'carbs', 'fat', 'fibre', 'cost'] as const
@@ -17,7 +18,7 @@ const labels: Record<GoalName, string> = { protein: 'Protein', calories: 'Calori
 const units: Record<GoalName, string> = { protein: 'g', calories: 'kcal', carbs: 'g', fat: 'g', fibre: 'g', cost: '₹' }
 type Feedback = { type: 'success' | 'error'; text: string } | null
 
-function SettingsScreen({ onBack, settings, onToggleTheme, onSaveMacroGoals, focusSection, onFocusConsumed }: SettingsScreenProps) {
+function SettingsScreen({ onBack, settings, onToggleTheme, onSaveMacroGoals,   focusSection, onFocusConsumed, onOpenBackup }: SettingsScreenProps) {
   const [enabled, setEnabled] = useState(() => Object.fromEntries(goalNames.map((name) => [name, settings.macroGoals[name].enabled])) as Record<GoalName, boolean>)
   const [values, setValues] = useState(() => Object.fromEntries(goalNames.map((name) => [name, settings.macroGoals[name].value === null ? '' : String(settings.macroGoals[name].value)])) as Record<GoalName, string>)
   const [feedback, setFeedback] = useState<Feedback>(null)
@@ -104,7 +105,7 @@ function SettingsScreen({ onBack, settings, onToggleTheme, onSaveMacroGoals, foc
 
       <section className="settings-section" aria-labelledby="data-title">
         <h2 id="data-title" className="settings-section-label">Data</h2>
-        <section className="settings-card settings-placeholder-card" aria-labelledby="backup-title"><div className="settings-card-header"><div><p className="settings-placeholder-detail">Your NutriFlow data is stored locally on this device.</p><h3 id="backup-title">Backup &amp; Restore</h3><p>Backup and restore are not available in this prototype.</p></div><span className="settings-placeholder-status">Coming later</span></div></section>
+        <section className="settings-card" aria-labelledby="backup-title"><div className="settings-card-header"><div><h3 id="backup-title">Backup &amp; Restore</h3><p>Your NutriFlow data is stored locally on this device. Export it to a file, or restore it from a backup.</p></div></div>{onOpenBackup && <button className="secondary-action" type="button" onClick={onOpenBackup}>Open Backup &amp; Restore</button>}</section>
       </section>
     </ScreenContainer>
   </div>
