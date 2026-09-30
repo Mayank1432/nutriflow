@@ -9,6 +9,7 @@ import AnalyticsScreen from './screens/AnalyticsScreen'
 import PantryScreen from './screens/PantryScreen'
 import ShoppingScreen from './screens/ShoppingScreen'
 import CostProteinTableScreen from './screens/CostProteinTableScreen'
+import BackupRestoreScreen from './screens/BackupRestoreScreen'
 import { readReactSettingsStore, writeReactSettingsStore, type MacroGoals } from './storage'
 import type { DrawerDestination } from './components/HamburgerDrawer'
 
@@ -24,6 +25,7 @@ function App() {
   const [showPantry, setShowPantry] = useState(false)
   const [showShopping, setShowShopping] = useState(false)
   const [showCostProteinTable, setShowCostProteinTable] = useState(false)
+  const [showBackup, setShowBackup] = useState(false)
   const [settings, setSettings] = useState(() => readReactSettingsStore())
   const [uiIntent, setUiIntent] = useState<UiIntent | null>(null)
   const [quickAddVisible, setQuickAddVisible] = useState(false)
@@ -71,7 +73,7 @@ function App() {
     weekly: <WeeklyScreen />,
     history: <HistoryScreen />,
     analytics: <AnalyticsScreen />,
-    more: showCostProteinTable ? <CostProteinTableScreen /> : showShopping ? <ShoppingScreen /> : showPantry ? <PantryScreen /> : showSettings
+    more: showBackup ? <BackupRestoreScreen onBack={() => setShowBackup(false)} /> : showCostProteinTable ? <CostProteinTableScreen /> : showShopping ? <ShoppingScreen /> : showPantry ? <PantryScreen /> : showSettings
       ? <SettingsScreen
           onBack={() => setShowSettings(false)}
           settings={settings}
@@ -81,6 +83,7 @@ function App() {
             ? { type: uiIntent.type, token: uiIntent.token }
             : null}
           onFocusConsumed={consumeIntent}
+          onOpenBackup={() => { setShowSettings(false); setShowBackup(true) }}
         />
       : <MoreScreen
           onOpenSettings={() => setShowSettings(true)}
@@ -97,6 +100,10 @@ function App() {
     setShowPantry(false)
     setShowShopping(false)
     setShowCostProteinTable(false)
+    setShowBackup(false)
+    if (destination === 'backup-restore') {
+      setActiveTab('more'); setShowSettings(false); setMoreSection(null); setShowBackup(true); return
+    }
     if (destination === 'cost-protein-table') {
       setActiveTab('more'); setShowSettings(false); setMoreSection(null); setShowCostProteinTable(true); return
     }
@@ -130,7 +137,9 @@ function App() {
     setShowSettings(false)
     setMoreSection(null)
   }
-  const activeDestination: DrawerDestination = showShopping
+  const activeDestination: DrawerDestination = showBackup
+    ? 'backup-restore'
+    : showShopping
     ? 'shopping'
     : showCostProteinTable
     ? 'cost-protein-table'
@@ -147,6 +156,7 @@ function App() {
       setShowPantry(false)
       setShowShopping(false)
       setShowCostProteinTable(false)
+      setShowBackup(false)
       setActiveTab(tab)
       if (tab !== 'more') setShowSettings(false)
     }} activeDestination={activeDestination} onDrawerNavigate={navigateDrawer}>

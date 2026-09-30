@@ -8,7 +8,6 @@ import { DailyStaplesManager } from '../components/DailyStaples'
 
 const tools = [
   { label: 'Analytics', description: 'Trends and charts will live here.', tone: 'green' as const },
-  { label: 'Export / Import', description: 'Backup compatibility comes in a later port.', tone: 'blue' as const },
 ]
 
 type MoreScreenProps = {
