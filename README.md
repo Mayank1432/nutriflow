@@ -29,7 +29,7 @@ The React application has **not** replaced production yet.
 
 The active React application lives under `react-app/` and uses Vite, React, TypeScript, and a separate React-only Local Storage schema.
 
-Completed React work through Sprint 8 includes:
+Completed React work through Sprint 9 includes:
 
 - React-only v1 storage schema and safe storage helpers
 - Persistent Today data
@@ -55,6 +55,8 @@ Completed React work through Sprint 8 includes:
 - Generate Shopping List from Weekly Planner, Daily Staples, and low-stock pantry items
 - Shopping Cost Estimate with budget comparison
 - Cost / Protein Table with search, sort, and per-100/per-unit basis handling
+- Edit Previous Day in History (change quantity, add a missing item, remove an item)
+- History delete safety with a Recently deleted list, restore, and confirmed permanent delete
 
 React storage is intentionally isolated from the protected Vanilla keys. React must not read, write, reset, or remove:
 
@@ -176,6 +178,7 @@ React sprint milestone tags:
 - `v0.7.0` — Sprint 6: Option C App UI Redesign
 - `v0.8.0` — Sprint 7: Analytics + Chart Library
 - `v0.9.0` — Sprint 8: Shopping List + Pantry Stock
+- `v0.10.0` — Sprint 9: History Catch-Up Editing
 
 These React sprint tags are development milestones. They do **not** mean the React app is already deployed as production.
 

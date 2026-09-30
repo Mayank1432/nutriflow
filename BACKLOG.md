@@ -9,14 +9,14 @@ Completed through:
 - Sprint 7 — Analytics + Chart Library
 - Task 7.8 — Weight Trend, If Added Later — intentionally skipped by explicit user approval
 - Sprint 8 — Shopping List + Pantry Stock
+- Sprint 9 — History Catch-Up Editing
 
 Next locked sprint:
 
-- Sprint 9 — History Catch-Up Editing
+- Sprint 10 — Backup, Export/Import + Local Production Readiness
 
 ## Remaining Locked Roadmap Work
 
-- [ ] Sprint 9 — History Catch-Up Editing
 - [ ] Sprint 10 — Backup, Export/Import + Local Production Readiness
 - [ ] Sprint 11 — Accounts + Cloud Architecture
 - [ ] Sprint 12 — Login + Cloud Sync

@@ -15,6 +15,15 @@ The format is based on Keep a Changelog.
 
 No runtime behavior is changed by this documentation refresh.
 
+## [v0.10.0] — Sprint 9: History Catch-Up Editing
+
+### Added
+- Added Edit Previous Day: open a saved History day and change an item quantity, add a missing item through the existing Quick Add sheet, or remove a wrong item, with day totals recalculated.
+- Added History delete safety: deleting a saved day moves it to a persistent Recently deleted list instead of erasing it, behind a confirmation dialog.
+- Added restore from Recently deleted, which refuses to overwrite a day already saved for the same date.
+- Added confirmed permanent delete from Recently deleted.
+- Added focused domain verifiers for History editing and History delete/restore.
+
 ## [v0.9.0] — Sprint 8: Shopping List + Pantry Stock
 
 ### Added

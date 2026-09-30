@@ -209,15 +209,17 @@ Ingredient name, quantity basis/unit, protein, calories, cost, cost per gram of 
 
 **Sprint tag:** `v0.9.0`
 
-## Sprint 9 — History Catch-Up Editing (in progress)
+## Sprint 9 — History Catch-Up Editing ✅
 
 **Goal:** Allow fixing missed previous days safely.
 
 ### Task 9.1 — Edit Previous Day ✅
 Open saved day, edit quantity, add missing item, remove wrong item.
 
-### Task 9.2 — History Delete/Restore Safety ⬜
+### Task 9.2 — History Delete/Restore Safety ✅
 Delete confirmation, optional undo/restore, and accidental-loss prevention.
+
+**Sprint tag:** `v0.10.0`
 
 ## Sprint 10 — Backup, Export/Import + Local Production Readiness ⬜
 

@@ -5,7 +5,7 @@
 NutriFlow currently has two deliberately separated application tracks:
 
 1. The **root Vanilla HTML/CSS/JavaScript PWA**, which remains the live production application.
-2. The **React/Vite/TypeScript application under `react-app/`**, which is the staged replacement and has completed the locked roadmap through Sprint 8.
+2. The **React/Vite/TypeScript application under `react-app/`**, which is the staged replacement and has completed the locked roadmap through Sprint 9.
 
 The React application is no longer a mock-only shell, but it has **not** replaced production.
 
@@ -105,7 +105,7 @@ History reads real React History storage rather than relying on a purely mock sa
 
 Implemented behavior includes the real saved-day list/detail, the read-only-first History workflow, History integrity utilities, and Option C History presentation.
 
-Catch-up editing and delete/restore safety remain in the locked future History sprint.
+Catch-up editing (change a quantity, add a missing item, remove an item) and delete/restore safety (soft delete into a Recently deleted list, restore, and confirmed permanent delete) are implemented.
 
 ### Ingredient Library and Daily Staples
 
@@ -204,6 +204,8 @@ Current focused verifier files include:
 - `verifyShoppingGeneration.ts`
 - `verifyShoppingCostEstimate.ts`
 - `verifyCostProteinComparison.ts`
+- `verifyHistoryEdit.ts`
+- `verifyHistoryDelete.ts`
 
 Some older files retain prototype-era names such as `historyMock.ts` or `weeklyMock.ts`; those filenames do not mean the current React application is still globally mock-only.
 
@@ -219,6 +221,7 @@ React development milestone tags:
 - `v0.7.0` — Sprint 6: Option C App UI Redesign
 - `v0.8.0` — Sprint 7: Analytics + Chart Library
 - `v0.9.0` — Sprint 8: Shopping List + Pantry Stock
+- `v0.10.0` — Sprint 9: History Catch-Up Editing
 
 The React tags are milestone markers, not production-deployment claims.
 
@@ -233,6 +236,6 @@ The React tags are milestone markers, not production-deployment claims.
 
 ## Remaining Locked Direction
 
-The next roadmap work begins with Sprint 9 — History Catch-Up Editing. Later locked work covers React export/import and production launch, App Info / Help, account/cloud architecture, login/cloud sync, food image upload and barcode scanner, multi-user sharing, Google Play Store release, and final stabilization.
+The next roadmap work begins with Sprint 10 — Backup, Export/Import + Local Production Readiness, covering React export/import, the production replacement plan and launch, and App Info / Help. Later locked work covers account/cloud architecture, login/cloud sync, food image upload and barcode scanner, multi-user sharing, Google Play Store release, and final stabilization.
 
 See `ROADMAP.md` for the exact locked order and task names.
