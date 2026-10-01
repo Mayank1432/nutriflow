@@ -311,3 +311,20 @@ React sprint tags (`v0.6.0`, `v0.7.0`, `v0.8.0`, and later sprint milestones) ar
 - A known-good production rollback stays identifiable.
 - React development can continue without reclassifying the live app.
 - Production replacement remains an explicit future release gate.
+
+## ADR-011: Replace the Root with React and Archive Vanilla at /classic/
+
+**Status:** Accepted
+
+### Decision
+
+At the React production launch (Task 10.3), the React app becomes the app served at the site root. A frozen copy of the Vanilla app (`index.html` and `js/storage.js` only, without its service worker or manifest) is published at `/classic/`.
+
+The Vanilla source in the repository root stays untouched and is the rollback path. Deployment moves to a GitHub Actions workflow that assembles both apps. The launch goes straight to the root with no preview deployment, and there is no Vanilla-to-React data migration, because only the owner used Vanilla. The plan is in `PRODUCTION_REPLACEMENT_PLAN.md`.
+
+### Consequences
+
+- One canonical app URL for PWA installs and the later Play Store release.
+- Fast rollback: switch the Pages source back to the branch root.
+- The Vanilla owner's data stays in the browser and is readable at `/classic/`.
+- The existing Playwright PWA smoke test must be updated for React in Task 10.3.
