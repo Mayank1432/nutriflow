@@ -83,8 +83,7 @@ Task 10.2. This is a plan only. No production change happens until Task 10.3.
 ## Vanilla backup plan
 
 - Before launch, open the live Vanilla app and use its own export to download a backup file.
-- Existing backups are in the repository folder `Protein Diet Planner Backups/`.
-- If the repository is public, do not commit new personal backup files. Store them outside the repository (for example in cloud storage).
+- The repository is public. Never commit personal backup files. Store them outside the repository (for example in cloud storage).
 - The Vanilla source stays in the repository root and at `/classic/`.
 - The Vanilla backup format is already documented, so a one-time importer into React can be added later if wanted.
 
@@ -97,5 +96,5 @@ Task 10.2. This is a plan only. No production change happens until Task 10.3.
 
 ## Open checks before Task 10.3
 
-- Confirm the current Pages Source in repository Settings.
-- Confirm whether the repository is public.
+- Confirm the Pages Source in repository Settings is "Deploy from a branch" (the `pages-build-deployment` runs and the missing `.github` folder suggest it is).
+- Confirm no `pages-build-deployment` run is stuck in the queue.
