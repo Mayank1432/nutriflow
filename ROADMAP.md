@@ -221,11 +221,11 @@ Delete confirmation, optional undo/restore, and accidental-loss prevention.
 
 **Sprint tag:** `v0.10.0`
 
-## Sprint 10 — Backup, Export/Import + Local Production Readiness ⬜
+## Sprint 10 — Backup, Export/Import + Local Production Readiness (in progress)
 
 **Goal:** Prepare React for safe production replacement.
 
-### Task 10.1 — React Export/Import ⬜
+### Task 10.1 — React Export/Import ✅
 Export React data, import React data, validate backup file, handle invalid backup, restore safely.
 
 ### Task 10.2 — Production Replacement Plan ⬜
