@@ -228,7 +228,7 @@ Delete confirmation, optional undo/restore, and accidental-loss prevention.
 ### Task 10.1 — React Export/Import ✅
 Export React data, import React data, validate backup file, handle invalid backup, restore safely.
 
-### Task 10.2 — Production Replacement Plan ⬜
+### Task 10.2 — Production Replacement Plan ✅
 Plan React root replacement, GitHub Pages, PWA cache, rollback, and old Vanilla backup handling.
 
 ### Task 10.3 — React PWA Production Launch ⬜
