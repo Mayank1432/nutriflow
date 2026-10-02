@@ -4540,3 +4540,9 @@ button:focus-visible { outline-color: var(--focus); }
 
 .backup-summary dt { color: var(--muted); }
 .backup-summary dd { margin: 0; color: var(--ink); font-weight: 800; }
+
+.mobile-brand-mark {
+  display: block;
+  background: transparent;
+  object-fit: cover;
+}

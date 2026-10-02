@@ -1,0 +1,67 @@
+name: Deploy site
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy to GitHub Pages after building (untick for a build-only dry run)
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: react-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: react-app
+        run: npm ci
+
+      - name: Type-check and run verifiers
+        working-directory: react-app
+        run: |
+          npx tsc -b
+          for f in src/domain/verify*.ts; do npx tsx "$f"; done
+
+      - name: Build
+        working-directory: react-app
+        run: npm run build
+
+      - name: Assemble site
+        run: node scripts/assemble-site.mjs
+
+      - name: Check site
+        run: node scripts/check-site.mjs
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

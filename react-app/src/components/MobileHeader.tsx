@@ -28,7 +28,7 @@ function MobileHeader({
           <span aria-hidden="true">☰</span>
         </button>
         <div className="mobile-brand">
-          <span className="mobile-brand-mark" aria-hidden="true">NF</span>
+          <img className="mobile-brand-mark" src={`${import.meta.env.BASE_URL}icons/icon-192.png`} alt="" aria-hidden="true" />
           <span>NutriFlow</span>
         </div>
       </div>
