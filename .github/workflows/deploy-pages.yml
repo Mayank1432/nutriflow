@@ -1,6 +1,10 @@
 name: Deploy site
 
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
   workflow_dispatch:
     inputs:
       deploy:
