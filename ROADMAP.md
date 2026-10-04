@@ -231,7 +231,7 @@ Export React data, import React data, validate backup file, handle invalid backu
 ### Task 10.2 — Production Replacement Plan ✅
 Plan React root replacement, GitHub Pages, PWA cache, rollback, and old Vanilla backup handling.
 
-### Task 10.3 — React PWA Production Launch ⬜
+### Task 10.3 — React PWA Production Launch ✅
 Replace root production with React, update PWA/service worker, verify live URL, install/offline behavior, and post-launch smoke tests.
 
 At this point, NutriFlow becomes the real local-first React PWA.

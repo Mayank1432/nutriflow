@@ -1,6 +1,6 @@
 # NutriFlow Production Replacement Plan
 
-Task 10.2. This is a plan only. No production change happens until Task 10.3.
+Task 10.2 was the plan. Task 10.3 carried it out: React has been the production app at the site root since the launch, and the Vanilla archive is at `/classic/`.
 
 ## Decisions
 
@@ -98,3 +98,11 @@ Task 10.2. This is a plan only. No production change happens until Task 10.3.
 
 - Confirm the Pages Source in repository Settings is "Deploy from a branch" (the `pages-build-deployment` runs and the missing `.github` folder suggest it is).
 - Confirm no `pages-build-deployment` run is stuck in the queue.
+
+## Launch record
+
+- Deployed by the `Deploy site` workflow after the Pages Source was switched to GitHub Actions.
+- Verified live: React at the root (service worker `nutriflow-react-<hash>`), the Vanilla archive at `/classic/`, and the hosted `npm run test:pwa` run (2 passed).
+- The workflow deploys on every push to `main` (Markdown-only changes are skipped).
+- One early check of the root briefly returned the old Vanilla page. It was most likely a stale GitHub Pages cache. When checking the live site from the command line, add a `?v=<timestamp>` query string.
+- Rollback is unchanged: set Settings, Pages, Source back to "Deploy from a branch", `main`, `/ (root)`.

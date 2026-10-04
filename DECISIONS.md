@@ -328,3 +328,17 @@ The Vanilla source in the repository root stays untouched and is the rollback pa
 - Fast rollback: switch the Pages source back to the branch root.
 - The Vanilla owner's data stays in the browser and is readable at `/classic/`.
 - The existing Playwright PWA smoke test must be updated for React in Task 10.3.
+## ADR-012: Deploy GitHub Pages From a GitHub Actions Workflow
+
+**Status:** Accepted
+
+### Decision
+
+GitHub Pages is set to **GitHub Actions**. The `Deploy site` workflow builds `react-app`, runs `tsc -b` and every domain verifier, assembles the site (React at the root, the Vanilla archive at `/classic/`), checks it, and deploys it on every push to `main` (Markdown-only changes are skipped). It can also be run manually, with a build-only dry run.
+
+### Consequences
+
+- A merge to `main` deploys automatically; there is no separate publish step.
+- The service-worker cache name and precache list are generated at build time, so no manual cache bump is needed.
+- Rollback is switching the Pages Source back to "Deploy from a branch"; the Vanilla files in the repository root are unchanged.
+- Workflow action versions should be reviewed when GitHub announces runtime deprecations.

@@ -67,12 +67,14 @@ Current milestone examples:
 - `v0.6.0` — Sprint 5
 - `v0.7.0` — Sprint 6
 - `v0.8.0` — Sprint 7
+- `v0.9.0` — Sprint 8
+- `v0.10.0` — Sprint 9
 
 The stable Vanilla production release uses a separate tag namespace:
 
 - `vanilla-v1.0.0`
 
-Sprint milestone tags must not be described as React production releases before the React production-launch sprint.
+React has been the live production app since the Task 10.3 launch. Sprint milestone tags remain development milestones and are not production release numbers.
 
 ## Engineering Rules
 
@@ -81,7 +83,7 @@ Sprint milestone tags must not be described as React production releases before 
 - Preserve behavior outside the task.
 - Reuse existing helpers.
 - Do not add dependencies outside approved tasks.
-- Keep the root Vanilla production app stable until the locked production-replacement sprint.
+- Keep the Vanilla source in the repository root untouched; it is the rollback path.
 - React code must not use protected Vanilla Local Storage keys.
 - Do not change storage schemas without explicit approval and migration planning.
 
@@ -120,12 +122,13 @@ Only update documents relevant to the task.
 
 ## Runtime App and PWA Rule
 
-For the live Vanilla app:
+The live app is the React PWA. Its service worker (`react-app/public/sw.js`) gets its cache name and precache list from the build (`react-app/scripts/inject-sw-precache.mjs`), so there is no manual cache bump.
 
-- if `index.html` changes, review/bump the cache name in `sw.js`
-- update the expected cache name in `tests/pwa-smoke.spec.js`
-- do not add `skipWaiting()` or `clients.claim()` without separate approval
-- documentation-only changes do not require a PWA cache bump
+- keep the `/classic/` exclusion in the React service worker
+- if the manifest, icons, or service worker change, run `node scripts/check-site.mjs` after assembling the site and re-run `npm run test:pwa`
+- changes that affect the Pages deployment (the workflow, the Pages Source setting, the site layout) follow `PRODUCTION_REPLACEMENT_PLAN.md`
+- the Vanilla files in the repository root (`index.html`, `sw.js`, `manifest.json`) are the rollback source; do not change them without separate approval
+- documentation-only changes do not trigger a deploy
 
 ## Change Reports
 

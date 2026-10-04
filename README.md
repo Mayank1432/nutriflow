@@ -4,26 +4,22 @@ NutriFlow is a nutrition, protein, meal-planning, cost, and analytics applicatio
 
 ## Production Status
 
-The **live production application is still the root Vanilla HTML/CSS/JavaScript PWA** served through GitHub Pages.
+The **live production application is the React/Vite/TypeScript PWA**, served through GitHub Pages at https://mayank1432.github.io/nutriflow/.
 
-Production runtime:
+The site is built and deployed by the **Deploy site** GitHub Actions workflow on every push to `main` (Markdown-only changes are skipped). It publishes:
 
-- `index.html`
-- `js/storage.js`
-- `manifest.json`
-- `sw.js`
-- `icons/`
-- Browser Local Storage
-- No runtime framework or backend
+- `/` — the React app (service-worker cache `nutriflow-react-<build hash>`)
+- `/classic/` — a frozen copy of the original Vanilla app (`index.html` and `js/storage.js` only, with no service worker)
 
-The stable rollback release is:
+The original Vanilla app source stays in the repository root as the rollback path:
 
 - Release: **NutriFlow Vanilla v1.0.0**
 - Tag: `vanilla-v1.0.0`
 - Snapshot: `ddd67751c682fac7a3a4ac2db9c1fa62468427b7`
-- Current Vanilla service-worker cache: `nutriflow-v0.6.0`
 
-The React application has **not** replaced production yet.
+To roll back, set **Settings → Pages → Source** to "Deploy from a branch" (`main`, `/ (root)`).
+
+React data and Vanilla data use separate Local Storage keys. Nothing is migrated between them.
 
 ## React Migration Status
 
@@ -102,13 +98,15 @@ Sprint 7 Task 7.8 — Weight Trend, If Added Later — was intentionally skipped
 
 ```text
 nutriflow/
-|-- index.html                       # Live Vanilla production application
+|-- index.html                       # Original Vanilla app (rollback source; also published at /classic/)
 |-- js/storage.js                    # Vanilla Local Storage helper
-|-- manifest.json                    # Vanilla PWA manifest
-|-- sw.js                            # Vanilla service worker
-|-- icons/                           # Production install icons
-|-- tests/                           # Vanilla PWA smoke tests
-|-- react-app/                       # Staged React/Vite/TypeScript application
+|-- manifest.json                    # Vanilla PWA manifest (rollback only, not published)
+|-- sw.js                            # Vanilla service worker (rollback only, not published)
+|-- icons/                           # Original Vanilla install icons
+|-- tests/                           # PWA smoke tests (React app and /classic/ archive)
+|-- scripts/                         # Site assembly, check, and local-serve scripts
+|-- .github/workflows/               # Deploy site workflow (GitHub Pages)
+|-- react-app/                       # React/Vite/TypeScript application (live production)
 |   `-- src/storage/                 # React-only v1 storage helpers
 |-- STORAGE_SCHEMA.md                # Locked React storage contract
 |-- README.md                        # Project overview
@@ -120,7 +118,7 @@ nutriflow/
 `-- DECISIONS.md                     # Architecture decisions
 ```
 
-## Run the Vanilla Production App Locally
+## Run the Original Vanilla App Locally
 
 ```bash
 python -m http.server 4173
@@ -145,26 +143,39 @@ npm run verify:nutrition
 
 Additional focused verification utilities exist in `react-app/src/domain/` for History integrity, Analytics charts, and Today protein-preview behavior.
 
-## Vanilla PWA Smoke Test
+## PWA Smoke Test
 
-```bash
+The smoke test covers the live React app (manifest, service worker, cache, tab navigation, backup download, offline reload) and the `/classic/` Vanilla archive.
+
+```````````bash
 npm install
 npx playwright install chromium
-```
+``````````
 
-Local:
+Local: build and serve the assembled site first.
 
-```powershell
-$env:PWA_BASE_URL="http://127.0.0.1:4173/"
+`````````powershell
+cd react-app
+npm run build
+cd ..
+node scripts/assemble-site.mjs
+node scripts/check-site.mjs
+node scripts/serve-site.mjs
+````````
+
+Then, in a second terminal:
+
+```````powershell
+$env:PWA_BASE_URL="http://localhost:4173/nutriflow/"
 npm run test:pwa
-```
+``````
 
 Hosted:
 
-```powershell
+`````powershell
 $env:PWA_BASE_URL="https://mayank1432.github.io/nutriflow/"
 npm run test:pwa
-```
+````
 
 ## Tags and Releases
 
@@ -180,6 +191,6 @@ React sprint milestone tags:
 - `v0.9.0` — Sprint 8: Shopping List + Pantry Stock
 - `v0.10.0` — Sprint 9: History Catch-Up Editing
 
-These React sprint tags are development milestones. They do **not** mean the React app is already deployed as production.
+These React sprint tags are development milestones. The React app has been the live production app since the Task 10.3 launch (see Production Status).
 
 See `ROADMAP.md` for the locked remaining sequence and `PROJECT_ANALYSIS.md` for the current architecture.

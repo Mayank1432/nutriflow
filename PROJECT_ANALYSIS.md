@@ -4,28 +4,28 @@
 
 NutriFlow currently has two deliberately separated application tracks:
 
-1. The **root Vanilla HTML/CSS/JavaScript PWA**, which remains the live production application.
-2. The **React/Vite/TypeScript application under `react-app/`**, which is the staged replacement and has completed the locked roadmap through Sprint 9.
+1. The **root Vanilla HTML/CSS/JavaScript PWA**, which is the archived original app, published at `/classic/` and kept in the repository root as the rollback path.
+2. The **React/Vite/TypeScript application under `react-app/`**, which is the live production application and has completed the locked roadmap through Sprint 9.
 
-The React application is no longer a mock-only shell, but it has **not** replaced production.
+The React application is no longer a mock-only shell. It replaced the Vanilla app in production at the Task 10.3 launch.
 
-## Live Vanilla Production
+## Vanilla App (Archived Rollback Path)
 
-Runtime files:
+The original Vanilla app source stays in the repository root. It is no longer the production app.
 
-- `index.html` — production application markup, styles, state, calculations, rendering, and actions
+Source files:
+
+- `index.html` — application markup, styles, state, calculations, rendering, and actions
 - `js/storage.js` — Vanilla Local Storage keys and helper
-- `manifest.json` — production manifest
-- `sw.js` — production service worker and app-shell cache
-- `icons/` — install icons
+- `manifest.json` and `sw.js` — the Vanilla PWA files, kept for rollback but not published
+- `icons/` — the original install icons
 
-The production app:
+The archived app:
 
-- is hosted through GitHub Pages
-- is installable as a PWA
+- is published at `/classic/` as `index.html` and `js/storage.js` only, with no service worker and no manifest
 - has no runtime framework or backend
-- continues to use the protected Vanilla Local Storage keys
-- currently uses service-worker cache `nutriflow-v0.6.0`
+- continues to use the protected Vanilla Local Storage keys, so it still shows existing Vanilla data
+- last shipped with service-worker cache `nutriflow-v0.6.0`
 
 Protected Vanilla keys:
 
@@ -52,8 +52,20 @@ Current boundaries:
 - React uses its own versioned `nutriflow_react_*_v1` Local Storage namespace.
 - React storage helpers must not read, write, reset, inspect, or remove protected Vanilla keys.
 - React schema version remains `1`.
-- React has not replaced the root GitHub Pages production deployment.
-- Production PWA/service-worker work remains deferred to the locked production-readiness sprint.
+- React is served at the site root by the Deploy site workflow; the Vanilla archive is served at `/classic/`.
+- The React service worker (`react-app/public/sw.js`) precaches the build under a build-hash cache name (`nutriflow-react-<hash>`), never handles `/classic/`, and removes older `nutriflow-` caches on activate.
+
+## Build and Deployment
+
+GitHub Pages is set to **GitHub Actions**. The `Deploy site` workflow (`.github/workflows/deploy-pages.yml`) runs on every push to `main` (Markdown-only changes are skipped) and can be run manually, with an option for a build-only dry run.
+
+The workflow installs `react-app`, runs `tsc -b` and every domain verifier, builds the app, assembles the site, checks it, and deploys it. The build also injects the precache list and a content hash into `sw.js`.
+
+- `scripts/assemble-site.mjs` — React build at the root, Vanilla archive at `classic/`
+- `scripts/check-site.mjs` — fails the build if the site is malformed
+- `scripts/serve-site.mjs` — local server that mimics the `/nutriflow/` path
+
+Rollback: set **Settings → Pages → Source** to "Deploy from a branch" (`main`, `/ (root)`). The Vanilla files in the repository root are untouched, so Vanilla is live again. See `PRODUCTION_REPLACEMENT_PLAN.md`.
 
 ## React Storage Architecture
 
@@ -71,6 +83,7 @@ The active React storage family contains approved v1 slices for meta, settings, 
 - guarded Local Storage access
 - store-specific read/write wrappers
 - React-only reset allowlisting
+- backup creation, validation, and all-or-nothing restore (`reactBackup.ts`)
 
 The helpers never use `localStorage.clear()`.
 
@@ -206,12 +219,13 @@ Current focused verifier files include:
 - `verifyCostProteinComparison.ts`
 - `verifyHistoryEdit.ts`
 - `verifyHistoryDelete.ts`
+- `verifyReactBackup.ts`
 
 Some older files retain prototype-era names such as `historyMock.ts` or `weeklyMock.ts`; those filenames do not mean the current React application is still globally mock-only.
 
 ## Release and Milestone State
 
-Stable live-production release:
+Stable rollback release:
 
 - `vanilla-v1.0.0` — Vanilla production rollback
 
@@ -223,19 +237,19 @@ React development milestone tags:
 - `v0.9.0` — Sprint 8: Shopping List + Pantry Stock
 - `v0.10.0` — Sprint 9: History Catch-Up Editing
 
-The React tags are milestone markers, not production-deployment claims.
+The React tags are milestone markers. React has been the live production app since the Task 10.3 launch.
 
 ## Current Compatibility and Safety Rules
 
-- Root Vanilla production remains untouched during ordinary React feature work.
+- The Vanilla source in the repository root stays untouched; it is the rollback path.
 - React must not use protected Vanilla keys.
 - React schema changes require separately approved migration planning.
-- Export/import and production replacement remain future locked-roadmap work.
-- No production replacement occurs before the production-readiness sprint.
-- The Vanilla v1.0.0 release remains an explicit rollback path until React production replacement is safely complete.
+- React export/import (Task 10.1) and the production launch (Task 10.3) are complete.
+- Changes to the Pages deployment (the workflow, the Pages Source setting, the site layout) follow `PRODUCTION_REPLACEMENT_PLAN.md`.
+- The Vanilla v1.0.0 release remains an explicit rollback path.
 
 ## Remaining Locked Direction
 
-The next roadmap work begins with Sprint 10 — Backup, Export/Import + Local Production Readiness, covering React export/import, the production replacement plan and launch, and App Info / Help. Later locked work covers account/cloud architecture, login/cloud sync, food image upload and barcode scanner, multi-user sharing, Google Play Store release, and final stabilization.
+The next roadmap work is Task 10.4 — App Info / Help, which completes Sprint 10. Later locked work covers account/cloud architecture, login/cloud sync, food image upload and barcode scanner, multi-user sharing, Google Play Store release, and final stabilization.
 
 See `ROADMAP.md` for the exact locked order and task names.
