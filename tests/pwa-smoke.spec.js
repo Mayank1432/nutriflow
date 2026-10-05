@@ -93,6 +93,15 @@ test('React PWA works online and offline', async ({ page, context, request, base
   expect(backup.history).toBeTruthy();
   await primaryNav.getByRole('button', { name: 'Today' }).click();
 
+  // App Info / Help
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page.getByRole('dialog', { name: 'Navigation menu' }).getByRole('button', { name: 'App Info / Help' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'App Info / Help' })).toBeVisible();
+  await expect(page.locator('dd', { hasText: /^\d+\.\d+\.\d+$/ })).toBeVisible();
+  await page.getByText('If something goes wrong').click();
+  await expect(page.getByText('I deleted a day by mistake.')).toBeVisible();
+  await primaryNav.getByRole('button', { name: 'Today' }).click();
+
   // Offline reload
   await context.setOffline(true);
   await page.reload({ waitUntil: 'domcontentloaded' });
