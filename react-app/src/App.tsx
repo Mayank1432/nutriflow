@@ -10,6 +10,7 @@ import PantryScreen from './screens/PantryScreen'
 import ShoppingScreen from './screens/ShoppingScreen'
 import CostProteinTableScreen from './screens/CostProteinTableScreen'
 import BackupRestoreScreen from './screens/BackupRestoreScreen'
+import AppInfoHelpScreen from './screens/AppInfoHelpScreen'
 import { readReactSettingsStore, writeReactSettingsStore, type MacroGoals } from './storage'
 import type { DrawerDestination } from './components/HamburgerDrawer'
 
@@ -26,6 +27,7 @@ function App() {
   const [showShopping, setShowShopping] = useState(false)
   const [showCostProteinTable, setShowCostProteinTable] = useState(false)
   const [showBackup, setShowBackup] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const [settings, setSettings] = useState(() => readReactSettingsStore())
   const [uiIntent, setUiIntent] = useState<UiIntent | null>(null)
   const [quickAddVisible, setQuickAddVisible] = useState(false)
@@ -73,7 +75,7 @@ function App() {
     weekly: <WeeklyScreen />,
     history: <HistoryScreen />,
     analytics: <AnalyticsScreen />,
-    more: showBackup ? <BackupRestoreScreen onBack={() => setShowBackup(false)} /> : showCostProteinTable ? <CostProteinTableScreen /> : showShopping ? <ShoppingScreen /> : showPantry ? <PantryScreen /> : showSettings
+    more: showHelp ? <AppInfoHelpScreen onOpenBackup={() => { setShowHelp(false); setShowBackup(true) }} /> : showBackup ? <BackupRestoreScreen onBack={() => setShowBackup(false)} /> : showCostProteinTable ? <CostProteinTableScreen /> : showShopping ? <ShoppingScreen /> : showPantry ? <PantryScreen /> : showSettings
       ? <SettingsScreen
           onBack={() => setShowSettings(false)}
           settings={settings}
@@ -101,6 +103,10 @@ function App() {
     setShowShopping(false)
     setShowCostProteinTable(false)
     setShowBackup(false)
+    setShowHelp(false)
+    if (destination === 'app-info-help') {
+      setActiveTab('more'); setShowSettings(false); setMoreSection(null); setShowHelp(true); return
+    }
     if (destination === 'backup-restore') {
       setActiveTab('more'); setShowSettings(false); setMoreSection(null); setShowBackup(true); return
     }
@@ -137,7 +143,9 @@ function App() {
     setShowSettings(false)
     setMoreSection(null)
   }
-  const activeDestination: DrawerDestination = showBackup
+  const activeDestination: DrawerDestination = showHelp
+    ? 'app-info-help'
+    : showBackup
     ? 'backup-restore'
     : showShopping
     ? 'shopping'
@@ -157,6 +165,7 @@ function App() {
       setShowShopping(false)
       setShowCostProteinTable(false)
       setShowBackup(false)
+      setShowHelp(false)
       setActiveTab(tab)
       if (tab !== 'more') setShowSettings(false)
     }} activeDestination={activeDestination} onDrawerNavigate={navigateDrawer}>

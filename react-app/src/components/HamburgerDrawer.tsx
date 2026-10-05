@@ -8,6 +8,7 @@ export type DrawerDestination =
   | 'pantry' | 'shopping'
   | 'cost-protein-table'
   | 'backup-restore'
+  | 'app-info-help'
 
 type HamburgerDrawerProps = {
   activeDestination: DrawerDestination
@@ -61,7 +62,7 @@ const groups: Array<{ label: string; links: DrawerLink[] }> = [
       { id: 'settings', label: 'Settings', destination: 'settings', activeFor: 'settings' },
       { id: 'macro-goals', label: 'Macro Goals', destination: 'macro-goals' },
       { id: 'theme', label: 'Theme', destination: 'theme' },
-      { id: 'app-info-help', label: 'App Info / Help' },
+      { id: 'app-info-help', label: 'App Info / Help', destination: 'app-info-help', activeFor: 'app-info-help' },
     ],
   },
 ]

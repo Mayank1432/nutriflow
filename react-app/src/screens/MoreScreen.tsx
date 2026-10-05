@@ -34,7 +34,7 @@ function MoreScreen({ onOpenSettings, focusSection, intent, onIntentConsumed }: 
     onIntentConsumed?.(intent.token)
   }, [focusSection, intent, onIntentConsumed])
   return (
-    <ScreenContainer title="More" subtitle="Prototype tools, placeholders, and app information.">
+    <ScreenContainer title="More" subtitle="Tools, settings, and app information.">
       <PrototypeNotice>Ingredient Library definitions are stored locally in the React app.</PrototypeNotice>
       <SummaryCard>
         <div className="summary-heading">
