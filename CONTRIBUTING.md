@@ -69,6 +69,7 @@ Current milestone examples:
 - `v0.8.0` — Sprint 7
 - `v0.9.0` — Sprint 8
 - `v0.10.0` — Sprint 9
+- `v0.11.0` — Sprint 10
 
 The stable Vanilla production release uses a separate tag namespace:
 

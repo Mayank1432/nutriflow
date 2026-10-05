@@ -221,7 +221,7 @@ Delete confirmation, optional undo/restore, and accidental-loss prevention.
 
 **Sprint tag:** `v0.10.0`
 
-## Sprint 10 — Backup, Export/Import + Local Production Readiness (in progress)
+## Sprint 10 — Backup, Export/Import + Local Production Readiness ✅
 
 **Goal:** Prepare React for safe production replacement.
 
@@ -236,8 +236,10 @@ Replace root production with React, update PWA/service worker, verify live URL, 
 
 At this point, NutriFlow becomes the real local-first React PWA.
 
-### Task 10.4 — App Info / Help ⬜
+### Task 10.4 — App Info / Help ✅
 App/version info, feature overview, navigation help, Today/Quick Add/Weekly/History/Analytics guidance, backup guidance, local-first explanation, account/cloud status, PWA/offline/update guidance, privacy/data ownership, known limitations, and recovery help.
+
+**Sprint tag:** `v0.11.0`
 
 ## Sprint 11 — Accounts + Cloud Architecture ⬜
 

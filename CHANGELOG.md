@@ -15,6 +15,25 @@ The format is based on Keep a Changelog.
 
 No runtime behavior is changed by this documentation refresh.
 
+## [v0.11.0] — Sprint 10: Backup, Export/Import + Local Production Readiness
+
+### Added
+- Added React Export/Import (Backup & Restore): download all React data as one backup file, preview a backup before restoring it, and restore it all-or-nothing, with Recently deleted days included.
+- Added strict backup validation: invalid JSON, files from other apps, newer backup versions, and damaged stores are rejected without changing any data.
+- Added the production replacement plan (`PRODUCTION_REPLACEMENT_PLAN.md`) and the decisions ADR-011 and ADR-012.
+- Added the React PWA: a manifest with a stable app id, the new NutriFlow logo (any and maskable icons), and a build-hash service worker that precaches the build and removes older NutriFlow caches.
+- Added the Deploy site GitHub Actions workflow, the site assembly and check scripts, and a local server that mimics the `/nutriflow/` path.
+- Added App Info / Help: app version, build date, and commit, plus collapsible help covering features, navigation, backup and restore, privacy, accounts and cloud status, install, offline, updates, known limitations, and recovery.
+- Added focused verifiers for backup and help content.
+
+### Changed
+- Launched React as the production app at the site root. The original Vanilla app is archived at `/classic/`, and its source stays in the repository root as the rollback path.
+- Replaced the Vanilla PWA smoke test with a React PWA smoke test and a `/classic/` archive test.
+- Moved Pages deployment to GitHub Actions. Merges to `main` deploy automatically; Markdown-only changes are skipped.
+
+### Fixed
+- Fixed the menu overlay sitting under the bottom navigation, which hid the last menu items on short screens.
+
 ## [v0.10.0] — Sprint 9: History Catch-Up Editing
 
 ### Added

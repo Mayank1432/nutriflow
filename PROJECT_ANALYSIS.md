@@ -5,7 +5,7 @@
 NutriFlow currently has two deliberately separated application tracks:
 
 1. The **root Vanilla HTML/CSS/JavaScript PWA**, which is the archived original app, published at `/classic/` and kept in the repository root as the rollback path.
-2. The **React/Vite/TypeScript application under `react-app/`**, which is the live production application and has completed the locked roadmap through Sprint 9.
+2. The **React/Vite/TypeScript application under `react-app/`**, which is the live production application and has completed the locked roadmap through Sprint 10.
 
 The React application is no longer a mock-only shell. It replaced the Vanilla app in production at the Task 10.3 launch.
 
@@ -142,6 +142,14 @@ Shopping reads and writes the React Shopping store. Implemented behavior include
 
 The Cost / Protein Table screen derives comparison rows from the Ingredient Library, resolving each ingredient's nutrition basis (per-100 g/ml or per-piece/serving) and computing cost per gram of protein. It supports search, a basis filter (all/per-100/per-unit), and six sort modes (protein, cost, and cost-per-gram-of-protein, each ascending/descending). The screen renders as a sortable table on wide viewports and a card list on narrow viewports, using the app's existing theme tokens for light/dark support.
 
+### Backup and Restore
+
+Backup & Restore (menu: Account & Data) exports every React store to one JSON file (`backupVersion` 1, `appFamily` `nutriflow_react`) and restores from such a file. Restore shows a summary first and then replaces all current React data; it does not merge. Parsing rejects invalid JSON, files from other apps, newer backup versions, and any store that fails its validator, and a restore that fails part-way puts the previous data back. Pantry, Shopping, and Daily Staples are optional in older backups and fall back to defaults. Recently deleted History days are included. Protected Vanilla keys are never read or written. The logic lives in `react-app/src/storage/reactBackup.ts` and `replaceReactStores` in `storageHelpers.ts`.
+
+### App Info / Help
+
+App Info / Help (menu: Settings group) shows the app version, build date, commit, release mode, whether the app is running installed, and the data format version. The build constants come from `vite.config.ts` (`npm_package_version`, the build date, and `GITHUB_SHA`). The help sections are data in `react-app/src/domain/appHelp.ts`, checked by `verifyAppHelp.ts`, and shown as collapsible sections.
+
 ## React App Shell and Navigation
 
 The final mobile structure is implemented around the Option C mobile header, hamburger drawer, and bottom navigation.
@@ -220,6 +228,7 @@ Current focused verifier files include:
 - `verifyHistoryEdit.ts`
 - `verifyHistoryDelete.ts`
 - `verifyReactBackup.ts`
+- `verifyAppHelp.ts`
 
 Some older files retain prototype-era names such as `historyMock.ts` or `weeklyMock.ts`; those filenames do not mean the current React application is still globally mock-only.
 
@@ -236,6 +245,7 @@ React development milestone tags:
 - `v0.8.0` — Sprint 7: Analytics + Chart Library
 - `v0.9.0` — Sprint 8: Shopping List + Pantry Stock
 - `v0.10.0` — Sprint 9: History Catch-Up Editing
+- `v0.11.0` — Sprint 10: Backup, Export/Import + Local Production Readiness
 
 The React tags are milestone markers. React has been the live production app since the Task 10.3 launch.
 
@@ -250,6 +260,6 @@ The React tags are milestone markers. React has been the live production app sin
 
 ## Remaining Locked Direction
 
-The next roadmap work is Task 10.4 — App Info / Help, which completes Sprint 10. Later locked work covers account/cloud architecture, login/cloud sync, food image upload and barcode scanner, multi-user sharing, Google Play Store release, and final stabilization.
+The next roadmap work begins with Sprint 11 — Accounts + Cloud Architecture. Later locked work covers login/cloud sync, food image upload and barcode scanner, multi-user sharing, Google Play Store release, and final stabilization.
 
 See `ROADMAP.md` for the exact locked order and task names.
